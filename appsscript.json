@@ -1,0 +1,16 @@
+{
+  "timeZone": "Europe/Bucharest",
+  "dependencies": {
+    "enabledAdvancedServices": [{
+      "userSymbol": "TagManager",
+      "serviceId": "tagmanager",
+      "version": "v2"
+    }, {
+      "userSymbol": "Analytics",
+      "serviceId": "analytics",
+      "version": "v3"
+    }]
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "DEPRECATED_ES5"
+}

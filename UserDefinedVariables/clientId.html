@@ -1,0 +1,10 @@
+<script>
+  function getClientId() {
+    try {
+      var tracker = ga.getAll()[0];
+      return "'" + tracker.get('clientId');
+    } catch (err) {
+      return err.message;
+    }
+  }
+</script>

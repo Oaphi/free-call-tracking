@@ -1,0 +1,335 @@
+<html>
+  <head>
+    <base target="_blank" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Please select your Account</title>
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"
+    />
+    <style>
+      #toast-container {
+        bottom: auto !important;
+        left: auto !important ;
+        top: 20%;
+        right: 10%;
+      }
+      #toast-container .toast {
+        cursor: pointer;
+      }
+      #toast-container .toast::after {
+        font-family: 'Material Icons';
+        content: 'close';
+        color: #f44336;
+        font-size: 1.5rem;
+        font-weight: 300;
+        float: right;
+        padding-left: 3rem;
+      }
+      .toast-error {
+        background-color: #f44336;
+      }
+    </style>
+  </head>
+  <body>
+    <form
+      class="main"
+      id="form"
+      novalidate="novalidate"
+      style="max-width: 580px;margin: 20px auto;"
+    >
+      <!----------------------------------------------- Analytics  -------------------------------------------------------->
+      <div class="#e3f2fd blue lighten-5">
+        <div class="row">
+          <div class="input-field col s12">
+            <select onchange="formChangeGaAccount()" id="GaAcc">
+              <option value="" disabled selected>Select</option>
+              <? for (var r = 0; r < ArrGaAccs.length; r++) { ?>
+              <option value="<?= ArrGaAccs[r].id ?>"
+                ><?= ArrGaAccs[r].name ?></option
+              >
+              <? } ?>
+            </select>
+            <label>Select Google Analytics account</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="input-field col s12">
+            <select id="Prop" name="Prop">
+              <option value="" disabled selected>Select</option>
+            </select>
+            <label>Select your Google Analytics property</label>
+          </div>
+        </div>
+      </div>
+
+      <!----------------------------------------------- Tag Manager  -------------------------------------------------------->
+      <div class="#f9fbe7 lime lighten-5">
+        <div class="row">
+          <div class="input-field col s12">
+            <select onchange="formChangeAccount()" id="Acc">
+              <option value="" disabled selected>Select</option>
+              <? for (var r = 0; r < ArrAccs.length; r++) { ?>
+              <option value="<?= ArrAccs[r].path ?>"
+                ><?= ArrAccs[r].name ?></option
+              >
+              <? } ?>
+            </select>
+            <label>Select Google Tag Manager account</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="input-field col s12">
+            <select onchange="formChangeContainer()" id="Cont" name="Cont">
+              <option value="" disabled selected>Select</option>
+            </select>
+            <label>Select Google Tag Manager container</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="input-field col s12">
+            <select id="Work" name="Work">
+              <option value="" disabled selected>Select</option>
+            </select>
+            <label
+              >Select Google Tag Manager workspace (* Default workspace is
+              recommended)</label
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="row" id="Preloader1">
+        <a> Please wait ... </a>
+        <div class="progress" id="Preloader" name="Preloader">
+          <div class="indeterminate"></div>
+        </div>
+      </div>
+
+      <div class="row" id="saveme">
+        <div class="input-field col s2">
+          <input placeholder="Call" id="MyCategory" type="text" />
+          <label for="MyCategory">Category</label>
+        </div>
+
+        <div class="input-field col s2">
+          <input placeholder="Call" id="MyEvent" type="text" />
+          <label for="MyEvent">Event</label>
+        </div>
+
+        <div class="input-field col s4">
+          <button
+            class="waves-effect waves-light btn blue"
+            type="button"
+            onclick="submitForm()"
+          >
+            <i class="material-icons left">check</i>Deploy
+          </button>
+        </div>
+        <div class="input-field col s4">
+          <button
+            class="waves-effect waves-light btn red"
+            type="button"
+            onclick="google.script.host.close()"
+          >
+            <i class="material-icons left">cancel</i>Cancel
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+    <script>
+      function removeOptions(selectElement) {
+        for (var i = selectElement.options.length - 1; i > 0; i--)
+          selectElement.remove(i);
+      }
+      function resetSelectPropagation() {
+        document
+          .querySelectorAll('.select-wrapper')
+          .forEach(t => t.addEventListener('click', e => e.stopPropagation()));
+      }
+      $(document).ready(function() {
+        $('#Preloader1').hide();
+        $('#GaAcc').material_select();
+        $('#Prop').material_select();
+        $('#Acc').material_select();
+        $('#Cont').material_select();
+        $('#Work').material_select();
+        resetSelectPropagation();
+      });
+
+      function formChangeGaAccount() {
+        var sAccId = $('#GaAcc').val();
+        if (sAccId) {
+          $('#Preloader1').show();
+          google.script.run
+            .withFailureHandler(err => {
+              $('#GaAcc')
+                .find('option:first')
+                .prop('selected', true);
+              $('#GaAcc').material_select();
+              resetSelectPropagation();
+              myErrorMsg(err);
+            })
+            .withSuccessHandler(function refreshContainers(data, element) {
+              $('#Preloader1').hide();
+              var Arr = data;
+              var Opt = document.getElementById('Prop');
+              removeOptions(Opt);
+
+              for (var r = 0; r < Arr.length; r++) {
+                addOption(Opt, Arr[r].name, Arr[r].id);
+              }
+              $('#Prop').material_select();
+              resetSelectPropagation();
+            })
+            .getGaPropertiesArrByAcc(sAccId);
+        }
+      }
+
+      function formChangeAccount() {
+        var sAccPath = $('#Acc').val();
+        if (sAccPath) {
+          $('#Preloader1').show();
+          google.script.run
+            .withFailureHandler(err => {
+              $('#Acc')
+                .find('option:first')
+                .prop('selected', true);
+              $('#Acc').material_select();
+              resetSelectPropagation();
+              myErrorMsg(err);
+            })
+            .withSuccessHandler(function refreshContainers(data, element) {
+              $('#Preloader1').hide();
+              var Arr = data;
+              var Opt = document.getElementById('Cont');
+              removeOptions(Opt);
+
+              for (var r = 0; r < Arr.length; r++) {
+                addOption(Opt, Arr[r].name, Arr[r].path);
+              }
+              $('#Cont').material_select();
+              resetSelectPropagation();
+            })
+            .getConteinersArrByAcc(sAccPath);
+        }
+      }
+
+      function formChangeContainer() {
+        var sContPath = $('#Cont').val();
+        if (sContPath) {
+          $('#Preloader1').show();
+          google.script.run
+            .withFailureHandler(err => {
+              $('#Cont')
+                .find('option:first')
+                .prop('selected', true);
+              $('#Cont').material_select();
+              resetSelectPropagation();
+              myErrorMsg(err);
+            })
+            .withSuccessHandler(function refreshWorkspaces(data, element) {
+              $('#Preloader1').hide();
+              var Arr = data;
+              var Opt = document.getElementById('Work');
+              removeOptions(Opt);
+
+              for (var r = 0; r < Arr.length; r++) {
+                addOption(Opt, Arr[r].name, Arr[r].path);
+              }
+              $('#Work').material_select();
+              resetSelectPropagation();
+            })
+            .getWorkspacesArrByCont(sContPath);
+        }
+      }
+
+      function addOption(oListbox, text, value) {
+        var oOption = document.createElement('option');
+        oOption.appendChild(document.createTextNode(text));
+        oOption.setAttribute('value', value);
+        oListbox.appendChild(oOption);
+      }
+
+      function submitForm() {
+        var sGaAcc = $('#GaAcc').val();
+        var sProfileId = $('#Prop').val();
+        var sAccValue = $('#Acc').val();
+        var sContValue = $('#Cont').val();
+        var sWorkValue = $('#Work').val();
+
+        var sMyCategory = $('#MyCategory').val();
+        var sMyEvent = $('#MyEvent').val();
+
+        var issues = [];
+
+        if (sGaAcc == '' || sGaAcc == null)
+          issues.push('Please select an Analytic Account!');
+        if (sProfileId == '' || sProfileId == null)
+          issues.push('Please select an Analytic Property!');
+        if (sAccValue == '' || sAccValue == null)
+          issues.push('Please select a Tag Manager Account!');
+        if (sContValue == '' || sContValue == null)
+          issues.push('Please select a Container!');
+        if (sWorkValue == '' || sWorkValue == null)
+          issues.push('Please select a Workspace!');
+
+        if (sMyCategory == '' || sMyCategory == null) sMyCategory = 'Call';
+        if (sMyEvent == '' || sMyEvent == null) sMyEvent = 'Call';
+
+        if (issues.length) {
+          issues.forEach(msg => Materialize.toast(msg, 4000));
+          return;
+        }
+        $('#Preloader1').show();
+
+        google.script.run
+          .withSuccessHandler(closeForm)
+          .withFailureHandler(myErrorMsg)
+          .deployAddon(
+            sProfileId,
+            sContValue,
+            sWorkValue,
+            sMyCategory,
+            sMyEvent
+          );
+      }
+
+      function myErrorMsg(err) {
+        $('#Preloader1').hide();
+        Materialize.toast(
+          'Received error:<br>"' +
+            err.message +
+            '"<br>This is an unexpected behavior. We are already fixing this.',
+          10000,
+          'toast-error'
+        );
+      }
+
+      function closeForm() {
+        google.script.host.close();
+      }
+
+      /**
+       * @see https://github.com/Dogfalo/materialize/issues/1453
+       */
+      $(document).on('click', '#toast-container .toast', function() {
+        $(this).fadeOut(function() {
+          $(this)
+            .first()[0]
+            .M_Toast.remove();
+        });
+      });
+    </script>
+  </body>
+</html>
