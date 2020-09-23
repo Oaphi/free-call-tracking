@@ -1,16 +1,27 @@
 {
   "timeZone": "Europe/Bucharest",
   "dependencies": {
-    "enabledAdvancedServices": [{
-      "userSymbol": "TagManager",
-      "serviceId": "tagmanager",
-      "version": "v2"
-    }, {
-      "userSymbol": "Analytics",
-      "serviceId": "analytics",
-      "version": "v3"
-    }]
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "TagManager",
+        "serviceId": "tagmanager",
+        "version": "v2"
+      },
+      {
+        "userSymbol": "Analytics",
+        "serviceId": "analytics",
+        "version": "v3"
+      }
+    ],
+    "libraries": [
+      {
+        "userSymbol": "TriggersApp",
+        "libraryId": "12Mf-uYbUiilFbP9MlQM9C63b7QcJEAdFe1d8SC6zPd3JOXgVdeb6Slc-",
+        "version": "14",
+        "developmentMode": true
+      }
+    ]
   },
   "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "DEPRECATED_ES5"
+  "runtimeVersion": "V8"
 }
