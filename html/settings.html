@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <style>
+        :root {
+            --theme-primary-color: #0277bd;
+            --theme-primary-color--opaque: rgba(2, 119, 189, 0.4);
+        }
+
+        .dense {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        .primary-background {
+            background-color: var(--theme-primary-color);
+        }
+
+        .timepicker-analog-display {
+            transform: scale(0.8);
+        }
+
+        .timepicker-digital-display {
+            background-color: var(--theme-primary-color);
+        }
+
+        .timepicker-plate {
+            left: -15px;
+        }
+
+        .timepicker-canvas-bg,
+        .timepicker-canvas-bearing {
+            fill: var(--theme-primary-color);
+        }
+
+        .timepicker-canvas line {
+            stroke: var(--theme-primary-color);
+        }
+
+        .timepicker-tick:hover {
+            background-color: var(--theme-primary-color--opaque);
+        }
+
+        .timepicker-close {
+            color: var(--theme-primary-color);
+        }
+
+        input[type=text]:not(.browser-default):focus:not([readonly]) {
+            border-bottom: 1px solid var(--theme-primary-color);
+            -webkit-box-shadow: 0 1px 0 0 var(--theme-primary-color);
+            box-shadow: 0 1px 0 0 var(--theme-primary-color);
+        }
+
+        input[type=text]:not(.browser-default):focus:not([readonly])+label {
+            color: var(--theme-primary-color);
+        }
+
+        .switch label input[type=checkbox]:checked+.lever {
+            background-color: var(--theme-primary-color);
+        }
+
+        .switch label .lever:before {
+            background-color: var(--theme-primary-color--opaque);
+        }
+
+        .switch label input[type=checkbox]:checked+.lever:after {
+            background-color: var(--theme-primary-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="row">
+            <div class="nav-wrapper valign-wrapper col s12 light-blue darken-3">
+                <h5 class="white-text">Settings</h5>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12">
+                <div class="input-field">
+                    <input id="clearAt" name="clearAt" placeholder="00:00" type="text" class="timepicker tooltipped"
+                        data-position="bottom" data-tooltip="Time when the sheet is cleared">
+                    <label for="clearAt">Clear At</label>
+                </div>
+            </div>
+        </div>
+        <div class="row valign-wrapper">
+            <div class="col s10">
+                <p class="dense" for="clear">Discard data daily</p>
+            </div>
+            <div class="col s2">
+                <div class="switch">
+                    <label>
+                        <input id="clear" name="enableDailyClear" type="checkbox" />
+                        <span class="lever right"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="row valign-wrapper">
+            <div class="col s10">
+                <p class="dense" for="edit">Enable edit trigger</p>
+            </div>
+            <div class="col s2">
+                <div class="switch">
+                    <label>
+                        <input id="edit" name="enableEditTrigger" type="checkbox" />
+                        <span class="lever right"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+
+    <?!= utils ?>
+
+    <script>
+
+        const initTooltipped = (options = {}) => {
+            const elems = document.querySelectorAll('.tooltipped');
+            return M.Tooltip.init(elems, options);
+        };
+
+        window.addEventListener("DOMContentLoaded", async (ev) => {
+
+            initTooltipped();
+
+            const tpicker = document.querySelector(".timepicker");
+
+            const { atHour, atMinute } = await asyncGAPIv2({ funcName: "getDailyClearConfig" });
+
+            const time = buildTime({ hours: atHour, minutes: atMinute });
+
+            tpicker.value = time;
+
+            const initialized = new M.Timepicker(tpicker, {
+                defaultTime: time,
+                twelveHour: false,
+                showClearBtn: true,
+                onCloseEnd: async () => {
+
+                    const { time } = initialized;
+
+                    if (!time) { return; }
+
+                    const [hour, minute] = time.split(":");
+
+                    await asyncGAPIv2({
+                        funcName: "rescheduleClearTrigger",
+                        params: [{
+                            atHour: +hour,
+                            atMinute: +minute
+                        }]
+                    });
+
+                    M.toast({
+                        html: "Updated trigger!",
+                        classes: "primary-background"
+                    });
+                }
+            });
+
+            const {
+                triggers: {
+                    enableDailyClear,
+                    enableEditTrigger
+                }
+            } = await asyncGAPIv2({ funcName: "getSettings" });
+
+            const clear = document.querySelector("#clear");
+            const edit = document.querySelector("#edit");
+
+            clear.checked = enableDailyClear;
+            edit.checked = enableEditTrigger;
+
+            const updateSettings = async (update) => await asyncGAPIv2({
+                funcName: "updateSettings",
+                params: [update],
+                onSuccess: () => M.toast({
+                    html: "Updated settings!",
+                    classes: "primary-background"
+                }),
+                onFailure: () => M.toast({
+                    html: "Failed to update!",
+                    classes: "primary-background"
+                })
+            });
+
+            clear.addEventListener("change", () => updateSettings({ 
+                "triggers/enableDailyClear": clear.checked 
+            }));
+
+            edit.addEventListener("change", () => updateSettings({ 
+                "triggers/enableEditTrigger": edit.checked 
+            }));
+        });
+
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+</body>
+
+</html>
