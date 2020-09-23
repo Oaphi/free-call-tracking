@@ -2,6 +2,7 @@
 /* global getProfileID sSITE_VISITOR_ID */
 
 /* exported userActionUpdateFreeCall  */
+
 /**
  *
  */
@@ -14,14 +15,21 @@ function userActionUpdateFreeCall() {
     range: activeCell
   });
 }
-function onEditEvent(e) {
+
+const onEditEvent = (e) => TriggersApp.guardTracked(e, function onEditEvent(e) {
+
   var sCurValue = e.range.getValue();
+
   if (sCurValue == '') return;
+
   sCurValue += '';
+
   var iRow = e.range.getRow();
 
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+
   if (ss == undefined) return;
+
   var sheet = ss.getActiveSheet();
 
   var data = sheet.getRange(iRow, 1, 1, 6).getValues();
@@ -66,21 +74,9 @@ function onEditEvent(e) {
 
     SpreadsheetApp.getActive().toast(res.getResponseCode(), 'Done');
   }
-}
+});
 
-/* exported userActionEveentTriggerSettings */
-function userActionEveentTriggerSettings() {
-  var userInterface = HtmlService.createTemplateFromFile(
-    '99_GA_Track_Settings'
-  );
-  SpreadsheetApp.getUi().showModalDialog(
-    userInterface
-      .evaluate()
-      .setHeight(40)
-      .setWidth(300),
-    'Trigger settings'
-  );
-}
+const prepareAndSendHit = (e) => TriggersApp.guardTracked(e, callback)
 
 /* exported switchTrigger */
 /**
@@ -92,7 +88,7 @@ function switchTrigger() {
     removeTrigger();
     return 0;
   } else if (trgr === 0) {
-    createTrigget();
+    createTrigger();
     return 1;
   }
   return -1;
@@ -133,7 +129,7 @@ function removeTrigger() {
 /**
  *
  */
-function createTrigget() {
+function createTrigger() {
   ScriptApp.newTrigger('onEditEvent')
     .forSpreadsheet(SpreadsheetApp.getActive())
     .onEdit()

@@ -13,6 +13,16 @@ var sSHEET_FORM = 'Calls Qualification';
 
 var sVERSION_NAME = 'MyVersion0';
 
+var APP_CONFIG = {
+  properties : {
+    clear : "clear_trigger",
+    settings : "addon_settings"
+  }
+};
+
+//proactively inject dependency
+TriggersApp.use(PropertiesService);
+
 // -------------------------------------------------------------------------- header --------------------------------------------------------------------------------
 /* exported
 sTIMESTAMP sSITE_VISITOR_ID sSOURCE sCURR_PAGE
@@ -29,3 +39,4 @@ sMSG_FORM_EXISTS
 
 var sMSG_FORM_EXISTS =
   "This add-on created a Google Form connected to this Spreadsheet tab. Please, disconnect any linked Google Form and rename/delete the old tab, if you've already tried to deploy this add-on";
+

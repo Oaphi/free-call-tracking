@@ -42,7 +42,7 @@ function selectAccountDeployAddon() {
     return;
   }
 
-  var template = HtmlService.createTemplateFromFile('99_SelectAccount.html');
+  var template = HtmlService.createTemplateFromFile('html/99_SelectAccount.html');
 
   template.ArrAccs = arrAccs;
   template.ArrGaAccs = arrGaAccs;

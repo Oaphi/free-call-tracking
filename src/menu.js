@@ -7,12 +7,26 @@ function onInstall() {
 
 /* exported onOpen */
 function onOpen() {
+
+  TriggersApp.trackTriggers();
+
+  TriggersApp.getOrInstallTrigger({
+    unique: true,
+    callbackName: "onEditEvent",
+    type: TriggersApp.TriggerTypes.EDIT
+  });
+
+  TriggersApp.getOrInstallTrigger({
+    unique: true,
+    installerConfig: getDailyClearConfig(),
+    callbackName: "handleDailyClear"
+  });
+
   SpreadsheetApp.getUi()
     .createAddonMenu()
-    // eslint-disable-next-line camelcase
     .addItem("Deploy a '" + sADDON_NAME + "' Addon", 'deployAddonGo')
     .addItem('Track Analytics', 'userActionUpdateFreeCall')
-    .addItem('Event trigger', 'userActionEveentTriggerSettings')
+    .addItem("Open Settings", "settingsGo")
     .addItem('Setup and Use Manual', 'helpGo')
     .addToUi();
 }
@@ -32,11 +46,25 @@ function deployAddonGo() {
  */
 function helpGo() {
   var sTitle = 'Free call tracking';
-  var html = HtmlService.createTemplateFromFile('99_Help.html').evaluate();
+  var html = HtmlService.createTemplateFromFile('html/99_Help.html').evaluate();
 
   html.setHeight(500);
   html.setWidth(600);
   html.setTitle(sTitle);
 
   SpreadsheetApp.getUi().showModalDialog(html, sTitle);
+}
+
+function settingsGo() {
+
+  const utils = include("html/utils.html");
+
+  const template = HtmlService.createTemplateFromFile("html/settings.html");
+
+  Object.assign(template, { utils });
+
+  const output = template.evaluate();
+
+  SpreadsheetApp.getUi().showSidebar(output);
+
 }
