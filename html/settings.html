@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings</title>
@@ -9,138 +10,126 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 
-    <style>
-        :root {
-            --theme-primary-color: #0277bd;
-            --theme-primary-color--opaque: rgba(2, 119, 189, 0.4);
-        }
-
-        .dense {
-            margin-top: 0;
-            margin-bottom: 0;
-        }
-
-        .primary-background {
-            background-color: var(--theme-primary-color);
-        }
-
-        .timepicker-analog-display {
-            transform: scale(0.8);
-        }
-
-        .timepicker-digital-display {
-            background-color: var(--theme-primary-color);
-        }
-
-        .timepicker-plate {
-            left: -15px;
-        }
-
-        .timepicker-canvas-bg,
-        .timepicker-canvas-bearing {
-            fill: var(--theme-primary-color);
-        }
-
-        .timepicker-canvas line {
-            stroke: var(--theme-primary-color);
-        }
-
-        .timepicker-tick:hover {
-            background-color: var(--theme-primary-color--opaque);
-        }
-
-        .timepicker-close {
-            color: var(--theme-primary-color);
-        }
-
-        input[type=text]:not(.browser-default):focus:not([readonly]) {
-            border-bottom: 1px solid var(--theme-primary-color);
-            -webkit-box-shadow: 0 1px 0 0 var(--theme-primary-color);
-            box-shadow: 0 1px 0 0 var(--theme-primary-color);
-        }
-
-        input[type=text]:not(.browser-default):focus:not([readonly])+label {
-            color: var(--theme-primary-color);
-        }
-
-        .switch label input[type=checkbox]:checked+.lever {
-            background-color: var(--theme-primary-color);
-        }
-
-        .switch label .lever:before {
-            background-color: var(--theme-primary-color--opaque);
-        }
-
-        .switch label input[type=checkbox]:checked+.lever:after {
-            background-color: var(--theme-primary-color);
-        }
-    </style>
+    <?!= style ?>
 </head>
 
 <body>
 
-    <div class="container">
-        <div class="row">
-            <div class="nav-wrapper valign-wrapper col s12 light-blue darken-3">
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{tid}}"></script>
+
+    <script>window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', "{{tid}}", {
+            'page_title': "{{page_title}}",
+            'page_location': "{{page_url}}"
+        });</script>
+
+    <header>
+        <div class="nav-wrapper valign-wrapper col s12 light-blue darken-3">
+            <div class="container">
                 <h5 class="white-text">Settings</h5>
             </div>
         </div>
-        <div class="row">
-            <div class="col s12">
-                <div class="input-field">
-                    <input id="clearAt" name="clearAt" placeholder="00:00" type="text" class="timepicker tooltipped"
-                        data-position="bottom" data-tooltip="Time when the sheet is cleared">
-                    <label for="clearAt">Clear At</label>
-                </div>
+        <div class="preload-wrapper">
+            <div id="preload" class="progress hide light-blue darken-3">
+                <div class="indeterminate light-blue"></div>
             </div>
         </div>
-        <div class="row valign-wrapper">
-            <div class="col s10">
-                <p class="dense" for="clear">Discard data daily</p>
-            </div>
-            <div class="col s2">
-                <div class="switch">
-                    <label>
-                        <input id="clear" name="enableDailyClear" type="checkbox" />
-                        <span class="lever right"></span>
-                    </label>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="row dense">
+                <div class="col s12">
+                    <div class="input-field">
+                        <input id="clearAt" name="clearAt" placeholder="00:00" type="text" class="timepicker tooltipped"
+                            data-position="bottom" data-tooltip="Time when the sheet is cleared">
+                        <label for="clearAt">Clear At</label>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="row valign-wrapper">
-            <div class="col s10">
-                <p class="dense" for="edit">Enable edit trigger</p>
-            </div>
-            <div class="col s2">
-                <div class="switch">
-                    <label>
-                        <input id="edit" name="enableEditTrigger" type="checkbox" />
-                        <span class="lever right"></span>
-                    </label>
+            <div class="row">
+                <div class="col s12">
+                    <a id="clearNow" class="waves-effect light-blue darken-3 btn">Clear Now</a>
                 </div>
             </div>
+            <div class="row valign-wrapper">
+                <div class="col s10">
+                    <p class="dense" for="clear">Discard data daily</p>
+                </div>
+                <div class="col s2">
+                    <div class="switch">
+                        <label>
+                            <input id="clear" name="enableDailyClear" type="checkbox" />
+                            <span class="lever right"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="row valign-wrapper">
+                <div class="col s10">
+                    <p class="dense" for="edit">Enable edit trigger</p>
+                </div>
+                <div class="col s2">
+                    <div class="switch">
+                        <label>
+                            <input id="edit" name="enableEditTrigger" type="checkbox" />
+                            <span class="lever right"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <input id="gaid" type="text" class="validate" />
+                    <label for="gaid">Analytics Id</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <a id="reset" class="waves-effect light-blue darken-3 btn">Reset</a>
+                </div>
+            </div>
+
         </div>
 
-    </div>
-    </div>
+    </main>
 
-
+    <?!= run ?>
     <?!= utils ?>
 
     <script>
+        const primBckg = "primary-background";
+        const failureBckg = "failure-background";
 
         const initTooltipped = (options = {}) => {
             const elems = document.querySelectorAll('.tooltipped');
             return M.Tooltip.init(elems, options);
         };
 
+        window.addEventListener("unhandledrejection", (ev) => {
+            const { promise } = ev;
+
+            M.toast({
+                html: "Something went wrong!",
+                classes: failureBckg
+            });
+
+            Promise.resolve(promise);
+        });
+
         window.addEventListener("DOMContentLoaded", async (ev) => {
+            const preloader = document.querySelector("#preload");
 
             initTooltipped();
 
             const tpicker = document.querySelector(".timepicker");
 
-            const { atHour, atMinute } = await asyncGAPIv2({ funcName: "getDailyClearConfig" });
+            show(preloader);
+
+            const { atHour, atMinute } = await run({ funcName: "getDailyClearConfig" });
 
             const time = buildTime({ hours: atHour, minutes: atMinute });
 
@@ -158,7 +147,7 @@
 
                     const [hour, minute] = time.split(":");
 
-                    await asyncGAPIv2({
+                    const status = await run({
                         funcName: "rescheduleClearTrigger",
                         params: [{
                             atHour: +hour,
@@ -167,18 +156,25 @@
                     });
 
                     M.toast({
-                        html: "Updated trigger!",
-                        classes: "primary-background"
+                        html: status ? "Updated trigger!" : "Failed to update trigger!",
+                        classes: primBckg
                     });
                 }
             });
+
+            const clearNow = document.querySelector("#clearNow");
+            clearNow.addEventListener("click", async () => await run({
+                funcName: "handleDailyClear",
+                onSuccess: () => M.toast({ html: "Cleared!", classes: primBckg }),
+                onFailure: () => M.toast({ html: "Failed to clear!", classes: failureBckg })
+            }));
 
             const {
                 triggers: {
                     enableDailyClear,
                     enableEditTrigger
                 }
-            } = await asyncGAPIv2({ funcName: "getSettings" });
+            } = await run({ funcName: "getSettings" });
 
             const clear = document.querySelector("#clear");
             const edit = document.querySelector("#edit");
@@ -186,26 +182,53 @@
             clear.checked = enableDailyClear;
             edit.checked = enableEditTrigger;
 
-            const updateSettings = async (update) => await asyncGAPIv2({
+            const updateSettings = async (update) => await run({
                 funcName: "updateSettings",
                 params: [update],
-                onSuccess: () => M.toast({
-                    html: "Updated settings!",
-                    classes: "primary-background"
-                }),
-                onFailure: () => M.toast({
-                    html: "Failed to update!",
-                    classes: "primary-background"
-                })
+                onSuccess: () => notify("Updated settings", primBckg),
+                onFailure: () => notify("Failed to update", failureBckg)
             });
 
-            clear.addEventListener("change", () => updateSettings({ 
-                "triggers/enableDailyClear": clear.checked 
+            clear.addEventListener("change", () => updateSettings({
+                "triggers/enableDailyClear": clear.checked
             }));
 
-            edit.addEventListener("change", () => updateSettings({ 
-                "triggers/enableEditTrigger": edit.checked 
+            edit.addEventListener("change", () => updateSettings({
+                "triggers/enableEditTrigger": edit.checked
             }));
+
+            const analyticsId = await run({ funcName: "getProfileID" });
+
+            const gaid = document.querySelector("#gaid");
+            gaid.value = analyticsId;
+
+            gaid.addEventListener("change", async () => await run({
+                funcName: "setProfileID",
+                params: [gaid.value],
+                onSuccess: () => notify(`Analytics Id updated`, primBckg)
+            }));
+
+            const reset = document.querySelector("#reset");
+
+            reset.addEventListener("click", async () => await run({
+                funcName: "resetAddon",
+                onSuccess: ({ status, errors }) => {
+
+                    gaid.value = "";
+                    tpicker.value = buildTime();
+                    clear.checked = true;
+                    edit.checked = true;
+
+                    if (status) {
+                        return notify(`Reset succeeded`, primBckg);
+                    }
+
+                    errors.forEach((err) => notify(err, failureBckg));
+                }
+            }));
+
+            hide(preloader);
+
         });
 
     </script>
