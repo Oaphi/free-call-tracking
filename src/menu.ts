@@ -1,18 +1,11 @@
-/* global sADDON_NAME */
-
-/**
- * @summary trigger firing on addon install
- * @param {GoogleAppsScript.Events.AddonOnInstall}
- */
-function onInstall() {
+function onInstall(e: GoogleAppsScript.Events.AddonOnInstall) {
   recordNewOwner();
-  return onOpen();
+  return onOpen(e);
 }
 
 /**
  * @summary trigger firing on spreadsheet open
  * @param {GoogleAppsScript.Events.SheetsOnOpen}
- * @returns {void}
  */
 function onOpen(
   { authMode } = {
@@ -26,10 +19,10 @@ function onOpen(
 
   SpreadsheetApp.getUi()
     .createAddonMenu()
-    .addItem(`Deploy the ${sADDON_NAME} Addon`, "deployAddonGo")
-    .addItem("Track Analytics", "userActionUpdateFreeCall")
-    .addItem("Open Settings", "settingsGo")
-    .addItem("Get Help", "helpGo")
+    .addItem(`Deploy the ${sADDON_NAME} Addon`, deployAddonGo.name)
+    .addItem("Track Analytics", userActionUpdateFreeCall.name)
+    .addItem("Open Settings", settingsGo.name)
+    .addItem("Get Help", helpGo.name)
     .addToUi();
 }
 
@@ -38,9 +31,6 @@ const getActiveURL = () => SpreadsheetApp.getActiveSpreadsheet().getUrl();
 const sidebarFromString = (content: string) =>
   SpreadsheetApp.getUi().showSidebar(HtmlService.createHtmlOutput(content));
 
-/**
- * @summary opens settings sidebar
- */
 function settingsGo() {
   prepareTriggersForUse();
 
@@ -52,10 +42,14 @@ function settingsGo() {
   templ.style = loadDependency("html", "style");
   templ.run = loadDependency("html", "run");
 
+  const {
+    ids: { analytics },
+  } = APP_CONFIG;
+
   const content = template({
-    content: templ.evaluate().getContent(),
+    template: templ,
     vars: {
-      tid: "UA-168009246-1",
+      tid: analytics,
       page_title: "settings",
       page_url: getActiveURL(),
     },
@@ -64,9 +58,6 @@ function settingsGo() {
   return sidebarFromString(content);
 }
 
-/**
- * @summary opens help sidebar
- */
 function helpGo() {
   recordNewOwner();
 

@@ -15,7 +15,7 @@
 
 <body>
 
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{tid}}"></script>
+    <script src="https://www.googletagmanager.com/gtag/js?id={{tid}}"></script>
 
     <script>window.dataLayer = window.dataLayer || [];
         function gtag() { dataLayer.push(arguments); }
@@ -101,135 +101,136 @@
     <?!= utils ?>
 
     <script>
-        const primBckg = "primary-background";
-        const failureBckg = "failure-background";
+        (async () => {
+            const primBckg = "primary-background";
+            const failureBckg = "failure-background";
 
-        const initTooltipped = (options = {}) => {
-            const elems = document.querySelectorAll('.tooltipped');
-            return M.Tooltip.init(elems, options);
-        };
+            const initTooltipped = (options = {}) => {
+                const elems = document.querySelectorAll('.tooltipped');
+                return M.Tooltip.init(elems, options);
+            };
 
-        window.addEventListener("unhandledrejection", (ev) => {
-            const { promise } = ev;
+            window.addEventListener("unhandledrejection", (ev) => {
+                const { promise } = ev;
 
-            M.toast({
-                html: "Something went wrong!",
-                classes: failureBckg
+                M.toast({
+                    html: "Something went wrong!",
+                    classes: failureBckg
+                });
             });
 
-            Promise.resolve(promise);
-        });
+            window.addEventListener("DOMContentLoaded", async (ev) => {
+                const preloader = document.querySelector("#preload");
 
-        window.addEventListener("DOMContentLoaded", async (ev) => {
-            const preloader = document.querySelector("#preload");
+                initTooltipped();
 
-            initTooltipped();
+                const tpicker = document.querySelector(".timepicker");
 
-            const tpicker = document.querySelector(".timepicker");
+                show(preloader);
 
-            show(preloader);
+                const { atHour, atMinute } = await run({ funcName: "getDailyClearConfig" });
 
-            const { atHour, atMinute } = await run({ funcName: "getDailyClearConfig" });
+                const time = buildTime({ hours: atHour, minutes: atMinute });
 
-            const time = buildTime({ hours: atHour, minutes: atMinute });
+                tpicker.value = time;
 
-            tpicker.value = time;
+                const initialized = new M.Timepicker(tpicker, {
+                    defaultTime: time,
+                    twelveHour: false,
+                    showClearBtn: true,
+                    onCloseEnd: async () => {
 
-            const initialized = new M.Timepicker(tpicker, {
-                defaultTime: time,
-                twelveHour: false,
-                showClearBtn: true,
-                onCloseEnd: async () => {
+                        const { time } = initialized;
 
-                    const { time } = initialized;
+                        if (!time) { return; }
 
-                    if (!time) { return; }
+                        const [hour, minute] = time.split(":");
 
-                    const [hour, minute] = time.split(":");
+                        const status = await run({
+                            funcName: "rescheduleClearTrigger",
+                            params: [{
+                                atHour: +hour,
+                                atMinute: +minute
+                            }]
+                        });
 
-                    const status = await run({
-                        funcName: "rescheduleClearTrigger",
-                        params: [{
-                            atHour: +hour,
-                            atMinute: +minute
-                        }]
-                    });
-
-                    M.toast({
-                        html: status ? "Updated trigger!" : "Failed to update trigger!",
-                        classes: primBckg
-                    });
-                }
-            });
-
-            const clearNow = document.querySelector("#clearNow");
-            clearNow.addEventListener("click", async () => await run({
-                funcName: "handleDailyClear",
-                onSuccess: () => M.toast({ html: "Cleared!", classes: primBckg }),
-                onFailure: () => M.toast({ html: "Failed to clear!", classes: failureBckg })
-            }));
-
-            const {
-                triggers: {
-                    enableDailyClear,
-                    enableEditTrigger
-                }
-            } = await run({ funcName: "getSettings" });
-
-            const clear = document.querySelector("#clear");
-            const edit = document.querySelector("#edit");
-
-            clear.checked = enableDailyClear;
-            edit.checked = enableEditTrigger;
-
-            const updateSettings = async (update) => await run({
-                funcName: "updateSettings",
-                params: [update],
-                onSuccess: () => notify("Updated settings", primBckg),
-                onFailure: () => notify("Failed to update", failureBckg)
-            });
-
-            clear.addEventListener("change", () => updateSettings({
-                "triggers/enableDailyClear": clear.checked
-            }));
-
-            edit.addEventListener("change", () => updateSettings({
-                "triggers/enableEditTrigger": edit.checked
-            }));
-
-            const analyticsId = await run({ funcName: "getProfileID" });
-
-            const gaid = document.querySelector("#gaid");
-            gaid.value = analyticsId;
-
-            gaid.addEventListener("change", async () => await run({
-                funcName: "setProfileID",
-                params: [gaid.value],
-                onSuccess: () => notify(`Analytics Id updated`, primBckg)
-            }));
-
-            const reset = document.querySelector("#reset");
-
-            reset.addEventListener("click", async () => await run({
-                funcName: "resetAddon",
-                onSuccess: ({ status, errors }) => {
-
-                    gaid.value = "";
-                    tpicker.value = buildTime();
-                    clear.checked = true;
-                    edit.checked = true;
-
-                    if (status) {
-                        return notify(`Reset succeeded`, primBckg);
+                        M.toast({
+                            html: status ? "Updated trigger!" : "Failed to update trigger!",
+                            classes: primBckg
+                        });
                     }
+                });
 
-                    errors.forEach((err) => notify(err, failureBckg));
-                }
-            }));
+                const clearNow = document.querySelector("#clearNow");
+                clearNow.addEventListener("click", async () => await run({
+                    funcName: "handleDailyClear",
+                    onSuccess: () => M.toast({ html: "Cleared!", classes: primBckg }),
+                    onFailure: () => M.toast({ html: "Failed to clear!", classes: failureBckg })
+                }));
 
-            hide(preloader);
+                const {
+                    triggers: {
+                        enableDailyClear,
+                        enableEditTrigger
+                    }
+                } = await run({ funcName: "getSettings" });
 
-        });
+                const clear = document.querySelector("#clear");
+                const edit = document.querySelector("#edit");
+
+                clear.checked = enableDailyClear;
+                edit.checked = enableEditTrigger;
+
+                const updateSettings = async (update) => await run({
+                    funcName: "updateSettings",
+                    params: [update],
+                    onSuccess: () => notify("Updated settings", primBckg),
+                    onFailure: () => notify("Failed to update", failureBckg)
+                });
+
+                clear.addEventListener("change", () => updateSettings({
+                    "triggers/enableDailyClear": clear.checked
+                }));
+
+                edit.addEventListener("change", () => updateSettings({
+                    "triggers/enableEditTrigger": edit.checked
+                }));
+
+                const analyticsId = await run({ funcName: "getProfileID" });
+
+                const gaid = document.querySelector("#gaid");
+                gaid.value = analyticsId;
+
+                gaid.addEventListener("change", async () => await run({
+                    funcName: "setProfileID",
+                    params: [gaid.value],
+                    onSuccess: () => notify(`Analytics Id updated`, primBckg)
+                }));
+
+                const reset = document.querySelector("#reset");
+
+                reset.addEventListener("click", async () => await run({
+                    funcName: "resetAddon",
+                    onSuccess: ({ status, errors }) => {
+
+                        gaid.value = "";
+                        tpicker.value = buildTime();
+                        clear.checked = true;
+                        edit.checked = true;
+
+                        if (status) {
+                            return notify(`Reset succeeded`, primBckg);
+                        }
+
+                        errors.forEach((err) => notify(err, failureBckg));
+                    }
+                }));
+
+                hide(preloader);
+
+            });
+
+        })();
 
     </script>
 
