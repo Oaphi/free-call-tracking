@@ -1,0 +1,101 @@
+<style>
+  :root {
+    --theme-primary-color: #0277bd;
+    --theme-primary-color--opaque: rgba(2, 119, 189, 0.4);
+    --theme-failure-color: #c62828;
+  }
+
+  .bold {
+    font-weight: bold;
+  }
+
+  body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+  main {
+    flex: 1 0 auto;
+    margin-top: 2em;
+  }
+
+  .dense {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .primary-background,
+  .btn.primary-background:hover {
+    background-color: var(--theme-primary-color);
+  }
+
+  .failure-background {
+    background-color: var(--theme-failure-color);
+  }
+
+  .timepicker-analog-display {
+    transform: scale(0.8);
+  }
+
+  .timepicker-digital-display {
+    background-color: var(--theme-primary-color);
+  }
+
+  .timepicker-plate {
+    left: -15px;
+  }
+
+  .timepicker-canvas-bg,
+  .timepicker-canvas-bearing {
+    fill: var(--theme-primary-color);
+  }
+
+  .timepicker-canvas line {
+    stroke: var(--theme-primary-color);
+  }
+
+  .timepicker-tick:hover {
+    background-color: var(--theme-primary-color--opaque);
+  }
+
+  .timepicker-close {
+    color: var(--theme-primary-color);
+  }
+
+  input[type="text"]:not(.browser-default):focus:not([readonly]) {
+    border-bottom: 1px solid var(--theme-primary-color);
+    -webkit-box-shadow: 0 1px 0 0 var(--theme-primary-color);
+    box-shadow: 0 1px 0 0 var(--theme-primary-color);
+  }
+
+  input[type="text"]:not(.browser-default):focus:not([readonly]) + label {
+    color: var(--theme-primary-color);
+  }
+
+  .switch label input[type="checkbox"]:checked + .lever {
+    background-color: var(--theme-primary-color);
+  }
+
+  .switch label .lever:before {
+    background-color: var(--theme-primary-color--opaque);
+  }
+
+  .switch label input[type="checkbox"]:checked + .lever:after {
+    background-color: var(--theme-primary-color);
+  }
+
+  .footer-link {
+    margin-left: 10px;
+    top: -10px;
+    position: relative;
+  }
+
+  .preload-wrapper {
+    height: 1em;
+  }
+
+  .page-footer {
+    max-height: 65px;
+  }
+</style>
