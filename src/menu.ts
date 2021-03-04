@@ -5,13 +5,12 @@ function onInstall(e: GoogleAppsScript.Events.AddonOnInstall) {
 
 /**
  * @summary trigger firing on spreadsheet open
- * @param {GoogleAppsScript.Events.SheetsOnOpen}
  */
-function onOpen(
-  { authMode } = {
-    authMode: ScriptApp.AuthMode.FULL,
-  }
-) {
+function onOpen({
+  authMode = ScriptApp.AuthMode.FULL,
+}:
+  | GoogleAppsScript.Events.SheetsOnOpen
+  | GoogleAppsScript.Events.AddonOnInstall) {
   //can work with triggers
   if (authMode !== ScriptApp.AuthMode.NONE) {
     prepareTriggersForUse();
@@ -31,25 +30,24 @@ const getActiveURL = () => SpreadsheetApp.getActiveSpreadsheet().getUrl();
 const sidebarFromString = (content: string) =>
   SpreadsheetApp.getUi().showSidebar(HtmlService.createHtmlOutput(content));
 
+/**
+ * @summary triggers settings screen sidebar
+ */
 function settingsGo() {
   prepareTriggersForUse();
 
   recordNewOwner();
 
   const templ = HtmlService.createTemplateFromFile("html/settings.html");
-
   templ.utils = loadDependency("html", "utils");
   templ.style = loadDependency("html", "style");
   templ.run = loadDependency("html", "run");
 
-  const {
-    ids: { analytics },
-  } = APP_CONFIG;
-
   const content = template({
     template: templ,
     vars: {
-      tid: analytics,
+      tid: APP_CONFIG.ids.analytics,
+      page_path: "/settings",
       page_title: "settings",
       page_url: getActiveURL(),
     },
@@ -58,14 +56,26 @@ function settingsGo() {
   return sidebarFromString(content);
 }
 
+/**
+ * @summary triggers help screen sidebar
+ */
 function helpGo() {
   recordNewOwner();
 
-  const template = HtmlService.createTemplateFromFile("html/help.html");
+  const templ = HtmlService.createTemplateFromFile("html/help.html");
+  templ.utils = loadDependency("html", "utils");
+  templ.style = loadDependency("html", "style");
+  templ.run = loadDependency("html", "run");
 
-  template.style = loadDependency("html", "style");
+  const content = template({
+    template: templ,
+    vars: {
+      tid: APP_CONFIG.ids.analytics,
+      page_path: "/help",
+      page_title: "help",
+      page_url: getActiveURL(),
+    },
+  });
 
-  const html = template.evaluate();
-
-  SpreadsheetApp.getUi().showSidebar(html);
+  return sidebarFromString(content);
 }
