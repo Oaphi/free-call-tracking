@@ -1,0 +1,48 @@
+<script>
+  /**
+   * @typedef {{
+   *  funcName : string,
+   *  onFailure : function,
+   *  onSuccess : function,
+   *  params : array
+   * }} AsyncOptions
+   *
+   * @summary v2 of async-friendly google.script.run
+   * @param {AsyncOptions}
+   * @returns {Promise}
+   */
+  const run = ({
+    funcName,
+    onFailure = console.error,
+    onSuccess,
+    params = [],
+  }) => {
+    return new Promise((res, rej) => {
+      google.script.run
+        .withSuccessHandler((data) => {
+          typeof onSuccess === "function" && onSuccess(data);
+          res(data);
+        })
+        .withFailureHandler((error) => {
+          typeof onFailure === "function" && onFailure(error);
+          rej(error);
+        })
+        [funcName].apply(null, params);
+    });
+  };
+
+  /**
+   * @summary mini-version of the above
+   * @param {string} funcName
+   * @param {...any[]} params
+   * @returns {Promise}
+   */
+  const gscript = (funcName, ...params) => {
+    return new Promise((res, rej) => {
+      google.script.run
+        .withSuccessHandler(res)
+        .withFailureHandler(rej)
+        [funcName].apply(null, params);
+    });
+  };
+</script>
