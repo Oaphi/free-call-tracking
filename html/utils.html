@@ -1,37 +1,37 @@
 <script>
-    const asyncGAPIv2 = ({
-        funcName,
-        onFailure = console.error,
-        onSuccess,
-        params = []
-    }) => {
+  const buildTime = ({ hours = 0, minutes = 0 } = {}) => {
+    const over = minutes > 59 ? Math.floor(minutes / 60) || 1 : 0;
 
-        console.log(funcName, params);
+    const hh = hours + over;
 
-        return new Promise((res, rej) => {
-            google.script.run
-                .withSuccessHandler(data => {
-                    typeof onSuccess === "function" && onSuccess(data);
-                    res(data);
-                })
-                .withFailureHandler(error => {
-                    typeof onFailure === "function" && onFailure(error);
-                    rej(error);
-                })
-            [funcName].apply(null, params);
-        });
-    };
+    const mm = over ? minutes - over * 60 : minutes;
 
-    const buildTime = ({
-        hours = 0,
-        minutes = 0
-    } = {}) => {
-        const over = minutes > 59 ? Math.floor(minutes / 60) || 1 : 0;
+    return `${hh < 10 ? `0${hh}` : hh}:${mm < 10 ? `0${mm}` : mm}`;
+  };
 
-        const hh = hours + over;
+  const show = ({ classList }, className = "hide") =>
+    classList.remove(className);
+  const hide = ({ classList }, className = "hide") => classList.add(className);
+  const notify = (msg, ...styles) =>
+    M.toast({ html: msg, classes: styles.join(" ") });
 
-        const mm = over ? minutes - (over * 60) : minutes;
+  const getCid = () => {
+    const cidName = "fct_cid";
 
-        return `${hh < 10 ? `0${hh}` : hh}:${mm < 10 ? `0${mm}` : mm}`;
-    };
+    let cid;
+
+    try {
+      cid = localStorage.getItem(cidName);
+
+      if (!cid) {
+        cid = uuidv4();
+        localStorage.setItem(cidName, cid);
+      }
+    } catch (error) {
+      console.debug(error);
+      cid = uuidv4();
+    } finally {
+      return cid;
+    }
+  };
 </script>
