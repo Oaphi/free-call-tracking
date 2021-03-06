@@ -158,7 +158,7 @@ var HelpersTagManager = (() => {
    */
   function listTags(path: string) {
     try {
-      const { tag } = TagManager?.Accounts?.Containers?.Workspaces?.Tags?.list(
+      const { tag = [] } = TagManager?.Accounts?.Containers?.Workspaces?.Tags?.list(
         path
       ) || {
         tag: [],
@@ -176,7 +176,7 @@ var HelpersTagManager = (() => {
   function listVariables(parent: string) {
     try {
       const {
-        variable,
+        variable = [],
       } = TagManager?.Accounts?.Containers?.Workspaces?.Variables?.list(
         parent
       ) || { variable: [] };
