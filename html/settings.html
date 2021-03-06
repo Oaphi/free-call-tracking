@@ -1,241 +1,303 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Settings</title>
 
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
 
     <?!= style ?>
-</head>
+  </head>
 
-<body>
-
-    <script src="https://www.googletagmanager.com/gtag/js?id={{tid}}"></script>
-
-    <script>window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', "{{tid}}", {
-            'page_title': "{{page_title}}",
-            'page_location': "{{page_url}}"
-        });</script>
-
+  <body>
     <header>
-        <div class="nav-wrapper valign-wrapper col s12 light-blue darken-3">
-            <div class="container">
-                <h5 class="white-text">Settings</h5>
-            </div>
+      <div class="nav-wrapper valign-wrapper col s12 light-blue darken-3">
+        <div class="container">
+          <h5 class="white-text">Settings</h5>
         </div>
-        <div class="preload-wrapper">
-            <div id="preload" class="progress hide light-blue darken-3">
-                <div class="indeterminate light-blue"></div>
-            </div>
+      </div>
+      <div class="preload-wrapper">
+        <div id="preload" class="progress hide light-blue darken-3">
+          <div class="indeterminate light-blue"></div>
         </div>
+      </div>
     </header>
 
     <main>
-        <div class="container">
-            <div class="row dense">
-                <div class="col s12">
-                    <div class="input-field">
-                        <input id="clearAt" name="clearAt" placeholder="00:00" type="text" class="timepicker tooltipped"
-                            data-position="bottom" data-tooltip="Time when the sheet is cleared">
-                        <label for="clearAt">Clear At</label>
-                    </div>
-                </div>
+      <div class="container">
+        <div class="row dense">
+          <div class="col s12">
+            <div class="input-field">
+              <input
+                id="clearAt"
+                name="clearAt"
+                placeholder="00:00"
+                type="text"
+                class="timepicker tooltipped"
+                data-position="bottom"
+                data-tooltip="Time when the sheet is cleared"
+              />
+              <label for="clearAt">Clear At</label>
             </div>
-            <div class="row">
-                <div class="col s12">
-                    <a id="clearNow" class="waves-effect light-blue darken-3 btn">Clear Now</a>
-                </div>
-            </div>
-            <div class="row valign-wrapper">
-                <div class="col s10">
-                    <p class="dense" for="clear">Discard data daily</p>
-                </div>
-                <div class="col s2">
-                    <div class="switch">
-                        <label>
-                            <input id="clear" name="enableDailyClear" type="checkbox" />
-                            <span class="lever right"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <div class="row valign-wrapper">
-                <div class="col s10">
-                    <p class="dense" for="edit">Enable edit trigger</p>
-                </div>
-                <div class="col s2">
-                    <div class="switch">
-                        <label>
-                            <input id="edit" name="enableEditTrigger" type="checkbox" />
-                            <span class="lever right"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s12">
-                    <input id="gaid" type="text" class="validate" />
-                    <label for="gaid">Analytics Id</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s12">
-                    <a id="reset" class="waves-effect light-blue darken-3 btn">Reset</a>
-                </div>
-            </div>
-
+          </div>
         </div>
-
+        <div class="row">
+          <div class="col s12">
+            <a id="clearNow" class="waves-effect light-blue darken-3 btn"
+              >Clear Now</a
+            >
+          </div>
+        </div>
+        <div class="row valign-wrapper">
+          <div class="col s10">
+            <p class="dense" for="clear">Discard data daily</p>
+          </div>
+          <div class="col s2">
+            <div class="switch">
+              <label>
+                <input id="clear" name="enableDailyClear" type="checkbox" />
+                <span class="lever right"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="row valign-wrapper">
+          <div class="col s10">
+            <p class="dense" for="edit">Enable edit trigger</p>
+          </div>
+          <div class="col s2">
+            <div class="switch">
+              <label>
+                <input id="edit" name="enableEditTrigger" type="checkbox" />
+                <span class="lever right"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col s12">
+            <input
+              id="gaid"
+              type="text"
+              class="validate tooltipped"
+              data-position="bottom"
+              data-tooltip="Your Google Analytics Id"
+            />
+            <label for="gaid">Analytics Id</label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col s12">
+            <a id="reset" class="waves-effect light-blue darken-3 btn">Reset</a>
+          </div>
+        </div>
+      </div>
     </main>
 
     <?!= run ?>
     <?!= utils ?>
 
     <script>
-        (async () => {
-            const primBckg = "primary-background";
-            const failureBckg = "failure-background";
+      (() => {
+        const primBckg = "primary-background";
+        const failureBckg = "failure-background";
 
-            const initTooltipped = (options = {}) => {
-                const elems = document.querySelectorAll('.tooltipped');
-                return M.Tooltip.init(elems, options);
-            };
+        const initTooltipped = (options = {}) => {
+          const elems = document.querySelectorAll(".tooltipped");
+          return M.Tooltip.init(elems, options);
+        };
 
-            window.addEventListener("unhandledrejection", (ev) => {
-                const { promise } = ev;
+        window.addEventListener("error", async (
+          /** @type {ErrorEvent} */ ev
+        ) => {
+          ev.preventDefault();
 
-                M.toast({
-                    html: "Something went wrong!",
-                    classes: failureBckg
-                });
+          const { message = "unknown error" } = ev;
+
+          console.debug({ message });
+
+          await gscript("logException", "settings", message);
+
+          M.toast({
+            html: "Something went wrong!",
+            classes: failureBckg,
+          });
+        });
+
+        window.addEventListener("unhandledrejection", async (
+          /** @type {PromiseRejectionEvent} */ ev
+        ) => {
+          ev.preventDefault();
+
+          const {
+            reason: { name = "Error", message = "unknown rejection" },
+          } = ev;
+
+          const log = `${name} | ${message}`;
+
+          console.debug({ log });
+
+          await gscript("logException", "settings", log);
+
+          M.toast({
+            html: "Something went wrong!",
+            classes: failureBckg,
+          });
+        });
+
+        window.addEventListener("DOMContentLoaded", async (ev) => {
+          await gscript(
+            "sendPageview",
+            getCid(),
+            "{{page_url}}",
+            "{{page_title}}",
+            "{{page_path}}"
+          );
+
+          const preloader = document.querySelector("#preload");
+
+          initTooltipped();
+
+          const tpicker = document.querySelector(".timepicker");
+
+          show(preloader);
+
+          const { atHour, atMinute } = await run({
+            funcName: "getDailyClearConfig",
+          });
+
+          const time = buildTime({ hours: atHour, minutes: atMinute });
+
+          tpicker.value = time;
+
+          const initialized = new M.Timepicker(tpicker, {
+            defaultTime: time,
+            twelveHour: false,
+            showClearBtn: true,
+            onCloseEnd: async () => {
+              const { time } = initialized;
+
+              if (!time) return;
+
+              const [hour, minute] = time.split(":");
+
+              const status = await run({
+                funcName: "rescheduleClearTrigger",
+                params: [
+                  {
+                    atHour: +hour,
+                    atMinute: +minute,
+                  },
+                ],
+              });
+
+              M.toast({
+                html: status ? "Updated trigger!" : "Failed to update trigger!",
+                classes: primBckg,
+              });
+            },
+          });
+
+          const clearNow = document.querySelector("#clearNow");
+          clearNow.addEventListener(
+            "click",
+            async () =>
+              await run({
+                funcName: "handleDailyClear",
+                onSuccess: () =>
+                  M.toast({ html: "Cleared!", classes: primBckg }),
+                onFailure: () =>
+                  M.toast({ html: "Failed to clear!", classes: failureBckg }),
+              })
+          );
+
+          const {
+            triggers: { enableDailyClear, enableEditTrigger },
+          } = await run({ funcName: "getSettings" });
+
+          const clear = document.querySelector("#clear");
+          const edit = document.querySelector("#edit");
+
+          clear.checked = enableDailyClear;
+          edit.checked = enableEditTrigger;
+
+          const updateSettings = async (update) =>
+            await run({
+              funcName: "updateSettings",
+              params: [update],
+              onSuccess: () => notify("Updated settings", primBckg),
+              onFailure: () => notify("Failed to update", failureBckg),
             });
 
-            window.addEventListener("DOMContentLoaded", async (ev) => {
-                const preloader = document.querySelector("#preload");
+          clear.addEventListener("change", () =>
+            updateSettings({
+              "triggers/enableDailyClear": clear.checked,
+            })
+          );
 
-                initTooltipped();
+          edit.addEventListener("change", () =>
+            updateSettings({
+              "triggers/enableEditTrigger": edit.checked,
+            })
+          );
 
-                const tpicker = document.querySelector(".timepicker");
+          const analyticsId = await run({ funcName: "getProfileID" });
 
-                show(preloader);
+          const gaid = document.querySelector("#gaid");
+          gaid.value = analyticsId;
 
-                const { atHour, atMinute } = await run({ funcName: "getDailyClearConfig" });
+          gaid.addEventListener(
+            "change",
+            async () =>
+              await run({
+                funcName: "setProfileID",
+                params: [gaid.value],
+                onSuccess: () => notify(`Analytics Id updated`, primBckg),
+              })
+          );
 
-                const time = buildTime({ hours: atHour, minutes: atMinute });
+          const reset = document.querySelector("#reset");
 
-                tpicker.value = time;
+          reset.addEventListener("click", async () => {
+            show(preloader);
 
-                const initialized = new M.Timepicker(tpicker, {
-                    defaultTime: time,
-                    twelveHour: false,
-                    showClearBtn: true,
-                    onCloseEnd: async () => {
+            try {
+              await run({
+                funcName: "resetAddon",
+                onSuccess: ({ status, errors }) => {
+                  gaid.value = "";
+                  tpicker.value = buildTime();
+                  clear.checked = true;
+                  edit.checked = true;
 
-                        const { time } = initialized;
+                  if (status) {
+                    return notify(`Reset succeeded`, primBckg);
+                  }
 
-                        if (!time) { return; }
+                  errors.forEach((err) => notify(err, failureBckg));
+                },
+              });
+            } catch ({ message }) {
+              await gscript("logException", "settings", message);
+            } finally {
+              hide(preloader);
+            }
+          });
 
-                        const [hour, minute] = time.split(":");
-
-                        const status = await run({
-                            funcName: "rescheduleClearTrigger",
-                            params: [{
-                                atHour: +hour,
-                                atMinute: +minute
-                            }]
-                        });
-
-                        M.toast({
-                            html: status ? "Updated trigger!" : "Failed to update trigger!",
-                            classes: primBckg
-                        });
-                    }
-                });
-
-                const clearNow = document.querySelector("#clearNow");
-                clearNow.addEventListener("click", async () => await run({
-                    funcName: "handleDailyClear",
-                    onSuccess: () => M.toast({ html: "Cleared!", classes: primBckg }),
-                    onFailure: () => M.toast({ html: "Failed to clear!", classes: failureBckg })
-                }));
-
-                const {
-                    triggers: {
-                        enableDailyClear,
-                        enableEditTrigger
-                    }
-                } = await run({ funcName: "getSettings" });
-
-                const clear = document.querySelector("#clear");
-                const edit = document.querySelector("#edit");
-
-                clear.checked = enableDailyClear;
-                edit.checked = enableEditTrigger;
-
-                const updateSettings = async (update) => await run({
-                    funcName: "updateSettings",
-                    params: [update],
-                    onSuccess: () => notify("Updated settings", primBckg),
-                    onFailure: () => notify("Failed to update", failureBckg)
-                });
-
-                clear.addEventListener("change", () => updateSettings({
-                    "triggers/enableDailyClear": clear.checked
-                }));
-
-                edit.addEventListener("change", () => updateSettings({
-                    "triggers/enableEditTrigger": edit.checked
-                }));
-
-                const analyticsId = await run({ funcName: "getProfileID" });
-
-                const gaid = document.querySelector("#gaid");
-                gaid.value = analyticsId;
-
-                gaid.addEventListener("change", async () => await run({
-                    funcName: "setProfileID",
-                    params: [gaid.value],
-                    onSuccess: () => notify(`Analytics Id updated`, primBckg)
-                }));
-
-                const reset = document.querySelector("#reset");
-
-                reset.addEventListener("click", async () => await run({
-                    funcName: "resetAddon",
-                    onSuccess: ({ status, errors }) => {
-
-                        gaid.value = "";
-                        tpicker.value = buildTime();
-                        clear.checked = true;
-                        edit.checked = true;
-
-                        if (status) {
-                            return notify(`Reset succeeded`, primBckg);
-                        }
-
-                        errors.forEach((err) => notify(err, failureBckg));
-                    }
-                }));
-
-                hide(preloader);
-
-            });
-
-        })();
-
+          hide(preloader);
+        });
+      })();
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
-</body>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.1.0/uuidv4.min.js"></script>
+  </body>
 </html>
