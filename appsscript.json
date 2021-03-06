@@ -3,6 +3,11 @@
   "dependencies": {
     "enabledAdvancedServices": [
       {
+        "userSymbol": "Sheets",
+        "serviceId": "sheets",
+        "version": "v4"
+      },
+      {
         "userSymbol": "TagManager",
         "serviceId": "tagmanager",
         "version": "v2"
@@ -17,11 +22,25 @@
       {
         "userSymbol": "TriggersApp",
         "libraryId": "12Mf-uYbUiilFbP9MlQM9C63b7QcJEAdFe1d8SC6zPd3JOXgVdeb6Slc-",
-        "version": "14",
-        "developmentMode": true
+        "version": "25"
       }
     ]
   },
   "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8"
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/analytics.readonly",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/tagmanager.edit.containers",
+    "https://www.googleapis.com/auth/tagmanager.edit.containerversions",
+    "https://www.googleapis.com/auth/tagmanager.manage.users",
+    "https://www.googleapis.com/auth/tagmanager.publish",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.scriptapp", 
+    "https://www.googleapis.com/auth/forms",
+    "https://www.googleapis.com/auth/adwords"
+  ]
 }
