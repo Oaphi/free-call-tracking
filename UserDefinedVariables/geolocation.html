@@ -1,0 +1,29 @@
+<script>
+  function getGeolocation() {
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "https://www.cloudflare.com/cdn-cgi/trace", false);
+      xhr.send();
+
+      if (xhr.status !== 200) return "";
+
+      var data = xhr.responseText;
+
+      var regexp = /(\w+)=\b(.+)\b\n/g;
+
+      var match;
+
+      while ((match = regexp.exec(data)) !== null) {
+        var name = match[1];
+        var val = match[2];
+
+        if (name === "ip") return val;
+      }
+
+      return "";
+    } catch (error) {
+      console.warn(error);
+      return "";
+    }
+  }
+</script>
