@@ -1,93 +1,286 @@
-/* global sSHEET_FORM */
-
-/* exported setProfileID */
-/**
- *
- * @param {string} sID
- */
-function setProfileID(sID) {
-  var ss = SpreadsheetApp.getActive();
-  var sh = ss.getSheetByName(sSHEET_FORM);
-  sh.getRange('F1').setValue(sID);
-}
-
-/* exported getProfileID */
-/**
- *
- */
-function getProfileID() {
-  var ss = SpreadsheetApp.getActive();
-  var sh = ss.getSheetByName(sSHEET_FORM);
-  return sh.getRange('F1').getValue();
-}
-
-/* exported include */
-/**
- *
- */
-function include(filename) {
+function include(filename: string) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 type ClearTypes = "all" | "format" | "notes" | "values";
 
-declare interface ClearSheetOptions {
+interface CommonOptions {
+  onError?: (err: Error) => void;
+}
+
+interface ClearSheetOptions extends CommonOptions {
   name?: string;
   range?: GoogleAppsScript.Spreadsheet.Range;
+  skipRows?: number[];
   sheet?: GoogleAppsScript.Spreadsheet.Sheet;
   type?: ClearTypes;
 }
 
-declare interface ClearHandler {
-  (sheet: GoogleAppsScript.Spreadsheet.Sheet): GoogleAppsScript.Spreadsheet.Sheet;
+interface ClearHandler {
+  (
+    sheet: GoogleAppsScript.Spreadsheet.Sheet
+  ): GoogleAppsScript.Spreadsheet.Sheet;
 }
 
 /**
- * @summary Clears a sheet of data | notes | formatting
+ * @summary clears a sheet
  */
 const clearSheet = ({
   sheet,
+  skipRows,
   range,
   name,
   type = "all",
+  onError = (err) => console.warn(err),
 }: ClearSheetOptions = {}) => {
-  const targetSheet = range
-    ? range.getSheet()
-    : sheet ||
-    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(
-      name || SpreadsheetApp.getActiveSheet().getSheetName()
-    );
-
-  const typeMap: Map<string, ClearHandler> = new Map([
-    ["all", (sh) => sh.clear()],
-    ["format", (sh) => sh.clearFormats()],
-    ["notes", (sh) => sh.clearNotes()],
-    ["values", (sh) => sh.clearContents()],
-  ]);
-
-  const typeHandler = typeMap.get(type);
-
-  typeHandler(targetSheet);
-};
-
-const getProperty = (key, def) => {
-  const store = PropertiesService.getScriptProperties();
-  const prop = store.getProperty(key);
-  return prop !== null ? prop : def;
-};
-
-const setProperty = (key, val) => {
   try {
-    const store = PropertiesService.getScriptProperties();
-    store.setProperty(key, val);
+    const targetSheet = range
+      ? range.getSheet()
+      : sheet ||
+        SpreadsheetApp.getActiveSpreadsheet().getSheetByName(
+          name || SpreadsheetApp.getActiveSheet().getSheetName()
+        );
+
+    if (!targetSheet) return false;
+
+    if (skipRows) {
+      const mrows = targetSheet.getMaxRows();
+      const mcols = targetSheet.getMaxColumns();
+
+      const rng = targetSheet.getRange(1, 1, mrows, mcols);
+
+      const values = rng.getValues();
+      const notes = rng.getNotes();
+      const formulas = rng.getFormulas();
+      const formats = rng.getNumberFormats();
+
+      const updated = formulas.map((_, ri) => {
+        const shouldSkip = skipRows.includes(ri + 1);
+
+        notes[ri].forEach((note) => (shouldSkip ? note : ""));
+        formats[ri].forEach((format) => (shouldSkip ? format : ""));
+
+        return _.map((cell, ci) => (shouldSkip ? cell || values[ri][ci] : ""));
+      });
+
+      rng.setValues(updated);
+      return true;
+    }
+
+    const typeMap: Map<
+      string,
+      (
+        sh: GoogleAppsScript.Spreadsheet.Sheet
+      ) => GoogleAppsScript.Spreadsheet.Sheet
+    > = new Map([
+      ["all", (sh) => sh.clear()],
+      ["format", (sh) => sh.clearFormats()],
+      ["notes", (sh) => sh.clearNotes()],
+      ["values", (sh) => sh.clearContents()],
+    ]);
+
+    const typeHandler = typeMap.get(type);
+
+    if (!typeHandler) throw new RangeError("clear handler not found");
+
+    typeHandler(targetSheet);
+
     return true;
-  }
-  catch (error) {
+  } catch (error) {
+    onError(error);
     return false;
   }
 };
 
-declare interface GtmInfo {
+interface ExpandParamsOptions {
+  encode?: boolean;
+  key: string;
+  obj: object | any[];
+  objectNotation?: "bracket" | "dot";
+  arrayNotation?: "bracket" | "empty_bracket" | "comma";
+}
+
+/**
+ * @summary expands object to parameter array
+ */
+const expandObjectToParams = ({
+  key,
+  obj,
+  encode = true,
+  objectNotation = "bracket",
+  arrayNotation = "bracket",
+}: ExpandParamsOptions): string[] => {
+  const paramMap: Map<
+    string,
+    (k: string, v: string | null | undefined) => typeof v
+  > = new Map([
+    ["bracket", (k, v) => `${key}[${k}]=${v}`],
+    ["comma", (k, v) => v],
+    ["dot", (k, v) => `${key}.${k}=${v}`],
+    ["empty_bracket", (k, v) => `${key}[]=${v}`],
+  ]);
+
+  if (Array.isArray(obj) && arrayNotation === "comma") {
+    return [
+      `${key}=${obj
+        .map((elem) =>
+          typeof elem === "object" && elem
+            ? expandObjectToParams({
+                key,
+                obj: elem,
+                objectNotation,
+                arrayNotation,
+              })
+            : elem
+        )
+        .flat()
+        .join(",")}`,
+    ];
+  }
+
+  const ambientParamType = Array.isArray(obj) ? arrayNotation : objectNotation;
+
+  return Object.entries(obj)
+    .map(([k, v]) => {
+      if (v === null || v === undefined) return;
+
+      const isObj = typeof v === "object" && v;
+
+      if (isObj) {
+        return expandObjectToParams({
+          key: k,
+          obj: v,
+          objectNotation,
+          arrayNotation,
+        });
+      }
+
+      const encoded = encode ? encodeURIComponent(v) : v;
+
+      return paramMap.has(ambientParamType)
+        ? paramMap.get(ambientParamType)!(k, encoded)
+        : encoded;
+    })
+    .flat();
+};
+
+/**
+ * @summary customizable converter from object to query string
+ */
+const objectToQuery = (
+  source: object,
+  {
+    arrayNotation = "bracket",
+    objectNotation = "bracket",
+    encode = true,
+  }: Partial<ExpandParamsOptions> = {}
+): string => {
+  const output: string[] = [];
+
+  Object.entries(source).forEach(([key, val]) => {
+    if (val === null || val === undefined) {
+      return;
+    }
+
+    const isObj = typeof val === "object" && val;
+
+    if (isObj) {
+      const objParams = expandObjectToParams({
+        key,
+        obj: val as any,
+        objectNotation,
+        arrayNotation,
+        encode,
+      });
+      return output.push(...objParams);
+    }
+
+    output.push(`${key}=${val}`);
+  });
+
+  return output.join("&");
+};
+
+const getAllProperties = ({ onError = console.warn } = {}) => {
+  try {
+    const store = PropertiesService.getScriptProperties();
+    return store.getProperties();
+  } catch (error) {
+    onError(error);
+    return {};
+  }
+};
+
+const deleteAllProperties = ({ onError = console.warn } = {}) => {
+  try {
+    const store = PropertiesService.getUserProperties();
+    store.deleteAllProperties();
+    return true;
+  } catch (error) {
+    onError(error);
+    return false;
+  }
+};
+
+const getProperty = (key: string, def: string) => {
+  const store = PropertiesService.getUserProperties();
+  const prop = store.getProperty(key);
+  return prop !== null ? prop : def;
+};
+
+const setProperty = (key: string, val: any) => {
+  try {
+    const store = PropertiesService.getUserProperties();
+    store.setProperty(key, JSON.stringify(val));
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * @summary high-access property getter (using caching)
+ */
+const getHighAccessProperty = (key: string, def?: any) => {
+  const cache = CacheService.getUserCache()!;
+
+  const cached = cache.get(key);
+
+  if (cached) return JSON.parse(cached);
+
+  const store = PropertiesService.getUserProperties();
+  const stored = store.getProperty(key);
+
+  console.log({ cached, stored, key });
+
+  if (stored) {
+    cache.put(key, stored);
+    return JSON.parse(stored);
+  }
+
+  if (def !== void 0) {
+    cache.put(key, JSON.stringify(def));
+    return def;
+  }
+};
+
+/**
+ * @summary sets Analytics profile ID
+ */
+const setProfileID = (sID: string) => {
+  try {
+    const {
+      properties: { profile },
+    } = APP_CONFIG;
+
+    return setProperty(profile, sID);
+  } catch (error) {
+    console.warn(error);
+    return false;
+  }
+};
+
+interface GtmInfo {
   accountId: string;
   containerId: string;
   workspaceId: string;
@@ -131,9 +324,6 @@ const getProfileID = ({ onError = console.warn } = {}): string => {
 
 /**
  * @summary converts category and event to category/event pair
- * @param {string} category
- * @param {string} event
- * @returns {string}
  */
 const toEventPair = (category = "Event", event = "Event") =>
   `${category}/${event}`;
@@ -143,31 +333,23 @@ type MaybeDate = string | number | Date;
 /**
  * @summary extracts date part in ISO format
  */
-const toISODate = (date: MaybeDate = Date.now()): string =>
+const toISODate = (date: MaybeDate = Date.now()) =>
   new Date(date).toISOString().slice(0, 10);
 
 /**
  * @summary gets column index from A1 notation
- * @param {string} a1
- * @param {("column"|"row")} [type]
- * @returns {number}
  */
-const getIndexFromA1 = (a1, type = "column") => {
-  if (!a1) {
-    throw new RangeError(`Expected A1 notation`);
-  }
+const getIndexFromA1 = (a1: string, type: "row" | "column" = "column") => {
+  if (!a1) throw new RangeError(`Expected A1 notation`);
 
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
 
   const [, cellChars, rowNumber] = a1.match(/^([A-Z]+)(?=(\d+)|$)/i) || [];
 
-  if (!cellChars) {
+  if (!cellChars)
     throw new RangeError(`Expected correct A1 notation, actual: ${a1}`);
-  }
 
-  if (type === "row") {
-    return rowNumber - 1;
-  }
+  if (type === "row") return +rowNumber - 1;
 
   const lcaseChars = cellChars.toLowerCase().split("").reverse();
   const middle = lcaseChars.reduce((acc, cur, i) => {
@@ -219,25 +401,30 @@ const makeLogger = (): Logger => {
   };
 };
 
+type MetadataOpts = {
+  sheet: GoogleAppsScript.Spreadsheet.Sheet;
+  key: string;
+};
+
+type MetadataGetterOpts = MetadataOpts & { def?: unknown };
+
+type MetadataSetterOpts = MetadataOpts & { value: unknown };
+
 const getMetadataValue = ({
   sheet = SpreadsheetApp.getActiveSheet(),
   key,
   def,
-}: {
-  def?: any;
-  key: string;
-  sheet: GoogleAppsScript.Spreadsheet.Sheet;
-}) => {
+}: MetadataGetterOpts) => {
   const items = sheet.getDeveloperMetadata();
   const data = items.find((data) => data.getKey() === key);
-  return data !== void 0 ? JSON.parse(data.getValue()) : def;
+  return data !== void 0 ? JSON.parse(data.getValue() || "{}") : def;
 };
 
 const setMetadataValue = ({
   sheet = SpreadsheetApp.getActiveSheet(),
   key,
   value,
-}) => {
+}: MetadataSetterOpts) => {
   const items = sheet.getDeveloperMetadata();
   const data = items.find((data) => data.getKey() === key);
 
@@ -252,7 +439,10 @@ const setMetadataValue = ({
   return true;
 };
 
-const deleteMetadata = ({ sheet = SpreadsheetApp.getActiveSheet(), key }) => {
+const deleteMetadata = ({
+  sheet = SpreadsheetApp.getActiveSheet(),
+  key,
+}: MetadataOpts) => {
   const items = sheet.getDeveloperMetadata();
   const data = items.find((data) => data.getKey() === key);
   data && data.remove();
@@ -289,7 +479,9 @@ const loadTemplate = (
   return templ.evaluate();
 };
 
-const withCatch = (onError) => (func, ...args) => {
+const withCatch = <T extends (...args: any[]) => any>(
+  onError: (err: Error, func: T, ...args: Parameters<T>) => unknown
+) => (func: T, ...args: Parameters<T>) => {
   try {
     return func(...args);
   } catch (error) {
@@ -366,4 +558,10 @@ const template = ({
     onError(error);
     return full;
   }
+};
+
+const logException = (context: string, err: string | Error) => {
+  const time = new Date();
+  const stamp = `${time.toISOString()} | ${context}`;
+  console.warn(`${stamp} | ${err}`);
 };
