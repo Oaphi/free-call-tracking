@@ -19,7 +19,6 @@ function onOpen({
   SpreadsheetApp.getUi()
     .createAddonMenu()
     .addItem(`Deploy the ${sADDON_NAME} Addon`, deployAddonGo.name)
-    .addItem("Track Analytics", userActionUpdateFreeCall.name)
     .addItem("Open Settings", settingsGo.name)
     .addItem("Get Help", helpGo.name)
     .addToUi();
@@ -38,10 +37,11 @@ function settingsGo() {
 
   recordNewOwner();
 
-  const templ = HtmlService.createTemplateFromFile("html/settings.html");
-  templ.utils = loadDependency("html", "utils");
-  templ.style = loadDependency("html", "style");
-  templ.run = loadDependency("html", "run");
+  const templ = loadTemplate(false, "html", "settings.html", {
+    utils: "html/utils",
+    style: "html/style",
+    run: "html/run",
+  });
 
   const content = template({
     template: templ,
@@ -62,10 +62,11 @@ function settingsGo() {
 function helpGo() {
   recordNewOwner();
 
-  const templ = HtmlService.createTemplateFromFile("html/help.html");
-  templ.utils = loadDependency("html", "utils");
-  templ.style = loadDependency("html", "style");
-  templ.run = loadDependency("html", "run");
+  const templ = loadTemplate(false, "html", "help.html", {
+    utils: "html/utils",
+    style: "html/style",
+    run: "html/run",
+  });
 
   const content = template({
     template: templ,
