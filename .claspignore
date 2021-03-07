@@ -1,2 +1,8 @@
 **/node_modules/**
 .eslintrc*
+
+*.d.ts
+
+*.png
+
+**/assets/**/*
