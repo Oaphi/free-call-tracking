@@ -32,6 +32,25 @@ function getGaPropertiesArrByAcc(sAccID: string) {
 }
 
 /**
+ * @see {@link https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters}
+ */
+type AnalyticsParameters = {
+  v: 1;
+  tid: string;
+  cid: string;
+  t: "event";
+  ec: string;
+  ea: string;
+  z: number;
+  ni: 1;
+  ua: string;
+  dh: string;
+  dp: string;
+  dt: string;
+  uip?: string;
+};
+
+/**
  * @summary onEdit sending a hit to analytics
  */
 const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
@@ -53,12 +72,7 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
       .getRange(iRow, 1, 1, sheet.getLastColumn())
       .getValues();
 
-    if (!cid) {
-      sheet.getRange(`I${iRow}`).clearContent();
-      return;
-    }
-
-    // url для отправки: в категорию передается "Заявка", в действие статус
+    if (!cid) return sheet.getRange(`I${iRow}`).clearContent();
 
     const tid = getProfileID();
 
@@ -67,10 +81,7 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
     const domain = extractDomain(tgt);
     const page = extractPage(tgt);
 
-    /**
-     * @see {@link https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters}
-     */
-    const query = objectToQuery({
+    const queryConfig: AnalyticsParameters = {
       v: 1,
       tid,
       cid,
@@ -83,21 +94,19 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
       dh: domain,
       dp: page,
       dt: title,
-    });
+    };
 
-    var url =
-      APP_CONFIG.ENV === "test"
-        ? `https://www.google-analytics.com/debug/collect?${query}`
-        : `https://www.google-analytics.com/collect?${query}`;
+    if (geo) queryConfig.uip = geo;
 
-    var res = UrlFetchApp.fetch(url, {
+    const query = objectToQuery(queryConfig);
+
+    const url = `${AnalyticsHelper.fullURL}?${query}`;
+
+    const res = UrlFetchApp.fetch(url, {
       muteHttpExceptions: true,
     });
 
-    SpreadsheetApp.getActive().toast(
-      res.getResponseCode().toString(),
-      "Sent To Analytics"
-    );
+    ss.toast(res.getResponseCode().toString(), "Sent To Analytics");
   });
 
 class AnalyticsHelper {
