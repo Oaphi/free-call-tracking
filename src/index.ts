@@ -1,5 +1,3 @@
-/* eslint-disable camelcase */
-
 // ------------------------------------------------------------------------- New Config -----------------------------------------------------------------------------
 
 var sADDON_NAME = "Free Call Tracking";
@@ -16,8 +14,10 @@ var APP_CONFIG = {
       title: "Help",
     },
     form: {
+      timestamp: "GA Timestamp",
       userAgent: "User Agent",
       pageTitle: "Page Title",
+      geoLocation: "Geolocation",
     },
   },
   sheets: {
