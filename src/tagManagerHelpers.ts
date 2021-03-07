@@ -117,7 +117,9 @@ var HelpersTagManager = (() => {
    */
   function listWorkspaces(containerPath?: string) {
     try {
-      const { workspace } = TagManager?.Accounts?.Containers?.Workspaces?.list(
+      const {
+        workspace = [],
+      } = TagManager?.Accounts?.Containers?.Workspaces?.list(
         containerPath || getContainerPath(LastUsed)
       ) || { workspace: [] };
       return workspace;
@@ -158,9 +160,9 @@ var HelpersTagManager = (() => {
    */
   function listTags(path: string) {
     try {
-      const { tag = [] } = TagManager?.Accounts?.Containers?.Workspaces?.Tags?.list(
-        path
-      ) || {
+      const {
+        tag = [],
+      } = TagManager?.Accounts?.Containers?.Workspaces?.Tags?.list(path) || {
         tag: [],
       };
       return tag;
