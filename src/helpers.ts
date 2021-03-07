@@ -463,11 +463,12 @@ const getFormSheet = () => {
   return sheets.find((sheet) => !!sheet.getFormUrl());
 };
 
-const loadTemplate = (
+const loadTemplate = <T extends boolean>(
+  evaluate: T,
   path: string,
   name: string,
   deps?: Record<string, string>,
-  vars?: Record<string, any>
+  vars?: Record<string, unknown>
 ) => {
   const templ = HtmlService.createTemplateFromFile(`${path}/${name}`);
   Object.entries(deps || {}).forEach(
@@ -476,7 +477,9 @@ const loadTemplate = (
 
   vars && Object.assign(templ, vars);
 
-  return templ.evaluate();
+  return (evaluate ? templ.evaluate() : templ) as T extends true
+    ? GoogleAppsScript.HTML.HtmlOutput
+    : GoogleAppsScript.HTML.HtmlTemplate;
 };
 
 const withCatch = <T extends (...args: any[]) => any>(
