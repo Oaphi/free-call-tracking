@@ -38,9 +38,9 @@ function settingsGo() {
   recordNewOwner();
 
   const templ = loadTemplate(false, "html", "settings.html", {
-    utils: "html/utils",
-    style: "html/style",
-    run: "html/run",
+    utils: "html",
+    style: "html",
+    run: "html",
   });
 
   const content = template({
@@ -63,9 +63,9 @@ function helpGo() {
   recordNewOwner();
 
   const templ = loadTemplate(false, "html", "help.html", {
-    utils: "html/utils",
-    style: "html/style",
-    run: "html/run",
+    utils: "html",
+    style: "html",
+    run: "html",
   });
 
   const content = template({
