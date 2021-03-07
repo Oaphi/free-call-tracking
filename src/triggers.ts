@@ -162,7 +162,7 @@ function promptUAinstall() {
   }
 
   const ui = SpreadsheetApp.getUi();
-  const content = loadTemplate("html", "installGA", {
+  const content = loadTemplate(true, "html", "installGA", {
     style: "html",
     run: "html",
   });
