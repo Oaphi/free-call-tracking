@@ -1,4 +1,4 @@
-type Errable<T> = T & { onError: (err: Error) => void };
+type Errable<T> = T & { onError?: (err: Error) => void };
 
 type FormSheetRemovalOpts = Errable<{ key: string }>;
 
