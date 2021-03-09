@@ -235,12 +235,12 @@ const installGAtag = () => {
     } = APP_CONFIG;
 
     const updated = versionWorkspace(HelpersTagManager.workspacePath, main);
-    const newVersion = republishContainer(updated);
+    const { code, containerVersion } = republishContainer(updated);
 
-    if (!newVersion) return false;
+    if (code !== 200) return false;
 
     //!important: makes sure reinstalls reference updated versions
-    gtmInfo.versionId = newVersion.containerVersionId!;
+    gtmInfo.versionId = containerVersion!.containerVersionId!; //TODO: improve typings
     gtmInfo.workspaceId = installed.workspaceId!;
     setGtmInfo(gtmInfo);
 

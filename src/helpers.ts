@@ -568,3 +568,60 @@ const logException = (context: string, err: string | Error) => {
   const stamp = `${time.toISOString()} | ${context}`;
   console.warn(`${stamp} | ${err}`);
 };
+
+const showMsg = (msg: string) => Browser.msgBox(msg);
+
+type Backoffer = <F extends (...args: any[]) => any, T = null>(
+  cbk: F,
+  opts: {
+    comparator: (res: ReturnType<F>) => boolean;
+    scheduler: (wait: number) => any;
+    onBeforeBackoff: (retries: number, exp: number, threshold?: number) => any;
+    onError?: (err: string | Error, errRetries: number) => void;
+    retryOnError?: boolean;
+    retries?: number;
+    threshold?: number;
+    thisObj?: T;
+  }
+) => (...params: Parameters<F>) => ReturnType<F>;
+
+const backoffSync: Backoffer = (
+  callback,
+  {
+    comparator,
+    scheduler,
+    retryOnError = false,
+    retries = 3,
+    threshold = 50,
+    thisObj = null,
+    onBeforeBackoff,
+    onError = console.warn,
+  }
+) => {
+  return (...params) => {
+    let exp = 0,
+      errRetries = retries + 1;
+
+    do {
+      try {
+        const response = callback.apply(thisObj, params);
+
+        if (comparator(response) === true) return response;
+
+        onBeforeBackoff && onBeforeBackoff(retries, exp, threshold);
+
+        retries -= 1;
+
+        scheduler(2 ** exp * threshold);
+
+        exp += 1;
+      } catch (error) {
+        onError(error, errRetries);
+
+        errRetries -= 1;
+
+        if (!retryOnError || errRetries < 1) throw error;
+      }
+    } while (retries > 0);
+  };
+};

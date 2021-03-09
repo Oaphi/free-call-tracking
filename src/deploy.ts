@@ -1,69 +1,80 @@
 /**
+ * @summary utility for safe getting of GTM/GA accounts
+ */
+const getAccounts = <T>(
+  accountGetter: () => T[],
+  errMsg: string,
+  errNotification: string
+) => {
+  const accounts: T[] = [];
+
+  try {
+    accounts.push(...accountGetter());
+
+    if (!accounts.length) throw new Error(errMsg);
+  } catch (error) {
+    const uuid = Utilities.getUuid();
+
+    const ui = SpreadsheetApp.getUi();
+
+    console.warn(uuid, error);
+
+    ui.alert(
+      "Warning!",
+      `"${errNotification}\nIssue id: ${uuid}`,
+      ui.ButtonSet.OK
+    );
+    return [];
+  }
+
+  return accounts;
+};
+
+/**
  * @summary setup process running on add-on deployment
  */
 function deployAddonGo() {
   prepareTriggersForUse();
   recordNewOwner();
 
-  const analyticsAccounts = [];
-
   const ui = SpreadsheetApp.getUi();
 
-  try {
-    analyticsAccounts.push(...(getGoogleAnalyticsAccounts().items || []));
+  const analyticsAccounts = getAccounts(
+    () => getGoogleAnalyticsAccounts().items || [],
+    "There is access to Analytics, but no account.",
+    "No Google Analytics accounts available. Please create at least one."
+  );
 
-    if (!analyticsAccounts || !analyticsAccounts.length) {
-      throw new Error("There is access to Analytics, but there is no account.");
+  const gtagAccounts = getAccounts(
+    () => HelpersTagManager.getAccountsList().account || [],
+    "There is access to GTM, but no account.",
+    "No Google Tag Manager accounts found. Please create and setup at least one."
+  );
+
+  const output = loadTemplate(
+    true,
+    "html",
+    "setup.html",
+    {
+      run: "html",
+    },
+    {
+      ArrAccs: gtagAccounts,
+      ArrGaAccs: analyticsAccounts,
     }
-  } catch (error) {
-    var _uuid1_ = Utilities.getUuid();
+  );
 
-    console.warn(_uuid1_, error);
+  const {
+    sizes: {
+      setup: [width, height],
+    },
+  } = APP_CONFIG;
 
-    ui.alert(
-      "Warning!",
-      "No Google Analytics accounts available. Please create at least one.\n" +
-        `Issue uuid: ${_uuid1_}`,
-      ui.ButtonSet.OK
-    );
-    return;
-  }
+  output.setHeight(height);
+  output.setWidth(width);
+  output.setTitle(sFORM_TITLE);
 
-  const gtagAccounts = [];
-
-  try {
-    gtagAccounts.push(...(HelpersTagManager.getAccountsList().account || []));
-
-    if (!gtagAccounts || !gtagAccounts.length) {
-      throw new Error("There is access to GTM, but there is no account.");
-    }
-  } catch (error) {
-    var _uuid2_ = Utilities.getUuid();
-
-    console.warn(_uuid2_, error);
-
-    ui.alert(
-      "Warning!",
-      "No Google Tag Manager accounts available. Please create and setup at least one.\n" +
-        `Issue uuid: ${_uuid2_}`,
-      ui.ButtonSet.OK
-    );
-    return;
-  }
-
-  var template = HtmlService.createTemplateFromFile("html/setup.html");
-
-  template.ArrAccs = gtagAccounts;
-  template.ArrGaAccs = analyticsAccounts;
-  template.run = loadDependency("html", "run");
-
-  var html = template.evaluate();
-
-  html.setHeight(670);
-  html.setWidth(620);
-  html.setTitle(sFORM_TITLE);
-
-  SpreadsheetApp.getUi().showModalDialog(html, sFORM_TITLE);
+  ui.showModalDialog(output, sFORM_TITLE);
 }
 
 /**
@@ -261,16 +272,19 @@ function deployAddon(
     const { publicId, containerId } = container;
 
     const {
-      tagManager: { variables: varNames },
+      tagManager: {
+        variables: varNames,
+        variables: { prefix },
+      },
     } = APP_CONFIG;
 
     const tagNames = {
-      img: `FCT_Caller on Site`,
-      geo: `FCT_Geolocation`,
+      img: `${prefix}Caller on Site`,
+      geo: `${prefix}Geolocation`,
     };
 
     const triggerNames = {
-      load: `FCT_Window Loaded`,
+      load: `${prefix}Window Loaded`,
     };
 
     const vars = HelpersTagManager.listVariables(wspacePath);
@@ -328,7 +342,16 @@ function deployAddon(
 
     const version = versionWorkspace(wspacePath, sVERSION_NAME);
 
-    const { name, containerVersionId } = republishContainer(version)!;
+    const { code, containerVersion } = backoffSync(republishContainer, {
+      onBeforeBackoff: () => console.warn("too many GTM requests, backoff"),
+      comparator: ({ code }) => code !== 429,
+      scheduler: (wait) => Utilities.sleep(wait),
+      threshold: 1e3,
+    })(version);
+
+    if (code === 400) return showMsg(`Failed to republish container`);
+
+    const { name, containerVersionId } = containerVersion!;
 
     //save GTM info;
     const gtmStatus = setGtmInfo({
@@ -340,12 +363,10 @@ function deployAddon(
 
     if (!gtmStatus) return ui.alert("Failed to save GTM data!");
 
-    Browser.msgBox(
-      `Published "${name}" container (version ${containerVersionId})`
-    );
+    showMsg(`Published "${name}" container (version ${containerVersionId})`);
   } catch (e) {
     console.warn(e);
-    Browser.msgBox(`Failed to deploy Add-on`);
+    showMsg(`Failed to deploy Add-on`);
     return e;
   }
 }
@@ -360,9 +381,7 @@ const versionWorkspace = (workspacePath: string, name: string) => {
 
   const { compilerError, containerVersion, newWorkspacePath } = response;
 
-  if (compilerError) {
-    throw new Error(`Failed to create a new GTM container version`);
-  }
+  if (compilerError) throw new Error(`Failed to create GTM container version`);
 
   //update returns old workspace ID, but new ID in path
   const workspaceId = newWorkspacePath!.replace(/.+workspaces\//, "");
@@ -373,26 +392,44 @@ const versionWorkspace = (workspacePath: string, name: string) => {
   };
 };
 
+type ContainerPublishResult = {
+  code?: 429 | 400 | 200;
+  containerVersion?: GoogleAppsScript.TagManager.Schema.ContainerVersion;
+};
+
 /**
  * @summary republishes a Tag Manager Container
  */
 function republishContainer({
   path,
 }: GoogleAppsScript.TagManager.Schema.ContainerVersion) {
-  const { compilerError: contCompileErr, containerVersion } =
-    TagManager?.Accounts?.Containers?.Versions?.publish(path!) || {};
+  const result: ContainerPublishResult = {};
 
-  if (contCompileErr) throw new Error(`Failed to publish the GTM container`);
+  try {
+    const { compilerError, containerVersion } =
+      TagManager?.Accounts?.Containers?.Versions?.publish(path!) || {};
 
-  return containerVersion;
+    if (compilerError) {
+      result.code = 400;
+      return result;
+    }
+
+    result.containerVersion = containerVersion;
+    result.code = 200;
+
+    return result;
+  } catch ({ details: { code, message } }) {
+    console.warn(message);
+    result.code = code;
+    return result;
+  }
 }
 
 /**
  * @summary lists account containers
  */
-function getConteinersArrByAcc(parent: string) {
-  return HelpersTagManager.getConteinersListByAcc(parent).container;
-}
+const getConteinersArrByAcc = (parent: string) =>
+  HelpersTagManager.getConteinersListByAcc(parent).container;
 
 /**
  * @summary lists container workspaces

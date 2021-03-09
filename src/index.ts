@@ -20,6 +20,9 @@ var APP_CONFIG = {
       geoLocation: "Geolocation",
     },
   },
+  sizes: {
+    setup: [620, 820],
+  },
   sheets: {
     form: "Calls Qualification",
   },

@@ -176,7 +176,7 @@
           <label for="MyEvent">Event</label>
         </div>
 
-        <div class="input-field col s4">
+        <div class="input-field col s3">
           <button
             class="waves-effect waves-light btn blue"
             type="button"
@@ -185,7 +185,7 @@
             <i class="material-icons left">check</i>Deploy
           </button>
         </div>
-        <div class="input-field col s4">
+        <div class="input-field col s3">
           <button
             class="waves-effect waves-light btn red"
             type="button"
@@ -269,7 +269,7 @@
 
               resetSelectPropagation();
 
-              myErrorMsg(err);
+              showErrorMsg(err);
             },
           });
 
@@ -298,6 +298,21 @@
         }
       }
 
+      const handleChange = (/** @type {string} */ id) => (data) => {
+        $("#Preloader1").hide();
+
+        const sel = document.getElementById(id);
+        removeOptions(sel);
+
+        const { length } = data;
+
+        data.forEach(({ name, path }) => addOption(sel, name, path));
+
+        $(sel).formSelect();
+
+        resetSelectPropagation();
+      };
+
       function formChangeAccount() {
         var sAccPath = $("#Acc").val();
         if (sAccPath) {
@@ -310,21 +325,9 @@
 
               resetSelectPropagation();
 
-              myErrorMsg(err);
+              showErrorMsg(err);
             })
-            .withSuccessHandler(function refreshContainers(data, element) {
-              $("#Preloader1").hide();
-              var Arr = data;
-              var Opt = document.getElementById("Cont");
-              removeOptions(Opt);
-
-              for (var r = 0; r < Arr.length; r++) {
-                addOption(Opt, Arr[r].name, Arr[r].path);
-              }
-              $("#Cont").formSelect();
-
-              resetSelectPropagation();
-            })
+            .withSuccessHandler(handleChange("Cont"))
             .getConteinersArrByAcc(sAccPath);
         }
       }
@@ -341,21 +344,9 @@
 
               resetSelectPropagation();
 
-              myErrorMsg(err);
+              showErrorMsg(err);
             })
-            .withSuccessHandler(function refreshWorkspaces(data, element) {
-              $("#Preloader1").hide();
-              var Arr = data;
-              var Opt = document.getElementById("Work");
-              removeOptions(Opt);
-
-              for (var r = 0; r < Arr.length; r++) {
-                addOption(Opt, Arr[r].name, Arr[r].path);
-              }
-              $("#Work").formSelect();
-
-              resetSelectPropagation();
-            })
+            .withSuccessHandler(handleChange("Work"))
             .getWorkspacesArrByCont(sContPath);
         }
       }
@@ -379,21 +370,14 @@
 
         var issues = [];
 
-        if (sGaAcc == "" || sGaAcc == null)
-          issues.push("Please select an Analytics Account!");
-        if (sProfileId == "" || sProfileId == null)
-          issues.push("Please select an Analytics Property!");
-        if (sAccValue == "" || sAccValue == null)
-          issues.push("Please select a Tag Manager Account!");
-        if (sContValue == "" || sContValue == null)
-          issues.push("Please select a Container!");
-        if (sWorkValue == "" || sWorkValue == null)
-          issues.push("Please select a Workspace!");
+        if (!sGaAcc) issues.push("Please select an Analytics Account!");
+        if (!sProfileId) issues.push("Please select an Analytics Property!");
+        if (!sAccValue) issues.push("Please select a Tag Manager Account!");
+        if (!sContValue) issues.push("Please select a Container!");
+        if (!sWorkValue) issues.push("Please select a Workspace!");
 
-        if (issues.length) {
-          issues.forEach((msg) => M.toast(msg, 4000));
-          return;
-        }
+        if (issues.length) return issues.forEach((msg) => M.toast(msg, 4000));
+
         $("#Preloader1").show();
 
         await run({
@@ -407,11 +391,11 @@
             sAccValue,
           ],
           onSuccess: closeForm,
-          onFailure: myErrorMsg,
+          onFailure: showErrorMsg,
         });
       }
 
-      function myErrorMsg(err) {
+      function showErrorMsg(err) {
         $("#Preloader1").hide();
 
         M.toast(
