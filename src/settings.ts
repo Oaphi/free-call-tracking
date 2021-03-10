@@ -1,5 +1,3 @@
-type RecursiveRecord = {};
-
 /**
  * @summary parse an object from path and value
  */
@@ -24,6 +22,12 @@ const fromPath = <V>(
   return output;
 };
 
+type DeepAssignOpts = Errable<{
+  source?: Record<string, unknown>;
+  updates?: Record<string, unknown>[];
+  objGuard?: (obj: unknown) => boolean;
+}>;
+
 /**
  * @summary deep assigns object props
  */
@@ -33,11 +37,7 @@ const deepAssign = ({
   objGuard = <T extends object>(obj: T | unknown): obj is T =>
     typeof obj === "object" && !!obj,
   onError = console.warn,
-}: Errable<{
-  source?: Record<string, unknown>;
-  updates?: Record<string, unknown>[];
-  objGuard?: (obj: unknown) => boolean;
-}>): Record<string, unknown> => {
+}: DeepAssignOpts): Record<string, unknown> => {
   try {
     return updates.reduce((ac, up) => {
       const entries = Object.entries(up);
@@ -65,7 +65,14 @@ const deepAssign = ({
   return source;
 };
 
-const getSettings = () => {
+type AppSettings = {
+  triggers: {
+    enableDailyClear: boolean;
+    enableEditTrigger: boolean;
+  };
+};
+
+const getSettings = (): AppSettings => {
   const defaults = {
     triggers: {
       enableDailyClear: true,
@@ -156,21 +163,15 @@ const resetAddon = ({ onError = console.warn } = {}) => {
 
   const untriggered = TriggersApp.deleteAllTracked(common);
 
-  if (!untriggered) {
-    status.err(`Failed to delete triggers`);
-  }
+  if (!untriggered) status.err(`Failed to delete triggers`);
 
   const untracked = TriggersApp.untrackTriggers(common);
 
-  if (!untracked) {
-    status.err(`Failed to stop tracking triggers`);
-  }
+  if (!untracked) status.err(`Failed to stop tracking triggers`);
 
   const deleted = deleteAllProperties(common);
 
-  if (!deleted) {
-    status.err(`Failed to delete settings`);
-  }
+  if (!deleted) status.err(`Failed to delete settings`);
 
   const unlinked = unlinkForm(common);
 
@@ -182,9 +183,7 @@ const resetAddon = ({ onError = console.warn } = {}) => {
 
   const removed = deleteFormSheet({ ...common, key });
 
-  if (!removed && unlinked) {
-    status.err(`Failed to remove sheet with the form`);
-  }
+  if (!removed && unlinked) status.err(`Failed to remove sheet with the form`);
 
   return status;
 };
