@@ -66,6 +66,7 @@ const deepAssign = ({
 };
 
 type AppSettings = {
+  firstTime: boolean;
   triggers: {
     enableDailyClear: boolean;
     enableEditTrigger: boolean;
@@ -73,7 +74,8 @@ type AppSettings = {
 };
 
 const getSettings = (): AppSettings => {
-  const defaults = {
+  const defaults: AppSettings = {
+    firstTime: true,
     triggers: {
       enableDailyClear: true,
       enableEditTrigger: true,
@@ -87,7 +89,9 @@ const getSettings = (): AppSettings => {
   return JSON.parse(getProperty(settings, JSON.stringify(defaults)));
 };
 
-const updateSettings = (updatesDict: Record<string, unknown>) => {
+const updateSettings = (
+  updatesDict: Partial<Record<keyof AppSettings, unknown>>
+) => {
   const source = getSettings();
 
   const updates = Object.entries(updatesDict).map(([path, value]) =>
@@ -95,6 +99,8 @@ const updateSettings = (updatesDict: Record<string, unknown>) => {
   );
 
   deepAssign({ source, updates });
+
+  source.firstTime = false;
 
   const {
     triggers: { enableDailyClear, enableEditTrigger },

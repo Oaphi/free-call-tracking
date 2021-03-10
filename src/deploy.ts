@@ -68,13 +68,20 @@ function deployAddonGo() {
     sizes: {
       setup: [width, height],
     },
+    strings: {
+      form: { title },
+    },
   } = APP_CONFIG;
 
   output.setHeight(height);
   output.setWidth(width);
-  output.setTitle(sFORM_TITLE);
+  output.setTitle(title);
 
-  ui.showModalDialog(output, sFORM_TITLE);
+  const { firstTime } = getSettings();
+
+  return firstTime
+    ? ui.showModalDialog(output, title)
+    : sidebarFromString(output.getContent());
 }
 
 /**
@@ -362,6 +369,8 @@ function deployAddon(
     });
 
     if (!gtmStatus) return ui.alert("Failed to save GTM data!");
+
+    updateSettings({ firstTime: false });
 
     showMsg(`Published "${name}" container (version ${containerVersionId})`);
   } catch (e) {

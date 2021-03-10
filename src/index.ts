@@ -14,6 +14,7 @@ var APP_CONFIG = {
       title: "Help",
     },
     form: {
+      title: "GA and GTM linking",
       timestamp: "GA Timestamp",
       userAgent: "User Agent",
       pageTitle: "Page Title",
