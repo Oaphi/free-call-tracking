@@ -24,7 +24,6 @@
         bottom: auto !important;
         left: auto !important;
         top: 20%;
-        right: 10%;
       }
 
       #toast-container .toast {
@@ -34,7 +33,6 @@
       #toast-container .toast::after {
         font-family: "Material Icons";
         content: "close";
-        color: var(--error-color);
         font-size: 1.5rem;
         font-weight: 300;
         float: right;
@@ -166,30 +164,30 @@
       </div>
 
       <div class="row" id="saveme">
-        <div class="input-field col s2">
+        <div class="input-field col s6 m2">
           <input placeholder="Call" id="MyCategory" type="text" />
           <label for="MyCategory">Category</label>
         </div>
 
-        <div class="input-field col s2">
+        <div class="input-field col s6 m2">
           <input placeholder="Call" id="MyEvent" type="text" />
           <label for="MyEvent">Event</label>
         </div>
 
-        <div class="input-field col s3">
+        <div class="input-field col s6 m3">
           <button
+            id="submit"
             class="waves-effect waves-light btn blue"
             type="button"
-            onclick="submitForm()"
           >
             <i class="material-icons left">check</i>Deploy
           </button>
         </div>
-        <div class="input-field col s3">
+        <div class="input-field col s6 m3">
           <button
+            id="cancel"
             class="waves-effect waves-light btn red"
             type="button"
-            onclick="google.script.host.close()"
           >
             <i class="material-icons left">cancel</i>Cancel
           </button>
@@ -215,6 +213,14 @@
           );
       }
 
+      const config = {
+        classes: {
+          notify: {
+            error: "toast-error",
+          },
+        },
+      };
+
       $(() => {
         $("#Preloader1").hide();
 
@@ -235,7 +241,23 @@
         );
 
         resetSelectPropagation();
+
+        $("#submit").click(submitForm);
+
+        $("#cancel").click(closeForm);
       });
+
+      /**
+       * @param {string} msg
+       * @param {number} duration
+       * @param {...string} classes
+       */
+      const notify = (msg, duration, ...classes) =>
+        M.toast({
+          html: msg,
+          classes: classes.join(" "),
+          displayLength: duration,
+        });
 
       function changeAdsFormVisibility(/** @type {Event} */ event) {
         const {
@@ -255,47 +277,35 @@
       }
 
       async function formChangeGaAccount() {
-        var sAccId = $("#GaAcc").val();
-        if (sAccId) {
-          $("#Preloader1").show();
+        const selId = "#GaAcc";
 
-          const { status, properties } = await run({
-            funcName: "getGaPropertiesArrByAcc",
-            params: [sAccId],
-            onFailure: (err) => {
-              $("#GaAcc").find("option:first").prop("selected", true);
+        const sAccId = $(selId).val();
+        if (!sAccId) return;
+        $("#Preloader1").show();
 
-              $("#GaAcc").formSelect();
+        const { status, properties } = await run({
+          funcName: "getGaPropertiesArrByAcc",
+          params: [sAccId],
+          onFailure: (err) => {
+            $(selId).find("option:first").prop("selected", true);
 
-              resetSelectPropagation();
+            $(selId).formSelect();
 
-              showErrorMsg(err);
-            },
-          });
-
-          if (!status) {
-            return M.toast(
-              `Failed to load Analytics properties!`,
-              5e2,
-              "toast-error"
-            );
-          }
-
-          function refreshContainers(data) {
-            $("#Preloader1").hide();
-            var Arr = data;
-            var Opt = document.getElementById("Prop");
-            removeOptions(Opt);
-
-            for (var r = 0; r < Arr.length; r++) {
-              addOption(Opt, Arr[r].name, Arr[r].id);
-            }
-            $("#Prop").formSelect();
             resetSelectPropagation();
-          }
 
-          refreshContainers(properties);
+            showErrorMsg(err);
+          },
+        });
+
+        if (!status) {
+          return notify(
+            `Failed to load Analytics properties!`,
+            5e2,
+            config.classes.notify.error
+          );
         }
+
+        handleChange("Prop")(properties);
       }
 
       const handleChange = (/** @type {string} */ id) => (data) => {
@@ -313,62 +323,55 @@
         resetSelectPropagation();
       };
 
-      function formChangeAccount() {
-        var sAccPath = $("#Acc").val();
-        if (sAccPath) {
-          $("#Preloader1").show();
-          google.script.run
-            .withFailureHandler((err) => {
-              $("#Acc").find("option:first").prop("selected", true);
+      /**
+       * @param {string} selId
+       * @param {string} subSelId
+       * @param {string} handlerName
+       */
+      const getEntities = (selId, subSelId, handlerName) => {
+        const sAccPath = $(`#${selId}`).val();
 
-              $("#Acc").formSelect();
+        if (!sAccPath) return;
 
-              resetSelectPropagation();
+        $("#Preloader1").show();
+        google.script.run
+          .withFailureHandler((err) => {
+            $(`#${selId}`).find("option:first").prop("selected", true);
 
-              showErrorMsg(err);
-            })
-            .withSuccessHandler(handleChange("Cont"))
-            .getConteinersArrByAcc(sAccPath);
-        }
-      }
+            $(`#${selId}`).formSelect();
 
-      function formChangeContainer() {
-        var sContPath = $("#Cont").val();
-        if (sContPath) {
-          $("#Preloader1").show();
-          google.script.run
-            .withFailureHandler((err) => {
-              $("#Cont").find("option:first").prop("selected", true);
+            resetSelectPropagation();
 
-              $("#Cont").formSelect();
+            showErrorMsg(err);
+          })
+          .withSuccessHandler(handleChange(subSelId))
+          [handlerName](sAccPath);
+      };
 
-              resetSelectPropagation();
+      const formChangeAccount = () =>
+        getEntities("Acc", "Cont", "getConteinersArrByAcc");
 
-              showErrorMsg(err);
-            })
-            .withSuccessHandler(handleChange("Work"))
-            .getWorkspacesArrByCont(sContPath);
-        }
-      }
+      const formChangeContainer = () =>
+        getEntities("Cont", "Work", "getWorkspacesArrByCont");
 
       function addOption(oListbox, text, value) {
-        var oOption = document.createElement("option");
+        const oOption = document.createElement("option");
         oOption.appendChild(document.createTextNode(text));
         oOption.setAttribute("value", value);
         oListbox.appendChild(oOption);
       }
 
       async function submitForm() {
-        var sGaAcc = $("#GaAcc").val();
-        var sProfileId = $("#Prop").val();
-        var sAccValue = $("#Acc").val();
-        var sContValue = $("#Cont").val();
-        var sWorkValue = $("#Work").val();
+        const sGaAcc = $("#GaAcc").val();
+        const sProfileId = $("#Prop").val();
+        const sAccValue = $("#Acc").val();
+        const sContValue = $("#Cont").val();
+        const sWorkValue = $("#Work").val();
 
-        var sMyCategory = $("#MyCategory").val() || "Call";
-        var sMyEvent = $("#MyEvent").val() || "Call";
+        const sMyCategory = $("#MyCategory").val() || "Call";
+        const sMyEvent = $("#MyEvent").val() || "Call";
 
-        var issues = [];
+        const issues = [];
 
         if (!sGaAcc) issues.push("Please select an Analytics Account!");
         if (!sProfileId) issues.push("Please select an Analytics Property!");
@@ -376,7 +379,10 @@
         if (!sContValue) issues.push("Please select a Container!");
         if (!sWorkValue) issues.push("Please select a Workspace!");
 
-        if (issues.length) return issues.forEach((msg) => M.toast(msg, 4000));
+        const { error } = config.classes.notify;
+
+        if (issues.length)
+          return issues.forEach((msg) => notify(msg, 4e3, error));
 
         $("#Preloader1").show();
 
@@ -395,29 +401,20 @@
         });
       }
 
-      function showErrorMsg(err) {
+      function showErrorMsg({ message }) {
         $("#Preloader1").hide();
 
-        M.toast(
-          'Received error:<br>"' +
-            err.message +
-            '"<br>This is an unexpected behavior. We are already fixing this.',
-          10000,
-          "toast-error"
+        notify(
+          `Add-on Failure:<br>"${message}<br>This is unexpected! We are already fixing this`,
+          1e4,
+          config.classes.notify.error
         );
       }
 
-      function closeForm() {
-        google.script.host.close();
-      }
+      const closeForm = () => google.script.host.close();
 
-      /**
-       * @see https://github.com/Dogfalo/materialize/issues/1453
-       */
-      $(document).on("click", "#toast-container .toast", function () {
-        $(this).fadeOut(function () {
-          $(this).first()[0].M_Toast.remove();
-        });
+      $(document).on("click", "#toast-container .toast", ({ target }) => {
+        $(this).fadeOut(() => M.Toast.getInstance(target).remove());
       });
     </script>
   </body>
