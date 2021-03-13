@@ -1,10 +1,11 @@
 <script>
   /**
    * @typedef {{
-   *  funcName : string,
-   *  onFailure : function,
-   *  onSuccess : function,
-   *  params : array
+   *  funcName   : string,
+   *  onEnd     ?: function,
+   *  onFailure ?: function,
+   *  onSuccess ?: function,
+   *  params    ?: array
    * }} AsyncOptions
    *
    * @summary v2 of async-friendly google.script.run
@@ -13,6 +14,7 @@
    */
   const run = ({
     funcName,
+    onEnd,
     onFailure = console.error,
     onSuccess,
     params = [],
@@ -21,10 +23,12 @@
       google.script.run
         .withSuccessHandler((data) => {
           typeof onSuccess === "function" && onSuccess(data);
+          typeof onEnd === "function" && onEnd();
           res(data);
         })
         .withFailureHandler((error) => {
           typeof onFailure === "function" && onFailure(error);
+          typeof onEnd === "function" && onEnd();
           rej(error);
         })
         [funcName].apply(null, params);
