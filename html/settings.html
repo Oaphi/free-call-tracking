@@ -25,7 +25,7 @@
         </div>
       </div>
       <div class="preload-wrapper">
-        <div id="preload" class="progress hide light-blue darken-3">
+        <div id="preload" class="progress light-blue darken-3">
           <div class="indeterminate light-blue"></div>
         </div>
       </div>
@@ -109,6 +109,7 @@
       (() => {
         const primBckg = "primary-background";
         const failureBckg = "failure-background";
+        const hideCls = "hidden";
 
         const initTooltipped = (options = {}) => {
           const elems = document.querySelectorAll(".tooltipped");
@@ -168,8 +169,6 @@
 
           const tpicker = document.querySelector(".timepicker");
 
-          show(preloader);
-
           const { atHour, atMinute } = await run({
             funcName: "getDailyClearConfig",
           });
@@ -183,6 +182,8 @@
             twelveHour: false,
             showClearBtn: true,
             onCloseEnd: async () => {
+              show(preloader, hideCls);
+
               const { time } = initialized;
 
               if (!time) return;
@@ -197,27 +198,30 @@
                     atMinute: +minute,
                   },
                 ],
-              });
-
-              M.toast({
-                html: status ? "Updated trigger!" : "Failed to update trigger!",
-                classes: primBckg,
+                onSuccess: () =>
+                  M.toast({ html: "Updated trigger!", classes: primBckg }),
+                onFailure: () =>
+                  M.toast({
+                    html: "Failed to update trigger!",
+                    classes: failureBckg,
+                  }),
+                onEnd: () => hide(preloader, hideCls),
               });
             },
           });
 
           const clearNow = document.querySelector("#clearNow");
-          clearNow.addEventListener(
-            "click",
-            async () =>
-              await run({
-                funcName: "handleDailyClear",
-                onSuccess: () =>
-                  M.toast({ html: "Cleared!", classes: primBckg }),
-                onFailure: () =>
-                  M.toast({ html: "Failed to clear!", classes: failureBckg }),
-              })
-          );
+          clearNow.addEventListener("click", async () => {
+            show(preloader, hideCls);
+
+            await run({
+              funcName: "handleDailyClear",
+              onEnd: () => hide(preloader, hideCls),
+              onSuccess: () => M.toast({ html: "Cleared!", classes: primBckg }),
+              onFailure: () =>
+                M.toast({ html: "Failed to clear!", classes: failureBckg }),
+            });
+          });
 
           const {
             triggers: { enableDailyClear, enableEditTrigger },
@@ -229,13 +233,17 @@
           clear.checked = enableDailyClear;
           edit.checked = enableEditTrigger;
 
-          const updateSettings = async (update) =>
+          const updateSettings = async (update) => {
+            show(preloader, hideCls);
+
             await run({
               funcName: "updateSettings",
               params: [update],
+              onEnd: () => hide(preloader, hideCls),
               onSuccess: () => notify("Updated settings", primBckg),
               onFailure: () => notify("Failed to update", failureBckg),
             });
+          };
 
           clear.addEventListener("change", () =>
             updateSettings({
@@ -267,11 +275,12 @@
           const reset = document.querySelector("#reset");
 
           reset.addEventListener("click", async () => {
-            show(preloader);
+            show(preloader, hideCls);
 
             try {
               await run({
                 funcName: "resetAddon",
+                onEnd: () => hide(preloader, hideCls),
                 onSuccess: ({ status, errors }) => {
                   gaid.value = "";
                   tpicker.value = buildTime();
@@ -288,11 +297,11 @@
             } catch ({ message }) {
               await gscript("logException", "settings", message);
             } finally {
-              hide(preloader);
+              hide(preloader, hideCls);
             }
           });
 
-          hide(preloader);
+          hide(preloader, hideCls);
         });
       })();
     </script>
