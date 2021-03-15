@@ -4,7 +4,7 @@
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
     "module": "none",
-    "types": ["node", "google-apps-script"],
+    "types": ["node", "google-apps-script", "google-apps-script-oauth2"],
     "moduleResolution": "node",
     "target": "es2019",
     "lib": ["es2019", "DOM"],

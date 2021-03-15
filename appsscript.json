@@ -23,6 +23,11 @@
         "userSymbol": "TriggersApp",
         "libraryId": "12Mf-uYbUiilFbP9MlQM9C63b7QcJEAdFe1d8SC6zPd3JOXgVdeb6Slc-",
         "version": "25"
+      },
+      {
+        "userSymbol": "OAuth2",
+        "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF",
+        "version": "32"
       }
     ]
   },
@@ -39,7 +44,7 @@
     "https://www.googleapis.com/auth/tagmanager.manage.users",
     "https://www.googleapis.com/auth/tagmanager.publish",
     "https://www.googleapis.com/auth/script.external_request",
-    "https://www.googleapis.com/auth/script.scriptapp", 
+    "https://www.googleapis.com/auth/script.scriptapp",
     "https://www.googleapis.com/auth/forms",
     "https://www.googleapis.com/auth/adwords"
   ]

@@ -241,6 +241,9 @@
             error: "toast-error",
           },
         },
+        ids: {
+          preloader: "#Preloader1",
+        },
       };
 
       $(async () => {
@@ -269,7 +272,7 @@
 
         $("#cancel").click(closeForm);
 
-        $("#Preloader1").hide();
+        $(config.ids.preloader).hide();
       });
 
       /**
@@ -319,7 +322,7 @@
       };
 
       const handleChange = (/** @type {string} */ id) => (data) => {
-        $("#Preloader1").hide();
+        $(config.ids.preloader).hide();
 
         const sel = document.getElementById(id);
         removeOptions(sel);
@@ -353,7 +356,7 @@
 
         const sAccId = $(selId).val();
         if (!sAccId) return;
-        $("#Preloader1").show();
+        $(config.ids.preloader).show();
 
         const { status, properties } = await run({
           funcName: "getGaPropertiesArrByAcc",
@@ -418,12 +421,11 @@
         if (issues.length)
           return issues.forEach((msg) => notify(msg, 4e3, error));
 
-        $("#Preloader1").show();
+        $(config.ids.preloader).show();
 
         if ($("#gAdsSwitch").is(":checked")) {
           await run({
             funcName: "linkAllAccounts",
-            params: [value],
             onFailure: () =>
               notify(
                 `Failed to link your Ads account!`,
@@ -450,7 +452,7 @@
       }
 
       function showErrorMsg({ message }) {
-        $("#Preloader1").hide();
+        $(config.ids.preloader).hide();
 
         notify(
           `Add-on Failure:<br>"${message}<br>This is unexpected! We are already fixing this`,
