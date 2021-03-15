@@ -57,6 +57,12 @@
         border: 2px solid var(--underline-color);
         background-color: var(--underline-color);
       }
+
+      @media screen and (width: 300px) {
+        .input-field {
+          margin-bottom: 0;
+        }
+      }
     </style>
   </head>
 
@@ -67,8 +73,7 @@
       novalidate="novalidate"
       style="max-width: 580px; margin: 20px auto"
     >
-      <!----------------------------------------------- Analytics  -------------------------------------------------------->
-      <div class="#e3f2fd blue lighten-5">
+      <div class="section">
         <div class="row">
           <div class="input-field col s12">
             <select id="GaAcc">
@@ -92,8 +97,7 @@
         </div>
       </div>
 
-      <!----------------------------------------------- Tag Manager  -------------------------------------------------------->
-      <div class="#f9fbe7 lime lighten-5">
+      <div class="section">
         <div class="row">
           <div class="input-field col s12">
             <select id="Acc">
@@ -122,14 +126,13 @@
               <option value="" disabled selected>Select</option>
             </select>
             <label
-              >Select Google Tag Manager workspace (* Default workspace is
+              >Select Google Tag Manager workspace (* Default is
               recommended)</label
             >
           </div>
         </div>
       </div>
 
-      <!-- Google Ads -->
       <div class="row">
         <div class="col s12">
           <label>
@@ -140,21 +143,21 @@
               type="checkbox"
               checked="checked"
             />
-            <span>Connect a Google Ads Account</span>
+            <span>Send conversions to Google Ads</span>
           </label>
         </div>
       </div>
-      <div id="gAdsSetup" class="#ffebee red lighten-5">
+
+      <div id="gAdsSetup" class="section">
         <div class="row">
           <div class="input-field col s12">
             <select id="Ads" name="Ads">
               <option value="" disabled selected>Select</option>
             </select>
-            <label>Select Google Ads Account</label>
+            <label>Select Ads Account</label>
           </div>
         </div>
       </div>
-      <!-- end Google Ads -->
 
       <div class="row" id="Preloader1">
         <a> Please wait ... </a>
@@ -200,17 +203,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-      function removeOptions(selectElement) {
-        for (var i = selectElement.options.length - 1; i > 0; i--)
-          selectElement.remove(i);
-      }
+      /**
+       * @param {HTMLSelectElement} sel
+       * @param {string} text
+       * @param {string} value
+       */
+      const addOption = (sel, text, value) => {
+        const opt = document.createElement("option");
+        opt.appendChild(document.createTextNode(text));
+        opt.setAttribute("value", value);
+        return opt;
+      };
+
+      /**
+       * @param {HTMLSelectElement} selectElement
+       */
+      const removeOptions = (selectElement) => {
+        const {
+          options: { length },
+          options,
+        } = selectElement;
+
+        for (const opt of options) opt.remove();
+      };
 
       function resetSelectPropagation() {
-        document
-          .querySelectorAll(".select-wrapper")
-          .forEach((t) =>
-            t.addEventListener("click", (e) => e.stopPropagation())
-          );
+        $(document).click((event) => {
+          const { target, currentTarget } = event;
+          if (target === currentTarget) return;
+          if (target.matches(".select-wrapper")) event.stopPropagation();
+        });
       }
 
       const config = {
@@ -221,30 +243,33 @@
         },
       };
 
-      $(() => {
-        $("#Preloader1").hide();
-
+      $(async () => {
         M.AutoInit();
 
         //map of selector : handler
         const changeHandlers = {
-          "#gAdsSwitch": changeAdsFormVisibility,
-          "#GaAcc": formChangeGaAccount,
-          "#Acc": formChangeAccount,
-          "#Cont": formChangeContainer,
+          gAdsSwitch: changeAdsFormVisibility,
+          GaAcc: formChangeGaAccount,
+          Acc: formChangeAccount,
+          Cont: formChangeContainer,
         };
 
         const $doc = $(document);
 
-        Object.entries(changeHandlers).forEach(([selector, handler]) =>
-          $doc.on("change", selector, handler)
+        Object.entries(changeHandlers).forEach(([id, handler]) =>
+          $doc.on("change", `#${id}`, handler)
         );
 
         resetSelectPropagation();
 
-        $("#submit").click(submitForm);
+        const customers = await getAdsAccounts();
+        handleChange("Ads")(customers);
+
+        $("#submit").click(deployAddon);
 
         $("#cancel").click(closeForm);
+
+        $("#Preloader1").hide();
       });
 
       /**
@@ -270,13 +295,60 @@
         checked ? adsForm.show(duration) : adsForm.hide(duration);
       }
 
-      async function getAdsAccounts() {
-        await run({
-          funcName: "",
-        });
-      }
+      const connectAdsAccounts = async () => {};
 
-      async function formChangeGaAccount() {
+      const getAdsAccounts = async () => {
+        try {
+          const customers = await run({
+            funcName: "getAllAccounts",
+          });
+
+          return customers.map(({ id, descriptiveName }) => ({
+            path: id,
+            name: descriptiveName,
+          }));
+        } catch (error) {
+          console.warn(error);
+          notify(
+            `Failed to list Google Ads accounts!`,
+            4e3,
+            config.classes.notify.error
+          );
+          return [];
+        }
+      };
+
+      const handleChange = (/** @type {string} */ id) => (data) => {
+        $("#Preloader1").hide();
+
+        const sel = document.getElementById(id);
+        removeOptions(sel);
+
+        const { length } = data;
+
+        data.unshift({ name: "Select", path: "" });
+
+        const options = data.map(({ name, path }) =>
+          addOption(sel, name, path)
+        ); //TODO: make more efficient by appending once
+
+        sel.append(...options);
+
+        $(sel).formSelect();
+      };
+
+      /**
+       * @param {string} selId
+       */
+      const handleChangeFailure = (selId) => (err) => {
+        $(`#${selId}`).find("option:first").prop("selected", true);
+
+        $(`#${selId}`).formSelect();
+
+        showErrorMsg(err);
+      };
+
+      const formChangeGaAccount = async () => {
         const selId = "#GaAcc";
 
         const sAccId = $(selId).val();
@@ -286,15 +358,7 @@
         const { status, properties } = await run({
           funcName: "getGaPropertiesArrByAcc",
           params: [sAccId],
-          onFailure: (err) => {
-            $(selId).find("option:first").prop("selected", true);
-
-            $(selId).formSelect();
-
-            resetSelectPropagation();
-
-            showErrorMsg(err);
-          },
+          onFailure: handleChangeFailure(selId),
         });
 
         if (!status) {
@@ -306,21 +370,6 @@
         }
 
         handleChange("Prop")(properties);
-      }
-
-      const handleChange = (/** @type {string} */ id) => (data) => {
-        $("#Preloader1").hide();
-
-        const sel = document.getElementById(id);
-        removeOptions(sel);
-
-        const { length } = data;
-
-        data.forEach(({ name, path }) => addOption(sel, name, path));
-
-        $(sel).formSelect();
-
-        resetSelectPropagation();
       };
 
       /**
@@ -335,15 +384,7 @@
 
         $("#Preloader1").show();
         google.script.run
-          .withFailureHandler((err) => {
-            $(`#${selId}`).find("option:first").prop("selected", true);
-
-            $(`#${selId}`).formSelect();
-
-            resetSelectPropagation();
-
-            showErrorMsg(err);
-          })
+          .withFailureHandler(handleChangeFailure(selId))
           .withSuccessHandler(handleChange(subSelId))
           [handlerName](sAccPath);
       };
@@ -354,14 +395,7 @@
       const formChangeContainer = () =>
         getEntities("Cont", "Work", "getWorkspacesArrByCont");
 
-      function addOption(oListbox, text, value) {
-        const oOption = document.createElement("option");
-        oOption.appendChild(document.createTextNode(text));
-        oOption.setAttribute("value", value);
-        oListbox.appendChild(oOption);
-      }
-
-      async function submitForm() {
+      async function deployAddon() {
         const sGaAcc = $("#GaAcc").val();
         const sProfileId = $("#Prop").val();
         const sAccValue = $("#Acc").val();
@@ -385,6 +419,20 @@
           return issues.forEach((msg) => notify(msg, 4e3, error));
 
         $("#Preloader1").show();
+
+        if ($("#gAdsSwitch").is(":checked")) {
+          await run({
+            funcName: "linkAllAccounts",
+            params: [value],
+            onFailure: () =>
+              notify(
+                `Failed to link your Ads account!`,
+                4e3,
+                config.classes.notify.error
+              ),
+            onSuccess: () => notify(`Linked Ads Accounts`, 4e3),
+          });
+        }
 
         await run({
           funcName: "deployAddon",
@@ -414,7 +462,7 @@
       const closeForm = () => google.script.host.close();
 
       $(document).on("click", "#toast-container .toast", ({ target }) => {
-        $(this).fadeOut(() => M.Toast.getInstance(target).remove());
+        $(this).fadeOut(() => M.Toast.getInstance(target).dismiss());
       });
     </script>
   </body>
