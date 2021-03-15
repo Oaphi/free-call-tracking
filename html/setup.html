@@ -428,11 +428,16 @@
             funcName: "linkAllAccounts",
             onFailure: () =>
               notify(
-                `Failed to link your Ads account!`,
+                `Failed to link your Ads accounts!`,
                 4e3,
                 config.classes.notify.error
               ),
-            onSuccess: () => notify(`Linked Ads Accounts`, 4e3),
+            onSuccess: ({ length }) => {
+              notify(
+                `Linked ${length} Ads account${length === 1 ? "" : "s"}`,
+                4e3
+              );
+            },
           });
         }
 
