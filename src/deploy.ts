@@ -57,6 +57,7 @@ function deployAddonGo() {
     "setup.html",
     {
       run: "html",
+      style: "html",
     },
     {
       ArrAccs: gtagAccounts,

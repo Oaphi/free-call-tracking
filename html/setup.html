@@ -16,7 +16,6 @@
         --analytics-color: #e3f2fd;
         --gtm-color: #f9fbe7;
         --ads-color: #ffebee;
-        --error-color: #f44336;
         --underline-color: #9e9e9e;
       }
 
@@ -40,16 +39,16 @@
       }
 
       .toast-error {
-        background-color: var(--error-color);
+        background-color: var(--theme-failure-color);
+      }
+
+      .removed {
+        display: none;
       }
 
       .notice {
         width: 100%;
         margin: auto;
-      }
-
-      .removed {
-        display: none;
       }
 
       /* TODO: make independent of Google Ads */
@@ -58,21 +57,30 @@
         background-color: var(--underline-color);
       }
 
-      @media screen and (width: 300px) {
+      @media screen and (min-width: 300px) {
         .input-field {
           margin-bottom: 0;
         }
       }
+
+      @media screen and (min-width: 600px) {
+        .row {
+          margin-bottom: 10px;
+        }
+      }
     </style>
+
+    <?!= style ?>
   </head>
 
-  <body>
-    <form
-      class="main"
-      id="form"
-      novalidate="novalidate"
-      style="max-width: 580px; margin: 20px auto"
-    >
+  <body class="hidden">
+    <div class="preload-wrapper">
+      <div id="Preloader1" class="progress light-blue darken-3 hidden">
+        <div class="indeterminate light-blue"></div>
+      </div>
+    </div>
+
+    <form class="main" id="form" novalidate="novalidate">
       <div class="section">
         <div class="row">
           <div class="input-field col s12">
@@ -125,9 +133,9 @@
             <select id="Work" name="Work">
               <option value="" disabled selected>Select</option>
             </select>
-            <label
-              >Select Google Tag Manager workspace (* Default is
-              recommended)</label
+            <label class="multiline"
+              >Select Google Tag Manager workspace<br />
+              * Default is recommended</label
             >
           </div>
         </div>
@@ -159,13 +167,6 @@
         </div>
       </div>
 
-      <div class="row" id="Preloader1">
-        <a> Please wait ... </a>
-        <div class="progress" id="Preloader" name="Preloader">
-          <div class="indeterminate"></div>
-        </div>
-      </div>
-
       <div class="row" id="saveme">
         <div class="input-field col s6 m2">
           <input placeholder="Call" id="MyCategory" type="text" />
@@ -180,7 +181,7 @@
         <div class="input-field col s6 m3">
           <button
             id="submit"
-            class="waves-effect waves-light btn blue"
+            class="waves-effect waves-theme btn primary-background"
             type="button"
           >
             <i class="material-icons left">check</i>Deploy
@@ -189,7 +190,7 @@
         <div class="input-field col s6 m3">
           <button
             id="cancel"
-            class="waves-effect waves-light btn red"
+            class="waves-effect waves-theme btn neutral-background"
             type="button"
           >
             <i class="material-icons left">cancel</i>Cancel
@@ -203,12 +204,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
+      const config = {
+        classes: {
+          notify: {
+            error: "toast-error",
+          },
+        },
+        ids: {
+          preloader: "#Preloader1",
+        },
+      };
+
+      const showLoader = () => $(config.ids.preloader).removeClass("hidden");
+
+      const hideLoader = () => $(config.ids.preloader).addClass("hidden");
+
       /**
-       * @param {HTMLSelectElement} sel
        * @param {string} text
        * @param {string} value
        */
-      const addOption = (sel, text, value) => {
+      const addOption = (text, value) => {
         const opt = document.createElement("option");
         opt.appendChild(document.createTextNode(text));
         opt.setAttribute("value", value);
@@ -235,17 +250,6 @@
         });
       }
 
-      const config = {
-        classes: {
-          notify: {
-            error: "toast-error",
-          },
-        },
-        ids: {
-          preloader: "#Preloader1",
-        },
-      };
-
       $(async () => {
         M.AutoInit();
 
@@ -265,14 +269,16 @@
 
         resetSelectPropagation();
 
+        $("body").removeClass("hidden");
+
         const customers = await getAdsAccounts();
-        handleChange("Ads")(customers);
+        handleChange("Ads", "id")(customers);
 
         $("#submit").click(deployAddon);
 
         $("#cancel").click(closeForm);
 
-        $(config.ids.preloader).hide();
+        hideLoader();
       });
 
       /**
@@ -287,7 +293,10 @@
           displayLength: duration,
         });
 
-      function changeAdsFormVisibility(/** @type {Event} */ event) {
+      /**
+       * @param {Event} event
+       */
+      const changeAdsFormVisibility = (event) => {
         const {
           target: { checked },
         } = event;
@@ -296,9 +305,7 @@
           duration = 100;
 
         checked ? adsForm.show(duration) : adsForm.hide(duration);
-      }
-
-      const connectAdsAccounts = async () => {};
+      };
 
       const getAdsAccounts = async () => {
         try {
@@ -307,8 +314,8 @@
           });
 
           return customers.map(({ id, descriptiveName }) => ({
-            path: id,
             name: descriptiveName,
+            id,
           }));
         } catch (error) {
           console.warn(error);
@@ -321,8 +328,8 @@
         }
       };
 
-      const handleChange = (/** @type {string} */ id) => (data) => {
-        $(config.ids.preloader).hide();
+      const handleChange = (/** @type {string} */ id, prop) => (data) => {
+        hideLoader();
 
         const sel = document.getElementById(id);
         removeOptions(sel);
@@ -331,9 +338,7 @@
 
         data.unshift({ name: "Select", path: "" });
 
-        const options = data.map(({ name, path }) =>
-          addOption(sel, name, path)
-        ); //TODO: make more efficient by appending once
+        const options = data.map((item) => addOption(item.name, item[prop]));
 
         sel.append(...options);
 
@@ -356,7 +361,7 @@
 
         const sAccId = $(selId).val();
         if (!sAccId) return;
-        $(config.ids.preloader).show();
+        showLoader();
 
         const { status, properties } = await run({
           funcName: "getGaPropertiesArrByAcc",
@@ -372,56 +377,56 @@
           );
         }
 
-        handleChange("Prop")(properties);
+        handleChange("Prop", "id")(properties);
       };
 
       /**
        * @param {string} selId
        * @param {string} subSelId
+       * @param {string} prop
        * @param {string} handlerName
        */
-      const getEntities = (selId, subSelId, handlerName) => {
+      const getEntities = (selId, subSelId, prop, handlerName) => {
         const sAccPath = $(`#${selId}`).val();
 
         if (!sAccPath) return;
 
-        $("#Preloader1").show();
+        showLoader();
+
         google.script.run
           .withFailureHandler(handleChangeFailure(selId))
-          .withSuccessHandler(handleChange(subSelId))
+          .withSuccessHandler(handleChange(subSelId, prop))
           [handlerName](sAccPath);
       };
 
       const formChangeAccount = () =>
-        getEntities("Acc", "Cont", "getConteinersArrByAcc");
+        getEntities("Acc", "Cont", "path", "getConteinersArrByAcc");
 
       const formChangeContainer = () =>
-        getEntities("Cont", "Work", "getWorkspacesArrByCont");
+        getEntities("Cont", "Work", "path", "getWorkspacesArrByCont");
 
       async function deployAddon() {
-        const sGaAcc = $("#GaAcc").val();
-        const sProfileId = $("#Prop").val();
-        const sAccValue = $("#Acc").val();
-        const sContValue = $("#Cont").val();
-        const sWorkValue = $("#Work").val();
+        const [gaAccount, profileId, gtmAccount, container, workspace] = $(
+          "#GaAcc, #Prop, #Acc, #Cont, #Work"
+        ).map((i, el) => $(el).val());
 
         const sMyCategory = $("#MyCategory").val() || "Call";
         const sMyEvent = $("#MyEvent").val() || "Call";
 
         const issues = [];
 
-        if (!sGaAcc) issues.push("Please select an Analytics Account!");
-        if (!sProfileId) issues.push("Please select an Analytics Property!");
-        if (!sAccValue) issues.push("Please select a Tag Manager Account!");
-        if (!sContValue) issues.push("Please select a Container!");
-        if (!sWorkValue) issues.push("Please select a Workspace!");
+        if (!gaAccount) issues.push("Please select an Analytics Account!");
+        if (!profileId) issues.push("Please select an Analytics Property!");
+        if (!gtmAccount) issues.push("Please select a Tag Manager Account!");
+        if (!container) issues.push("Please select a Container!");
+        if (!workspace) issues.push("Please select a Workspace!");
 
         const { error } = config.classes.notify;
 
         if (issues.length)
           return issues.forEach((msg) => notify(msg, 4e3, error));
 
-        $(config.ids.preloader).show();
+        showLoader();
 
         if ($("#gAdsSwitch").is(":checked")) {
           await run({
@@ -444,12 +449,12 @@
         await run({
           funcName: "deployAddon",
           params: [
-            sProfileId,
-            sContValue,
-            sWorkValue,
+            profileId,
+            container,
+            workspace,
             sMyCategory,
             sMyEvent,
-            sAccValue,
+            gtmAccount,
           ],
           onSuccess: closeForm,
           onFailure: showErrorMsg,
@@ -457,7 +462,7 @@
       }
 
       function showErrorMsg({ message }) {
-        $(config.ids.preloader).hide();
+        hideLoader();
 
         notify(
           `Add-on Failure:<br>"${message}<br>This is unexpected! We are already fixing this`,

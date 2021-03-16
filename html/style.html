@@ -3,6 +3,7 @@
     --theme-primary-color: #0277bd;
     --theme-primary-color--opaque: rgba(2, 119, 189, 0.4);
     --theme-failure-color: #c62828;
+    --theme-neutral-color: #c0c0c0;
   }
 
   .bold {
@@ -30,8 +31,37 @@
     background-color: var(--theme-primary-color);
   }
 
-  .failure-background {
+  .neutral-background,
+  .btn.neutral-background:hover {
+    background-color: var(--theme-neutral-color);
+  }
+
+  .failure-background,
+  .btn.failure-background:hover {
     background-color: var(--theme-failure-color);
+  }
+
+  .select-wrapper :is(.dropdown-trigger, .dropdown-content li span) {
+    color: var(--theme-primary-color);
+  }
+
+  .select-wrapper input.select-dropdown:focus {
+    color: var(--theme-primary-color);
+  }
+
+  .select-wrapper + label.multiline {
+    top: -35px !important;
+  }
+
+  :is(button, .btn):focus {
+    background-color: var(--theme-primary-color);
+  }
+
+  /* button waves effect color extension */
+  .waves-effect.waves-theme .waves-ripple {
+    /* The alpha value allows the text and background color
+   of the button to still show through. */
+    background-color: var(--theme-primary-color);
   }
 
   .timepicker-analog-display {
