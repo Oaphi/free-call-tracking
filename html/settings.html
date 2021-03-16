@@ -257,10 +257,8 @@
             })
           );
 
-          const analyticsId = await run({ funcName: "getProfileID" });
-
           const gaid = document.querySelector("#gaid");
-          gaid.value = analyticsId;
+          gaid.value = await run({ funcName: "getProfileID" });
 
           gaid.addEventListener(
             "change",
