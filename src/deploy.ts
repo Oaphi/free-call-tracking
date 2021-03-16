@@ -261,21 +261,19 @@ function deployAddon(
   sMyEvent: string,
   accountId: string
 ) {
-  const ui = SpreadsheetApp.getUi();
-
   const { sUrl: sTagCommand } = createForm(sMyCategory, sMyEvent);
 
   const status = setProfileID(gaAccountID);
 
-  if (!status) return ui.alert("Failed to save Analytics ID!");
+  if (!status) return showMsg("Failed to save Analytics ID!");
 
-  if (!sTagCommand) return ui.alert("Failed to create tracking Form!");
+  if (!sTagCommand) return showMsg("Failed to create tracking Form!");
 
   try {
     const container = HelpersTagManager.getContainer(containerPath);
 
     if (!container || !container.containerId)
-      return ui.alert(`Failed to get GTM container`);
+      return showMsg(`Failed to get GTM container`);
 
     const { publicId, containerId } = container;
 
@@ -369,7 +367,7 @@ function deployAddon(
       versionId: containerVersionId!,
     });
 
-    if (!gtmStatus) return ui.alert("Failed to save GTM data!");
+    if (!gtmStatus) return showMsg("Failed to save GTM data!");
 
     updateSettings({ firstTime: false });
 
