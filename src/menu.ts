@@ -18,7 +18,7 @@ function onOpen({
 
   SpreadsheetApp.getUi()
     .createAddonMenu()
-    .addItem(`Deploy the ${sADDON_NAME} Addon`, deployAddonGo.name)
+    .addItem(`Deploy the Addon`, deployAddonGo.name)
     .addItem("Open Settings", settingsGo.name)
     .addItem("Get Help", helpGo.name)
     .addToUi();
