@@ -4,8 +4,7 @@ const getDailyClearConfig = () => {
   const defaultConfig = JSON.stringify({ days: 1, atMinute: 0, atHour: 0 });
   return JSON.parse(getProperty(APP_CONFIG.properties.clear, defaultConfig));
 };
-
-declare interface DailyClearOptions {
+interface DailyClearOptions {
   days?: number;
   atHour?: number;
   atMinute?: number;
@@ -16,20 +15,13 @@ const setDailyClearConfig = (config: DailyClearOptions) => {
   return setProperty(APP_CONFIG.properties.clear, { days, atMinute, atHour });
 };
 
-const handleDailyClear = ({ onError = console.warn } = {}) => {
-  try {
-    clearSheet({
-      onError,
-      skipRows: [1],
-      name: sSHEET_FORM,
-      type: "values",
-    });
-    return true;
-  } catch (error) {
-    onError(`failed to clear: ${error}`);
-    return false;
-  }
-};
+const handleDailyClear = ({ onError = console.warn } = {}) =>
+  clearSheet({
+    onError: (err) => onError(`failed to clear: ${err}`),
+    skipRows: [1],
+    name: sSHEET_FORM,
+    type: "values",
+  });
 
 /**
  * @summary reusable utility preparing project triggers
