@@ -155,7 +155,9 @@ const switchAppAccount = () => {
 };
 
 class AdsHelper {
-  static base = "https://googleads.googleapis.com/v6";
+  static version = 6;
+
+  static base = `https://googleads.googleapis.com/v${AdsHelper.version}`;
 
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/rest/auth#login_customer_id}
