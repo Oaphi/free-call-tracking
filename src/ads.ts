@@ -180,7 +180,15 @@ class AdsHelper {
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/query/overview}
    */
-  static search<R>(query: string, override?: string, pageToken?: string) {
+  static search<R>(
+    query: string,
+    {
+      operatingCustomerId,
+      loginCustomerId,
+      pageToken,
+      pageSize = 1e4,
+    }: SearchOptions
+  ) {
     const { base, loginId } = AdsHelper;
 
     const full = `${base}/customers/${override || loginId}`;
