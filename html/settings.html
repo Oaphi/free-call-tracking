@@ -116,6 +116,8 @@
           return M.Tooltip.init(elems, options);
         };
 
+        const notify = (msg, ...classes) => M.toast({ html: msg, classes });
+
         window.addEventListener("error", async (
           /** @type {ErrorEvent} */ ev
         ) => {
@@ -182,13 +184,15 @@
             twelveHour: false,
             showClearBtn: true,
             onCloseEnd: async () => {
-              show(preloader, hideCls);
-
               const { time } = initialized;
 
               if (!time) return;
 
+              show(preloader, hideCls);
+
               const [hour, minute] = time.split(":");
+
+              if (+hour === atHour && +minute === atMinute) return;
 
               const status = await run({
                 funcName: "rescheduleClearTrigger",
@@ -198,13 +202,9 @@
                     atMinute: +minute,
                   },
                 ],
-                onSuccess: () =>
-                  M.toast({ html: "Updated trigger!", classes: primBckg }),
+                onSuccess: () => notify("Updated trigger!", primBckg),
                 onFailure: () =>
-                  M.toast({
-                    html: "Failed to update trigger!",
-                    classes: failureBckg,
-                  }),
+                  notify("Failed to update trigger!", failureBckg),
                 onEnd: () => hide(preloader, hideCls),
               });
             },
@@ -217,9 +217,8 @@
             await run({
               funcName: "handleDailyClear",
               onEnd: () => hide(preloader, hideCls),
-              onSuccess: () => M.toast({ html: "Cleared!", classes: primBckg }),
-              onFailure: () =>
-                M.toast({ html: "Failed to clear!", classes: failureBckg }),
+              onSuccess: () => notify("Cleared!", primBckg),
+              onFailure: () => notify("Failed to clear!", failureBckg),
             });
           });
 
@@ -285,9 +284,7 @@
                   clear.checked = true;
                   edit.checked = true;
 
-                  if (status) {
-                    return notify(`Reset succeeded`, primBckg);
-                  }
+                  if (status) return notify(`Reset succeeded`, primBckg);
 
                   errors.forEach((err) => notify(err, failureBckg));
                 },
