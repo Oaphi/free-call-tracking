@@ -1,3 +1,159 @@
+type Customer = {
+  resourceName: string;
+  callReportingSetting: [object];
+  conversionTrackingSetting: [object];
+  remarketingSetting: [object];
+  payPerConversionEligibilityFailureReasons: [object];
+  id: string;
+  descriptiveName: string;
+  currencyCode: string;
+  timeZone: string;
+  autoTaggingEnabled: boolean;
+  hasPartnersBadge: boolean;
+  manager: boolean;
+  testAccount: boolean;
+};
+
+type ManagerLinkStatus =
+  | "ACTIVE"
+  | "INACTIVE"
+  | "PENDING"
+  | "REFUSED"
+  | "CANCELED";
+
+type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}`
+  ? `${Lowercase<T>}${Capitalize<SnakeToCamel<U>>}`
+  : S;
+
+type SnakeToCamelObj<T> = T extends object
+  ? {
+      [K in keyof T as SnakeToCamel<K & string>]: SnakeToCamelObj<T[K]>;
+    }
+  : T;
+
+type CustomerClientLinkPayload = {
+  manager_link_id: string;
+  resource_name: string;
+  client_customer: string;
+  hidden: boolean;
+  status: ManagerLinkStatus;
+};
+
+type CustomerManagerLinkPayload = {
+  resource_name: string;
+  status: ManagerLinkStatus;
+};
+
+type CustomerManagerLink = SnakeToCamelObj<CustomerManagerLinkPayload> & {
+  manager_customer: string;
+  manager_link_id: string;
+};
+
+type CustomerClientLink = SnakeToCamelObj<CustomerClientLinkPayload>;
+
+type SearchGoogleAdsResponse<R> = {
+  results: R[];
+  nextPageToken?: string;
+  totalResultsCount: number;
+  fieldMask: string;
+};
+
+type AdsErrorResponse = {
+  error: {
+    code: number;
+    message: string;
+    status: string;
+    details: {
+      "@type": string;
+      "errors": {
+        location: {
+          operationIndex: string;
+          fieldPathElements?: { fieldName: string }[];
+        };
+        message: string;
+        errorCode: {
+          managerLinkError:
+            | "ALREADY_MANAGED_IN_HIERARCHY"
+            | "DUPLICATE_CHILD_FOUND"
+            | "ACCOUNTS_NOT_COMPATIBLE_FOR_LINKING"
+            | "TOO_MANY_MANAGERS"; //TODO: expand
+        };
+      }[];
+    }[];
+  };
+};
+
+type Values<T> = T[keyof T];
+
+type AdsErrorCodes = Values<
+  AdsErrorResponse["error"]["details"][number]["errors"][number]["errorCode"]
+>;
+
+class AdsError extends Error {
+  constructor(code: AdsErrorCodes, message: string) {
+    super(AdsError.formatMessage(code, message));
+    this.name = "GoogleAdsError";
+  }
+
+  static formatMessage(code: AdsErrorCodes, message: string) {
+    return `${code} | ${message}`;
+  }
+}
+
+type SearchOptions = {
+  loginCustomerId?: string;
+  operatingCustomerId: string;
+  pageToken?: string;
+  pageSize?: number;
+};
+
+type BulkSearchOptions = SearchOptions & { pages?: number };
+
+type MutateCustomerLinkOptions = {
+  fromId: string;
+  linkId?: string;
+  loginId?: string;
+  resourceName?: string;
+  toId: string;
+  status?: ManagerLinkStatus;
+};
+
+const getAppAuthService = () => {
+  const store = PropertiesService.getScriptProperties();
+
+  const creds = store.getProperty("ads_secret");
+
+  if (!creds) throw new Error("Missing App credentials");
+
+  const { id, secret }: { id: string; secret: string } = JSON.parse(creds);
+
+  const service = OAuth2.createService("ads_helper");
+  service.setTokenUrl("https://oauth2.googleapis.com/token");
+  service.setAuthorizationBaseUrl(
+    "https://accounts.google.com/o/oauth2/v2/auth"
+  );
+  service.setPropertyStore(PropertiesService.getScriptProperties());
+  service.setClientId(id);
+  service.setClientSecret(secret);
+  service.setScope("https://www.googleapis.com/auth/adwords");
+  service.setParam("access_type", "offline");
+  service.setParam("approval_prompt", "force");
+  service.setCallbackFunction("authCallback");
+  return service;
+};
+
+const authCallback = (request: object) => {
+  const service = getAppAuthService();
+  const status = service.handleCallback(request);
+  return HtmlService.createHtmlOutput(status ? "success" : "failure");
+};
+
+const switchAppAccount = () => {
+  const service = getAppAuthService();
+  if (service.hasAccess()) service.reset();
+  console.warn(service.getAuthorizationUrl());
+};
+
 class AdsHelper {
   static base = "https://googleads.googleapis.com/v6";
 
