@@ -49,20 +49,20 @@ const prepareTriggersForUse = () => {
 
   const submitInstalled = TriggersApp.getOrInstallTrigger({
     ...common,
-    callbackName: "onFormSubmit", //@ts-ignore
+    callbackName: onFormSubmit.name,
     type: TriggersApp.TriggerTypes.SUBMIT,
   });
 
   const editInstalled = TriggersApp.getOrInstallTrigger({
     ...common,
-    callbackName: "onEditEvent", //@ts-ignore
+    callbackName: onEditEvent.name,
     type: TriggersApp.TriggerTypes.EDIT,
   });
 
   const clearInstalled = TriggersApp.getOrInstallTrigger({
     ...common,
     installerConfig: getDailyClearConfig(),
-    callbackName: "handleDailyClear", //@ts-ignore
+    callbackName: handleDailyClear.name,
     type: TriggersApp.TriggerTypes.CLOCK,
   });
 
@@ -83,15 +83,11 @@ const rescheduleClearTrigger = ({
 
   const status = !info || TriggersApp.deleteTracked(info);
 
-  if (!status) {
-    return false;
-  }
+  if (!status) return false;
 
   const settingsStatus = setDailyClearConfig({ atHour, atMinute });
 
-  if (!settingsStatus) {
-    return false; //TODO: use different status codes;
-  }
+  if (!settingsStatus) return false; //TODO: use different status codes;
 
   const installed = TriggersApp.getOrInstallTrigger({
     unique: true,
@@ -157,9 +153,7 @@ function promptUAinstall() {
 
   console.log(status, dismissed);
 
-  if (!status || dismissed) {
-    return;
-  }
+  if (!status || dismissed) return;
 
   const ui = SpreadsheetApp.getUi();
   const content = loadTemplate(true, "html", "installGA", {
