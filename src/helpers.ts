@@ -251,8 +251,6 @@ const getHighAccessProperty = (key: string, def?: any) => {
   const store = PropertiesService.getUserProperties();
   const stored = store.getProperty(key);
 
-  console.log({ cached, stored, key });
-
   if (stored) {
     cache.put(key, stored);
     return JSON.parse(stored);
