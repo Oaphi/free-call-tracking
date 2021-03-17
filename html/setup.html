@@ -204,278 +204,281 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-      const config = {
-        classes: {
-          notify: {
-            error: "toast-error",
+      (() => {
+        const config = {
+          classes: {
+            notify: {
+              error: "toast-error",
+            },
           },
-        },
-        ids: {
-          preloader: "#Preloader1",
-        },
-      };
-
-      const showLoader = () => $(config.ids.preloader).removeClass("hidden");
-
-      const hideLoader = () => $(config.ids.preloader).addClass("hidden");
-
-      /**
-       * @param {string} text
-       * @param {string} value
-       */
-      const addOption = (text, value) => {
-        const opt = document.createElement("option");
-        opt.appendChild(document.createTextNode(text));
-        opt.setAttribute("value", value);
-        return opt;
-      };
-
-      /**
-       * @param {HTMLSelectElement} selectElement
-       */
-      const removeOptions = (selectElement) => {
-        const {
-          options: { length },
-          options,
-        } = selectElement;
-
-        for (const opt of options) opt.remove();
-      };
-
-      function resetSelectPropagation() {
-        $(document).click((event) => {
-          const { target, currentTarget } = event;
-          if (target === currentTarget) return;
-          if (target.matches(".select-wrapper")) event.stopPropagation();
-        });
-      }
-
-      $(async () => {
-        M.AutoInit();
-
-        //map of selector : handler
-        const changeHandlers = {
-          gAdsSwitch: changeAdsFormVisibility,
-          GaAcc: formChangeGaAccount,
-          Acc: formChangeAccount,
-          Cont: formChangeContainer,
+          ids: {
+            preloader: "#Preloader1",
+          },
         };
 
-        const $doc = $(document);
+        const disableBtn = (id) => $(`#${id}`).addClass("disabled");
 
-        Object.entries(changeHandlers).forEach(([id, handler]) =>
-          $doc.on("change", `#${id}`, handler)
-        );
+        const enableBtn = (id) => $(`#${id}`).removeClass("disabled");
 
-        resetSelectPropagation();
+        const showLoader = () => $(config.ids.preloader).removeClass("hidden");
 
-        $("body").removeClass("hidden");
+        const hideLoader = () => $(config.ids.preloader).addClass("hidden");
 
-        const customers = await getAdsAccounts();
-        handleChange("Ads", "id")(customers);
+        /**
+         * @param {string} text
+         * @param {string} value
+         */
+        const addOption = (text, value) => {
+          const opt = document.createElement("option");
+          opt.appendChild(document.createTextNode(text));
+          opt.setAttribute("value", value);
+          return opt;
+        };
 
-        $("#submit").click(deployAddon);
+        /**
+         * @param {HTMLSelectElement} selectElement
+         */
+        const removeOptions = (selectElement) => {
+          const {
+            options: { length },
+            options,
+          } = selectElement;
 
-        $("#cancel").click(closeForm);
+          for (const opt of options) opt.remove();
+        };
 
-        hideLoader();
-      });
+        function resetSelectPropagation() {
+          $(document).click((event) => {
+            const { target, currentTarget } = event;
+            if (target === currentTarget) return;
+            if (target.matches(".select-wrapper")) event.stopPropagation();
+          });
+        }
 
-      /**
-       * @param {string} msg
-       * @param {number} duration
-       * @param {...string} classes
-       */
-      const notify = (msg, duration, ...classes) =>
-        M.toast({
-          html: msg,
-          classes: classes.join(" "),
-          displayLength: duration,
+        $(async () => {
+          M.AutoInit();
+
+          //map of selector : handler
+          const changeHandlers = {
+            gAdsSwitch: changeAdsFormVisibility,
+            GaAcc: formChangeGaAccount,
+            Acc: formChangeAccount,
+            Cont: formChangeContainer,
+          };
+
+          const $doc = $(document);
+
+          Object.entries(changeHandlers).forEach(([id, handler]) =>
+            $doc.on("change", `#${id}`, handler)
+          );
+
+          resetSelectPropagation();
+
+          $("body").removeClass("hidden");
+
+          showLoader();
+
+          const customers = await getAdsAccounts();
+          handleChange("Ads", "id")(customers);
+
+          $("#submit").click(deployAddon);
+
+          $("#cancel").click(closeForm);
+
+          hideLoader();
         });
 
-      /**
-       * @param {Event} event
-       */
-      const changeAdsFormVisibility = (event) => {
-        const {
-          target: { checked },
-        } = event;
-
-        const adsForm = $("#gAdsSetup"),
-          duration = 100;
-
-        checked ? adsForm.show(duration) : adsForm.hide(duration);
-      };
-
-      const getAdsAccounts = async () => {
-        try {
-          const customers = await run({
-            funcName: "getAllAccounts",
+        /**
+         * @param {string} msg
+         * @param {number} duration
+         * @param {...string} classes
+         */
+        const notify = (msg, duration, ...classes) =>
+          M.toast({
+            html: msg,
+            classes: classes.join(" "),
+            displayLength: duration,
           });
 
-          return customers.map(({ id, descriptiveName }) => ({
-            name: descriptiveName,
-            id,
-          }));
-        } catch (error) {
-          console.warn(error);
-          notify(
-            `Failed to list Google Ads accounts!`,
-            4e3,
-            config.classes.notify.error
-          );
-          return [];
-        }
-      };
+        /**
+         * @param {Event} event
+         */
+        const changeAdsFormVisibility = (event) => {
+          const {
+            target: { checked },
+          } = event;
 
-      const handleChange = (/** @type {string} */ id, prop) => (data) => {
-        hideLoader();
+          const adsForm = $("#gAdsSetup"),
+            duration = 100;
 
-        const sel = document.getElementById(id);
-        removeOptions(sel);
+          checked ? adsForm.show(duration) : adsForm.hide(duration);
+        };
 
-        const { length } = data;
+        const getAdsAccounts = async () => {
+          try {
+            const customers = await run({
+              funcName: "getAllAccounts",
+            });
 
-        data.unshift({ name: "Select", path: "" });
+            return customers.map(({ id, descriptiveName }) => ({
+              name: descriptiveName,
+              id,
+            }));
+          } catch (error) {
+            console.warn(error);
+            showError(`Failed to list Google Ads accounts!`, 4e3);
+            return [];
+          }
+        };
 
-        const options = data.map((item) => addOption(item.name, item[prop]));
+        /**
+         * @param {string} id
+         * @param {string} prop
+         */
+        const handleChange = (id, prop) => (data) => {
+          hideLoader();
 
-        sel.append(...options);
+          const sel = document.getElementById(id);
+          removeOptions(sel);
 
-        $(sel).formSelect();
-      };
+          const { length } = data;
 
-      /**
-       * @param {string} selId
-       */
-      const handleChangeFailure = (selId) => (err) => {
-        $(`#${selId}`).find("option:first").prop("selected", true);
+          data.unshift({ name: "Select", path: "" });
 
-        $(`#${selId}`).formSelect();
+          const options = data.map((item) => addOption(item.name, item[prop]));
 
-        showErrorMsg(err);
-      };
+          sel.append(...options);
 
-      const formChangeGaAccount = async () => {
-        const selId = "#GaAcc";
+          $(sel).formSelect();
+        };
 
-        const sAccId = $(selId).val();
-        if (!sAccId) return;
-        showLoader();
+        /**
+         * @param {string} selId
+         */
+        const handleChangeFailure = (selId) => (err) => {
+          $(`#${selId}`).find("option:first").prop("selected", true);
 
-        const { status, properties } = await run({
-          funcName: "getGaPropertiesArrByAcc",
-          params: [sAccId],
-          onFailure: handleChangeFailure(selId),
-        });
+          $(`#${selId}`).formSelect();
 
-        if (!status) {
-          return notify(
-            `Failed to load Analytics properties!`,
-            5e2,
-            config.classes.notify.error
-          );
-        }
+          showError(err);
+        };
 
-        handleChange("Prop", "id")(properties);
-      };
+        const formChangeGaAccount = async () => {
+          const selId = "#GaAcc";
 
-      /**
-       * @param {string} selId
-       * @param {string} subSelId
-       * @param {string} prop
-       * @param {string} handlerName
-       */
-      const getEntities = (selId, subSelId, prop, handlerName) => {
-        const sAccPath = $(`#${selId}`).val();
+          const sAccId = $(selId).val();
+          if (!sAccId) return;
+          showLoader();
 
-        if (!sAccPath) return;
+          const { status, properties } = await run({
+            funcName: "getGaPropertiesArrByAcc",
+            params: [sAccId],
+            onFailure: handleChangeFailure(selId),
+          });
 
-        showLoader();
+          if (!status) return showError(`Failed to load Analytics properties!`);
 
-        google.script.run
-          .withFailureHandler(handleChangeFailure(selId))
-          .withSuccessHandler(handleChange(subSelId, prop))
-          [handlerName](sAccPath);
-      };
+          handleChange("Prop", "id")(properties);
+        };
 
-      const formChangeAccount = () =>
-        getEntities("Acc", "Cont", "path", "getConteinersArrByAcc");
+        /**
+         * @param {string} selId
+         * @param {string} subSelId
+         * @param {string} prop
+         * @param {string} handlerName
+         */
+        const getEntities = (selId, subSelId, prop, handlerName) => {
+          const sAccPath = $(`#${selId}`).val();
 
-      const formChangeContainer = () =>
-        getEntities("Cont", "Work", "path", "getWorkspacesArrByCont");
+          if (!sAccPath) return;
 
-      async function deployAddon() {
-        const [gaAccount, profileId, gtmAccount, container, workspace] = $(
-          "#GaAcc, #Prop, #Acc, #Cont, #Work"
-        ).map((i, el) => $(el).val());
+          showLoader();
 
-        const sMyCategory = $("#MyCategory").val() || "Call";
-        const sMyEvent = $("#MyEvent").val() || "Call";
+          google.script.run
+            .withFailureHandler(handleChangeFailure(selId))
+            .withSuccessHandler(handleChange(subSelId, prop))
+            [handlerName](sAccPath);
+        };
 
-        const issues = [];
+        const formChangeAccount = () =>
+          getEntities("Acc", "Cont", "path", "getConteinersArrByAcc");
 
-        if (!gaAccount) issues.push("Please select an Analytics Account!");
-        if (!profileId) issues.push("Please select an Analytics Property!");
-        if (!gtmAccount) issues.push("Please select a Tag Manager Account!");
-        if (!container) issues.push("Please select a Container!");
-        if (!workspace) issues.push("Please select a Workspace!");
+        const formChangeContainer = () =>
+          getEntities("Cont", "Work", "path", "getWorkspacesArrByCont");
 
-        const { error } = config.classes.notify;
+        async function deployAddon() {
+          const [gaAccount, profileId, gtmAccount, container, workspace] = $(
+            "#GaAcc, #Prop, #Acc, #Cont, #Work"
+          ).map((i, el) => $(el).val());
 
-        if (issues.length)
-          return issues.forEach((msg) => notify(msg, 4e3, error));
+          const sMyCategory = $("#MyCategory").val() || "Call";
+          const sMyEvent = $("#MyEvent").val() || "Call";
 
-        showLoader();
+          const issues = [];
 
-        if ($("#gAdsSwitch").is(":checked")) {
+          if (!gaAccount) issues.push("Please select an Analytics Account!");
+          if (!profileId) issues.push("Please select an Analytics Property!");
+          if (!gtmAccount) issues.push("Please select a Tag Manager Account!");
+          if (!container) issues.push("Please select a Container!");
+          if (!workspace) issues.push("Please select a Workspace!");
+
+          const { error } = config.classes.notify;
+
+          if (issues.length)
+            return issues.forEach((msg) => notify(msg, 4e3, error));
+
+          showLoader();
+          disableBtn("submit");
+
+          if ($("#gAdsSwitch").is(":checked")) {
+            await run({
+              funcName: "linkAllAccounts",
+              onFailure: () =>
+                showError(`Failed to link your Ads accounts!`, 4e3),
+              onSuccess: ({ length }) => {
+                notify(
+                  `Linked ${length} Ads account${length === 1 ? "" : "s"}`,
+                  4e3
+                );
+              },
+            });
+          }
+
           await run({
-            funcName: "linkAllAccounts",
-            onFailure: () =>
-              notify(
-                `Failed to link your Ads accounts!`,
-                4e3,
-                config.classes.notify.error
-              ),
-            onSuccess: ({ length }) => {
-              notify(
-                `Linked ${length} Ads account${length === 1 ? "" : "s"}`,
-                4e3
-              );
-            },
+            funcName: "deployAddon",
+            params: [
+              profileId,
+              container,
+              workspace,
+              sMyCategory,
+              sMyEvent,
+              gtmAccount,
+            ],
+            onSuccess: closeForm,
+            onFailure: showError,
+            onEnd: () => enableBtn("submit"),
           });
         }
 
-        await run({
-          funcName: "deployAddon",
-          params: [
-            profileId,
-            container,
-            workspace,
-            sMyCategory,
-            sMyEvent,
-            gtmAccount,
-          ],
-          onSuccess: closeForm,
-          onFailure: showErrorMsg,
+        /**
+         * @param {Error|string} error
+         */
+        const showError = async (error, duration = 1e4) => {
+          hideLoader();
+
+          notify(
+            error || `This is unexpected! We are fixing this`,
+            duration,
+            config.classes.notify.error
+          );
+        };
+
+        const closeForm = () => google.script.host.close();
+
+        $(document).on("click", "#toast-container .toast", ({ target }) => {
+          $(this).fadeOut(() => M.Toast.getInstance(target).dismiss());
         });
-      }
-
-      function showErrorMsg({ message }) {
-        hideLoader();
-
-        notify(
-          `Add-on Failure:<br>"${message}<br>This is unexpected! We are already fixing this`,
-          1e4,
-          config.classes.notify.error
-        );
-      }
-
-      const closeForm = () => google.script.host.close();
-
-      $(document).on("click", "#toast-container .toast", ({ target }) => {
-        $(this).fadeOut(() => M.Toast.getInstance(target).dismiss());
-      });
+      })();
     </script>
   </body>
 </html>
