@@ -191,16 +191,18 @@ class AdsHelper {
   ) {
     const { base, loginId } = AdsHelper;
 
-    const full = `${base}/customers/${override || loginId}`;
+    const full = `${base}/customers/${operatingCustomerId}/googleAds:search`;
 
     type AdsQueryPayload = {
+      customer_id: string;
       pageSize?: number;
       query: string;
       pageToken?: string;
     };
 
     const payload: AdsQueryPayload = {
-      pageSize: 10000,
+      customer_id: operatingCustomerId,
+      pageSize,
       query,
     };
 
