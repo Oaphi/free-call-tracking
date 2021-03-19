@@ -12,6 +12,7 @@
     "pretty": true,
     "experimentalDecorators": true,
     "strict": true,
-    "rootDir": "src"
+    "rootDir": "src",
+    "noUnusedLocals": true
   }
 }
