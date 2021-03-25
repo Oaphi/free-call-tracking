@@ -9,6 +9,16 @@ var sSHEET_FORM = "Calls Qualification";
 var sVERSION_NAME = "MyVersion0";
 
 var APP_CONFIG = {
+  menus: {
+    main: {
+      items: {
+        deploy: "Deploy the Addon",
+        installUA: "Install Universal Analytics",
+        openSettings: "Open Settings",
+        openHelp: "Get Help",
+      },
+    },
+  },
   strings: {
     help: {
       title: "Help",
@@ -77,6 +87,8 @@ var APP_CONFIG = {
   },
   ENV: "prod",
 };
+
+const getConfig = () => APP_CONFIG;
 
 //proactively inject dependency
 TriggersApp.use(PropertiesService);

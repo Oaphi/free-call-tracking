@@ -16,12 +16,18 @@ function onOpen({
     prepareTriggersForUse();
   }
 
+  const {
+    menus: {
+      main: { items },
+    },
+  } = getConfig();
+
   SpreadsheetApp.getUi()
     .createAddonMenu()
-    .addItem("Deploy the Addon", deployAddonGo.name)
-    .addItem("Insall Universal Analytics", promptUAinstall.name)
-    .addItem("Open Settings", settingsGo.name)
-    .addItem("Get Help", helpGo.name)
+    .addItem(items.deploy, deployAddonGo.name)
+    .addItem(items.installUA, promptUAinstall.name)
+    .addItem(items.openSettings, settingsGo.name)
+    .addItem(items.openHelp, helpGo.name)
     .addToUi();
 }
 
