@@ -151,6 +151,7 @@ function promptUAinstall() {
   const content = loadTemplate(true, "html", "installGA", {
     style: "html",
     run: "html",
+    utils: "html",
   });
   content.setHeight(175);
   ui.showModalDialog(content, "Warning");

@@ -1,90 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GA install</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons">
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Icons"
+    />
 
     <?!= style ?>
-</head>
+  </head>
 
-<body>
-
+  <body>
     <div class="container">
-        <div class="row">
-            <div class="col s12 m4 l6">
+      <div class="row">
+        <div class="col s12 m4 l6">
+          <p>
+            Analytics not configured on one of the sites. Would you like to
+            create a Universal Analytics tag?
+          </p>
 
-                <p>Analytics not configured on one of the sites.
-                    Would you like to create a Universal Analytics tag?</p>
+          <a id="yes" class="waves-effect waves-light btn primary-background"
+            >Yes</a
+          >
+          <a id="no" class="waves-effect waves-light btn primary-background"
+            >No</a
+          >
 
-                <a id="yes" class="waves-effect waves-light btn primary-background">Yes</a>
-                <a id="no" class="waves-effect waves-light btn primary-background">No</a>
-
-                <div id="preload" class="progress primary-background hide">
-                    <div class="indeterminate primary-background"></div>
-                </div>
-
-            </div>
+          <div id="preload" class="progress primary-background hide">
+            <div class="indeterminate primary-background"></div>
+          </div>
         </div>
+      </div>
     </div>
 
     <?!= run ?>
+    <?!= utils ?>
 
     <script type="text/javascript">
+      const close = () => google.script.host.close();
 
-        const show = ({ classList }, className = "hide") => classList.remove(className);
-        const hide = ({ classList }, className = "hide") => classList.add(className);
-        const notify = (msg, ...classes) => M.toast({ html: msg, classes });
+      (() => {
+          M.AutoInit();
 
-        const close = (cond = true) => cond && google.script.host.close();
+          document.addEventListener("click", ({ target }) => {
 
-        (() => {
+              const { id } = target;
 
-            M.AutoInit();
+              const handlerMap = {
+                  yes: {
+                      action: () => gscript("installGAtag"),
+                      onSuccess: () => notify("Successfully installed tag"),
+                      onFailure: () => notify("Failed to install tag"),
+                      onError: () => notify("Something went wrong during install")
+                  },
+                  no: {
+                      action: () => gscript("setGaInstallDismissed"),
+                      onSuccess: close,
+                      onFailure: () => { }, //noop
+                      onError: () => notify(`Failed to save (you will be prompted again if no UA tag is found)`)
+                  },
+              };
 
-            const yes = document.querySelector("#yes");
-            yes.addEventListener("click", async ({ target }) => {
-                const preload = document.querySelector("#preload");
+              const { action, onSuccess, onFailure, onError } = handlerMap[id];
 
-                try {
-                    show(preload);
+              const preload = document.querySelector("#preload");
 
-                    const status = await run({ funcName: "installGAtag" });
-                    notify(status ? "Successfully installed" : "Failed to install");
+              try {
+                  show(preload);
 
-                } catch (error) {
-                    notify("Something went wrong during install");
-                }
+                  const status = await action();
 
-                hide(preload);
-            });
+                  status ? onSuccess() : onFailure();
 
-            const no = document.querySelector("#no");
-            no.addEventListener("click", async () => {
-                const preload = document.querySelector("#preload");
+              } catch (error) {
+                  onError(error);
+              } finally {
+                  hide(preload);
+              }
+          });
 
-                show(preload);
-
-                const result = await run({ funcName: "setGaInstallDismissed" });
-
-                hide(preload);
-
-                if (!result) {
-                    return notify(`Failed to save preference (you will be prompted again if no UA tag is found)`);
-                }
-
-                close();
-            });
-
-        })();
-
+      })();
     </script>
-
-</body>
-
+  </body>
 </html>
