@@ -18,7 +18,8 @@ function onOpen({
 
   SpreadsheetApp.getUi()
     .createAddonMenu()
-    .addItem(`Deploy the Addon`, deployAddonGo.name)
+    .addItem("Deploy the Addon", deployAddonGo.name)
+    .addItem("Insall Universal Analytics", promptUAinstall.name)
     .addItem("Open Settings", settingsGo.name)
     .addItem("Get Help", helpGo.name)
     .addToUi();
