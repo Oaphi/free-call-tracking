@@ -87,12 +87,12 @@ function createForm(sMyCategory: string, sMyEvent: string) {
 
   const {
     strings: {
-      form: { userAgent, pageTitle, geoLocation, timestamp },
+      form: { userAgent, pageTitle, geoLocation, timestamp, visitorId },
     },
   } = APP_CONFIG;
 
   form.addTextItem().setTitle(timestamp);
-  form.addTextItem().setTitle(sSITE_VISITOR_ID);
+  form.addTextItem().setTitle(visitorId);
   form.addTextItem().setTitle(geoLocation);
   form.addTextItem().setTitle(sSOURCE);
   form.addTextItem().setTitle(sCURR_PAGE);
@@ -132,7 +132,7 @@ function createForm(sMyCategory: string, sMyEvent: string) {
   return getPrefilledUrl(formId);
 }
 
-declare interface NoAnalyticsStatus {
+interface NoAnalyticsStatus {
   status: boolean;
   dismissed: boolean;
 }
@@ -144,7 +144,7 @@ function onFormSubmit({
   values,
   range,
   onError = console.warn,
-}: GoogleAppsScript.Events.SheetsOnFormSubmit & { onError: any }) {
+}: Errable<GoogleAppsScript.Events.SheetsOnFormSubmit>) {
   try {
     const src = range.getSheet();
     const sheet = range.getSheet();
@@ -180,7 +180,7 @@ function onFormSubmit({
     });
 
     TriggersApp.getOrInstallTrigger({
-      callbackName: "promptUAinstall",
+      callbackName: promptUAinstall.name,
       type: TriggersApp.TriggerTypes.CHANGE,
       unique: true,
     });

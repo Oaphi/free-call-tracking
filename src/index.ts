@@ -24,6 +24,7 @@ var APP_CONFIG = {
       title: "Help",
     },
     form: {
+      visitorId: "Site Visitor (Client ID)",
       title: "GA and GTM linking",
       timestamp: "GA Timestamp",
       userAgent: "User Agent",
@@ -96,7 +97,6 @@ TriggersApp.use(PropertiesService);
 // -------------------------------------------------------------------------- header --------------------------------------------------------------------------------
 
 var sTIMESTAMP = "GA Timestamp";
-var sSITE_VISITOR_ID = "Site Visitor (Client ID)";
 var sSOURCE = "Source / Previous Page";
 var sCURR_PAGE = "Current Page";
 
