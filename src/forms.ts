@@ -149,7 +149,7 @@ function onFormSubmit({
     const src = range.getSheet();
     const sheet = range.getSheet();
 
-    const [fstamp, tstamp, clientId] = values;
+    const [_fstamp, _tstamp, clientId] = values;
 
     const {
       properties: { metadata: key },
@@ -164,9 +164,7 @@ function onFormSubmit({
     if (!clientId) {
       const { dismissed = false }: NoAnalyticsStatus = noGAmeta;
 
-      if (dismissed) {
-        return;
-      }
+      if (dismissed) return;
 
       noGAmeta.status = true;
     }
@@ -183,7 +181,6 @@ function onFormSubmit({
 
     TriggersApp.getOrInstallTrigger({
       callbackName: "promptUAinstall",
-      //@ts-ignore
       type: TriggersApp.TriggerTypes.CHANGE,
       unique: true,
     });
