@@ -336,7 +336,20 @@ function deployAddon(
 
     const tags = HelpersTagManager.listTags(wspacePath);
 
-    createOrUpdateTag(tags, tagNames.img, wspacePath, {
+    const commonBackoffOptions: Pick<
+      BackoffOptions<any>,
+      "comparator" | "scheduler" | "threshold"
+    > = {
+      comparator: ({ code }) => code !== 429,
+      scheduler: (wait) => Utilities.sleep(wait),
+      threshold: 1e3,
+    };
+
+    backoffSync(createOrUpdateTag, {
+      onBeforeBackoff: () =>
+        console.log(`quota hit: ${createOrUpdateTag.name}`),
+      ...commonBackoffOptions,
+    })(tags, tagNames.img, wspacePath, {
       type: "img",
       parameter: [
         { type: "boolean", value: "true", key: "useCacheBuster" },
@@ -346,13 +359,16 @@ function deployAddon(
       firingTriggerId: [triggerId!],
     });
 
-    const version = versionWorkspace(wspacePath, sVERSION_NAME);
+    const version = backoffSync(versionWorkspace, {
+      onBeforeBackoff: () =>
+        console.warn(`quota hit: ${versionWorkspace.name}`),
+      ...commonBackoffOptions,
+    })(wspacePath, sVERSION_NAME);
 
     const { code, containerVersion } = backoffSync(republishContainer, {
-      onBeforeBackoff: () => console.warn("too many GTM requests, backoff"),
-      comparator: ({ code }) => code !== 429,
-      scheduler: (wait) => Utilities.sleep(wait),
-      threshold: 1e3,
+      onBeforeBackoff: () =>
+        console.warn(`quota hit: ${republishContainer.name}`),
+      ...commonBackoffOptions,
     })(version);
 
     if (code === 400) return showMsg(`Failed to republish container`);
