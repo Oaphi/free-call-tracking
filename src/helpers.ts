@@ -569,18 +569,20 @@ const logException = (context: string, err: string | Error) => {
 
 const showMsg = (msg: string) => Browser.msgBox(msg);
 
+type BackoffOptions<F extends (...args: any[]) => any, T = null> = {
+  comparator: (res: ReturnType<F>) => boolean;
+  scheduler: (wait: number) => any;
+  onBeforeBackoff: (retries: number, exp: number, threshold?: number) => any;
+  onError?: (err: string | Error, errRetries: number) => void;
+  retryOnError?: boolean;
+  retries?: number;
+  threshold?: number;
+  thisObj?: T;
+};
+
 type Backoffer = <F extends (...args: any[]) => any, T = null>(
   cbk: F,
-  opts: {
-    comparator: (res: ReturnType<F>) => boolean;
-    scheduler: (wait: number) => any;
-    onBeforeBackoff: (retries: number, exp: number, threshold?: number) => any;
-    onError?: (err: string | Error, errRetries: number) => void;
-    retryOnError?: boolean;
-    retries?: number;
-    threshold?: number;
-    thisObj?: T;
-  }
+  opts: BackoffOptions<F, T>
 ) => (...params: Parameters<F>) => ReturnType<F>;
 
 const backoffSync: Backoffer = (
