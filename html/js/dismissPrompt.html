@@ -1,0 +1,41 @@
+<script type="text/javascript" defer>
+  (() => {
+    M.AutoInit();
+
+    const config = {
+      ids: {
+        submit: "reset",
+      },
+      toasts: {
+        success: "Updated preferences! Installer will load shortly",
+        error: "Something went wrong when saving preferences!",
+      },
+    };
+
+    document.addEventListener("click", async ({ target }) => {
+      const { id } = target;
+
+      if (id !== config.ids.submit) return;
+
+      const preload = document.querySelector("#preload");
+
+      try {
+        show(preload);
+
+        disable(config.ids.submit);
+
+        await gscript("setGaInstallDismissed", { dismissed: false }); //TODO: rework public API to accept config object
+
+        notify(config.toasts.success);
+
+        await gscript("promptUAinstall");
+      } catch ({ message }) {
+        await gscript("logException", "ua_prompt", message);
+        notify(config.toasts.error);
+      } finally {
+        hide(preload);
+        enable(config.ids.submit);
+      }
+    });
+  })();
+</script>

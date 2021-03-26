@@ -9,11 +9,20 @@
     return `${hh < 10 ? `0${hh}` : hh}:${mm < 10 ? `0${mm}` : mm}`;
   };
 
+  const disable = (id) => document.getElementById(id).classList.add("disabled");
+
+  const enable = (id) =>
+    document.getElementById(id).classList.remove("disabled");
+
   const show = ({ classList }, className = "hide") =>
     classList.remove(className);
+
   const hide = ({ classList }, className = "hide") => classList.add(className);
+
   const notify = (msg, ...styles) =>
     M.toast({ html: msg, classes: styles.join(" ") });
+
+  const close = () => google.script.host.close();
 
   const getCid = () => {
     const cidName = "fct_cid";

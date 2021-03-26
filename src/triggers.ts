@@ -93,7 +93,7 @@ const rescheduleClearTrigger = ({
 };
 
 const makeNoGAstatus = (): NoAnalyticsStatus => ({
-  status: false,
+  status: true,
   dismissed: false,
 });
 
@@ -101,11 +101,13 @@ const makeNoGAstatus = (): NoAnalyticsStatus => ({
  * @summary gets metadata that install of UA is dismissed
  */
 const getGaInstalledDismissed = (sheet = getFormSheet()) => {
+  //TODO: change public contract to config object
   const {
     properties: { metadata: key },
+    sheets: { form },
   } = APP_CONFIG;
 
-  if (!sheet) throw new RangeError(`form sheet not found`);
+  if (!sheet) throw new RangeError(`"${form}" sheet not found`);
 
   const analyticsStatus: NoAnalyticsStatus = getMetadataValue({
     sheet,
@@ -116,23 +118,33 @@ const getGaInstalledDismissed = (sheet = getFormSheet()) => {
   return analyticsStatus;
 };
 
+type CommonAnalyticsInstallOptions = {
+  sheet?: GoogleAppsScript.Spreadsheet.Sheet;
+};
+
+type AnalyticsInstallGetterOptions = CommonAnalyticsInstallOptions;
+
+type AnalyticsInstallSetterOptions = {
+  dismissed?: boolean;
+} & CommonAnalyticsInstallOptions;
+
 /**
  * @summary sets metadata that install of UA is dismissed
  */
-const setGaInstallDismissed = (sheet = getFormSheet()) => {
+const setGaInstallDismissed = ({
+  sheet = getFormSheet(),
+  dismissed = true,
+}: AnalyticsInstallSetterOptions = {}) => {
   const {
     properties: { metadata: key },
+    sheets: { form },
   } = APP_CONFIG;
 
-  if (!sheet) throw new RangeError(`form sheet not found`);
+  if (!sheet) throw new RangeError(`"${form}" sheet not found`);
 
-  const analyticsStatus: NoAnalyticsStatus = getMetadataValue({
-    sheet,
-    key,
-    def: makeNoGAstatus(),
-  });
+  const analyticsStatus = getGaInstalledDismissed(sheet);
 
-  analyticsStatus.dismissed = true;
+  analyticsStatus.dismissed = dismissed;
 
   return setMetadataValue({ sheet, key, value: analyticsStatus });
 };
@@ -140,19 +152,36 @@ const setGaInstallDismissed = (sheet = getFormSheet()) => {
 /**
  * @summary checks if the user has GA installed and prompts accordingly
  */
-function promptUAinstall() {
+const promptUAinstall = () => {
   const { dismissed, status } = getGaInstalledDismissed();
 
-  console.log(status, dismissed);
-
-  if (!status || dismissed) return;
+  if (!status) return;
 
   const ui = SpreadsheetApp.getUi();
-  const content = loadTemplate(true, "html", "installGA", {
+
+  const commonDeps = {
     style: "html",
     run: "html",
     utils: "html",
-  });
-  content.setHeight(175);
-  ui.showModalDialog(content, "Warning");
-}
+  };
+
+  const templateMap = {
+    true: () =>
+      loadTemplate(true, "html", "dismissedNotice", {
+        ...commonDeps,
+        dismissPrompt: "html/js",
+      }),
+    false: () =>
+      loadTemplate(true, "html", "installGA", {
+        ...commonDeps,
+        uaPrompt: "html/js",
+      }),
+  };
+
+  const loader = templateMap[dismissed.toString() as "true" | "false"];
+
+  const content = loader();
+  content.setHeight(225);
+
+  ui.showModalDialog(content, "Universal Analytics");
+};
