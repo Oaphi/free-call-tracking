@@ -116,8 +116,6 @@
           return M.Tooltip.init(elems, options);
         };
 
-        const notify = (msg, ...classes) => M.toast({ html: msg, classes });
-
         window.addEventListener("error", async (
           /** @type {ErrorEvent} */ ev
         ) => {
