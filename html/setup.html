@@ -414,6 +414,10 @@
           const sMyCategory = $("#MyCategory").val() || "Call";
           const sMyEvent = $("#MyEvent").val() || "Call";
 
+          const willLinkAds = $("#gAdsSwitch").is(":checked");
+
+          notify(willLinkAds); //TODO: remove
+
           const issues = [];
 
           if (!gaAccount) issues.push("Please select an Analytics Account!");
@@ -430,7 +434,7 @@
           showLoader();
           disableBtn("submit");
 
-          if ($("#gAdsSwitch").is(":checked")) {
+          if (willLinkAds) {
             await run({
               funcName: "linkAllAccounts",
               onFailure: () =>
@@ -475,8 +479,8 @@
 
         const closeForm = () => google.script.host.close();
 
-        $(document).on("click", "#toast-container .toast", ({ target }) => {
-          $(this).fadeOut(() => M.Toast.getInstance(target).dismiss());
+        $(document).on("click", ".toast", ({ target }) => {
+          M.Toast.getInstance(target).dismiss();
         });
       })();
     </script>
