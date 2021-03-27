@@ -1,0 +1,58 @@
+<style>
+  :root {
+    --analytics-color: #e3f2fd;
+    --gtm-color: #f9fbe7;
+    --ads-color: #ffebee;
+    --underline-color: #9e9e9e;
+  }
+  /* TODO: remove, legacy styling */
+  #toast-container {
+    bottom: auto !important;
+    left: auto !important;
+    top: 20%;
+  }
+
+  .toast {
+    cursor: pointer;
+  }
+
+  .toast::after {
+    font-family: "Material Icons";
+    content: "close";
+    font-size: 1.5rem;
+    font-weight: 300;
+    float: right;
+    padding-left: 3rem;
+  }
+
+  .toast-error {
+    background-color: var(--theme-failure-color);
+  }
+
+  .removed {
+    display: none;
+  }
+
+  .notice {
+    width: 100%;
+    margin: auto;
+  }
+
+  /* TODO: make independent of Google Ads */
+  .ads-color[type="checkbox"].filled-in:checked + span:not(.lever):after {
+    border: 2px solid var(--underline-color);
+    background-color: var(--underline-color);
+  }
+
+  @media screen and (min-width: 300px) {
+    .input-field {
+      margin-bottom: 0;
+    }
+  }
+
+  @media screen and (min-width: 600px) {
+    .row {
+      margin-bottom: 10px;
+    }
+  }
+</style>
