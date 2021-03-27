@@ -71,6 +71,10 @@ type AppSettings = {
     enableDailyClear: boolean;
     enableEditTrigger: boolean;
   };
+  accounts: {
+    ads: string;
+    analytics: string;
+  };
 };
 
 const getSettings = (): AppSettings => {
@@ -79,6 +83,10 @@ const getSettings = (): AppSettings => {
     triggers: {
       enableDailyClear: true,
       enableEditTrigger: true,
+    },
+    accounts: {
+      ads: "",
+      analytics: "",
     },
   };
 
@@ -89,8 +97,45 @@ const getSettings = (): AppSettings => {
   return JSON.parse(getProperty(settings, JSON.stringify(defaults)));
 };
 
-const updateSettings = (
-  updatesDict: Partial<Record<keyof AppSettings, unknown>>
+type ExtractPathExpressions<T, Sep extends string = "."> = Exclude<
+  keyof {
+    [P in Exclude<keyof T, symbol> as T[P] extends any[] | readonly any[]
+      ?
+          | P
+          | `${P}[${number}]`
+          | `${P}[${number}]${Sep}${Exclude<
+              ExtractPathExpressions<T[P][number]>,
+              keyof number | keyof string
+            >}`
+      : T[P] extends { [x: string]: any }
+      ? `${P}${Sep}${ExtractPathExpressions<T[P]>}` | P
+      : P]: string;
+  },
+  symbol
+>;
+
+type ValueByPathExpression<
+  T,
+  K extends ExtractPathExpressions<T, Sep>,
+  Sep extends string = "/"
+> = {
+  [P in K]: P extends `${infer F}${Sep}${infer L}`
+    ? F extends keyof T
+      ? ValueByPathExpression<
+          T[F],
+          L extends ExtractPathExpressions<T[F], Sep> ? L : never,
+          Sep
+        >
+      : never
+    : P extends keyof T
+    ? T[P]
+    : never;
+}[K];
+
+const updateSettings = <PE extends ExtractPathExpressions<AppSettings, "/">>(
+  updatesDict: {
+    [P in PE]: ValueByPathExpression<AppSettings, P>;
+  }
 ) => {
   const source = getSettings();
 
