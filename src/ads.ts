@@ -176,12 +176,26 @@ class AdsHelper {
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/first-call/dev-token}
    */
-  static get devToken() {
-    return "OzTAlzi33sZ1RedcmlPvJQ";
+  static devToken = "OzTAlzi33sZ1RedcmlPvJQ";
+
+  static authMode: "user" | "app" = "user";
+
+  static get userAuthToken() {
+    return ScriptApp.getOAuthToken();
+  }
+
+  static get appAuthToken() {
+    const service = getAppAuthService();
+    return service.getAccessToken();
   }
 
   static get authToken() {
-    return ScriptApp.getOAuthToken();
+    const { authMode } = this;
+    return authMode === "user" ? this.userAuthToken : this.appAuthToken;
+  }
+
+  static mangleId(id: string) {
+    return id.replace(/\-/g, "");
   }
 
   /**
