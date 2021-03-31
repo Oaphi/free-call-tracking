@@ -277,11 +277,11 @@ class AdsHelper {
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/rest/auth#oauth_20_credentials}
    */
-  static getAuthHeaders() {
+  static getAuthHeaders(loginCustomerId?: string) {
     const { loginId, devToken, authToken } = this;
 
     return {
-      "Authorization": `Bearer: ${authToken}`,
+      "Authorization": `Bearer ${authToken}`,
       "developer-token": devToken,
       "login-customer-id": loginId,
     };
