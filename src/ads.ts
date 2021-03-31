@@ -283,27 +283,393 @@ class AdsHelper {
     return {
       "Authorization": `Bearer ${authToken}`,
       "developer-token": devToken,
-      "login-customer-id": loginId,
+      "login-customer-id": loginCustomerId || loginId,
     };
   }
 
-  static getAccountHierarhy() {
-    const accounts = this.listAccesibleAccounts();
-    return accounts.flatMap(({ id }) => this.listAccesibleAccounts(id));
+  static getCommonFetchOpts(): Partial<GoogleAppsScript.URL_Fetch.URLFetchRequestOptions> {
+    return {
+      contentType: "application/json",
+      muteHttpExceptions: true,
+    };
   }
 
-  static listAccesibleAccounts(loginId?: string) {
-    const query = `SELECT customer_client.id FROM customer_client`;
+  /**
+   * @see {@link https://developers.google.com/google-ads/api/docs/account-management/get-account-hierarchy}
+   */
+  static getAllCustomers() {
+    const ids = this.listAccesibleAccounts();
 
-    const { success, results } = this.search<{ id: string }>(query, loginId);
+    const customers = this.listCustomers(ids);
 
-    console.log(results, success);
+    const query = `
+    SELECT
+      customer_client.client_customer,
+      customer_client.level,
+      customer_client.manager,
+      customer_client.descriptive_name,
+      customer_client.currency_code,
+      customer_client.time_zone,
+      customer_client.id
+    FROM
+      customer_client
+    WHERE
+      customer_client.level = 1
+    `;
 
-    if (!success) return [];
+    const processedIds: Partial<Record<string, 1>> = {};
 
-    console.log(results);
+    const walkAccount = (id: string, managerId = id): Customer[] => {
+      console.log(`walking customer: ${id}, manager: ${managerId}`);
 
-    return results;
+      if (processedIds[id]) return [];
+
+      const { results } = this.bulkSearch<{ customerClient: Customer }>(query, {
+        operatingCustomerId: id,
+        loginCustomerId: managerId,
+      });
+
+      processedIds[id] = 1;
+
+      return results.flatMap(({ customerClient }) => {
+        if (!customerClient.manager) return [customerClient];
+        return [customerClient, ...walkAccount(customerClient.id, managerId)];
+      });
+    };
+
+    return customers.flatMap((acc) => [acc, ...walkAccount(acc.id)]);
+  }
+
+  static getCustomerManagerLinkResourceName(
+    managerId: string,
+    clientId: string,
+    linkId: string
+  ) {
+    return `${AdsHelper.getCustomerResourceName(
+      clientId
+    )}/customerManagerLinks/${managerId}~${linkId}`;
+  }
+
+  static getCustomerClientLinkResourceName(
+    managerId: string,
+    clientId: string,
+    linkId: string
+  ) {
+    return `${AdsHelper.getCustomerResourceName(
+      managerId
+    )}/customerClientLinks/${clientId}~${linkId}`;
+  }
+
+  static getCustomerResourceName(id: string) {
+    return `customers/${id}`;
+  }
+
+  static getCustomerLink(
+    managerId: string,
+    clientId: string,
+    status: ManagerLinkStatus = "PENDING"
+  ) {
+    const name = "customer_client_link";
+
+    const query = `
+    SELECT
+      ${name}.manager_link_id,
+      ${name}.client_customer
+    FROM
+      ${name}
+    WHERE
+      ${name}.client_customer = "${AdsHelper.getCustomerResourceName(clientId)}"
+    AND ${name}.status = ${status}`;
+
+    const { results: [match] = [] } = this.search<{
+      customerClientLink: CustomerClientLink;
+    }>(query, {
+      operatingCustomerId: managerId,
+      loginCustomerId: managerId,
+    });
+
+    if (!match) return;
+
+    const { customerClientLink } = match;
+
+    return customerClientLink;
+  }
+
+  static fetchAPI<P extends object>(
+    path: string,
+    {
+      method = "get",
+      loginId,
+      payload,
+    }: { method?: "get" | "post"; loginId?: string; payload?: P }
+  ) {
+    const { base } = AdsHelper;
+
+    const res = UrlFetchApp.fetch(`${base}/${path}`, {
+      method,
+      headers: AdsHelper.getAuthHeaders(loginId),
+      ...AdsHelper.getCommonFetchOpts(),
+      payload: JSON.stringify(payload),
+    });
+
+    const code = res.getResponseCode(),
+      content = JSON.parse(res.getContentText());
+
+    const success = code >= 200 && code < 300;
+
+    return { code, success, content };
+  }
+
+  static handleCustomerLinkError(
+    managerId: string,
+    clientId: string,
+    response: AdsErrorResponse,
+    _status: ManagerLinkStatus //TODO: make used in v2
+  ) {
+    const {
+      error: {
+        details: [
+          {
+            errors: [
+              {
+                errorCode: { managerLinkError },
+                message,
+              },
+            ],
+          },
+        ],
+      },
+    }: AdsErrorResponse = response;
+
+    /**
+     * @see {@link https://developers.google.com/google-ads/api/reference/rpc/v6/ManagerLinkErrorEnum.ManagerLinkError}
+     */
+    const errorStatuses: Record<
+      ManagerLinkErrorCode,
+      (mid: string, cid: string) => boolean
+    > = {
+      ALREADY_INVITED_BY_THIS_MANAGER: () => false,
+      ALREADY_MANAGED_IN_HIERARCHY: () => false,
+      DUPLICATE_CHILD_FOUND: () => false,
+      TOO_MANY_MANAGERS: (_mid, _cid) => {
+        return false; //TODO: in v2, should trigger new manager account from pool
+      },
+      ACCOUNTS_NOT_COMPATIBLE_FOR_LINKING: () => false,
+    };
+
+    console.warn(new AdsError(managerLinkError, message), managerLinkError);
+
+    return errorStatuses[managerLinkError](managerId, clientId); //TODO: add parameters
+  }
+
+  /**
+   * @see {@link https://developers.google.com/google-ads/api/reference/rpc/v6/CustomerClientLink}
+   */
+  static mutateCustomerClientLink({
+    fromId,
+    linkId,
+    resourceName,
+    toId,
+    status = "PENDING",
+  }: MutateCustomerLinkOptions) {
+    const managerId = AdsHelper.mangleId(fromId),
+      clientId = AdsHelper.mangleId(toId);
+
+    const isCreating = status === "PENDING";
+
+    const clientLink: Partial<CustomerClientLinkPayload> = {
+      status,
+    };
+
+    //client_customer field is immutable
+    if (isCreating) clientLink.client_customer = `customers/${clientId}`;
+
+    if (!isCreating) {
+      if (!linkId && !resourceName)
+        throw new RangeError("links can't be updated without ID");
+
+      clientLink.resource_name =
+        resourceName ||
+        AdsHelper.getCustomerClientLinkResourceName(
+          managerId,
+          clientId,
+          linkId!
+        );
+    }
+
+    const op = new AdsMutatateOperation(managerId);
+    isCreating ? op.setCreate(clientLink) : op.setUpdate(clientLink);
+
+    const {
+      content,
+      success,
+    } = AdsHelper.fetchAPI(
+      `${this.getCustomerResourceName(managerId)}/customerClientLinks:mutate`,
+      { method: "post", loginId: managerId, payload: op }
+    );
+
+    if (!success)
+      return this.handleCustomerLinkError(managerId, clientId, content, status);
+
+    return true;
+  }
+
+  /**
+   * @see {@link https://developers.google.com/google-ads/api/reference/rpc/v6/CustomerManagerLink}
+   */
+  static mutateCustomerManagerLink({
+    fromId,
+    linkId,
+    loginId,
+    resourceName,
+    toId,
+    status = "PENDING",
+  }: MutateCustomerLinkOptions) {
+    const managerId = AdsHelper.mangleId(fromId),
+      clientId = AdsHelper.mangleId(toId);
+
+    const clientLink: Partial<CustomerManagerLinkPayload> = {
+      status,
+    };
+
+    if (!linkId && !resourceName)
+      throw new RangeError("links can't be updated without ID");
+
+    clientLink.resource_name =
+      resourceName ||
+      AdsHelper.getCustomerManagerLinkResourceName(
+        managerId,
+        clientId,
+        linkId!
+      );
+
+    const op = new AdsMutateOperations(clientId);
+    op.addUpdate(clientLink);
+
+    const {
+      content,
+      success,
+    } = AdsHelper.fetchAPI(
+      `${this.getCustomerResourceName(clientId)}/customerManagerLinks:mutate`,
+      { method: "post", loginId: loginId || clientId, payload: op }
+    );
+
+    if (!success)
+      return this.handleCustomerLinkError(managerId, clientId, content, status);
+
+    return true;
+  }
+
+  /**
+   * @see {@link https://developers.google.com/google-ads/api/docs/account-management/listing-accounts}
+   */
+  static listAccesibleAccounts() {
+    const { base } = AdsHelper;
+
+    const full = `${base}/customers:listAccessibleCustomers`;
+
+    const res = UrlFetchApp.fetch(full, {
+      headers: AdsHelper.getAuthHeaders(),
+      ...AdsHelper.getCommonFetchOpts(),
+    });
+
+    const code = res.getResponseCode(),
+      text = res.getContentText();
+
+    const success = code >= 200 && code < 300;
+
+    if (!success) {
+      logException("customer list", new Error(text));
+      return [];
+    }
+
+    type ListAccessibleCustomersResponse = {
+      resourceNames: string[];
+    };
+
+    const { resourceNames }: ListAccessibleCustomersResponse = JSON.parse(text);
+
+    return resourceNames.map((name) => name.replace("customers/", ""));
+  }
+
+  /**
+   * @see {@link https://developers.google.com/google-ads/api/reference/rpc/v6/CustomerService#getcustomer}
+   */
+  static listCustomers(ids: string[]): Customer[] {
+    const { base } = AdsHelper;
+
+    const requests: GoogleAppsScript.URL_Fetch.URLFetchRequest[] = ids.map(
+      (id) => ({
+        url: `${base}/customers/${id}`,
+        ...AdsHelper.getCommonFetchOpts(),
+        headers: AdsHelper.getAuthHeaders(id),
+      })
+    );
+
+    const results = UrlFetchApp.fetchAll(requests);
+
+    const succeded = results.filter((res) => {
+      const code = res.getResponseCode();
+      return code >= 200 && code < 300;
+    });
+
+    return succeded.map((res) => JSON.parse(res.getContentText()));
+  }
+
+  /**
+   * @see {@link https://developers.google.com/google-ads/api/docs/conversions/upload-calls}
+   */
+  static addCallConversion(clientId: string) {}
+}
+
+class AdsMutatateOperation {
+  operation: Partial<
+    Record<"create" | "update" | "remove" | "update_mask", unknown>
+  > = {};
+
+  constructor(public customer_id: string, public setCustomerId = true) {}
+
+  static resourceToProtoBuf<T>(resource: T) {
+    return Object.keys(resource).join(","); //TODO: conform to ProtoBuff spec
+  }
+
+  setCreate<T>(resource: T) {
+    this.operation.create = resource;
+  }
+
+  setUpdate<T>(resource: T) {
+    this.operation.update = resource;
+    this.operation.update_mask = AdsMutatateOperation.resourceToProtoBuf(
+      resource
+    );
+  }
+
+  toJSON() {
+    const { setCustomerId, operation, customer_id } = this;
+    return setCustomerId ? { operation, customer_id } : { operation };
+  }
+}
+
+class AdsMutateOperations {
+  operations: AdsMutatateOperation[] = [];
+
+  constructor(public customer_id: string) {}
+
+  addUpdate<T>(resource: T) {
+    const { operations, customer_id } = this;
+
+    const operation = new AdsMutatateOperation(customer_id, false);
+    operation.setUpdate(resource);
+
+    operations.push(operation);
+  }
+
+  toJSON() {
+    const { operations, customer_id } = this;
+    return {
+      customer_id,
+      operations: operations.map(({ operation }) => operation),
+    };
   }
 }
 
