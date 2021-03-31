@@ -47,9 +47,6 @@ type FormInfo = {
   sUrl: string;
 };
 
-const nl = (parts: TemplateStringsArray, ...args: string[]) =>
-  "\n" + parts.reduce((a, c, i) => a + c + (args[i] || ""), "");
-
 /**
  * @summary creates a form to be used with the Add-on
  */
