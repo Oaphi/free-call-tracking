@@ -1,11 +1,7 @@
 // ------------------------------------------------------------------------- New Config -----------------------------------------------------------------------------
 
 var sADDON_NAME = "Free Call Tracking";
-
-var sFORM_TITLE = "GA and GTM linking";
-var sFORM_NAME = "Free Call Tracking";
 var sSHEET_FORM = "Calls Qualification";
-
 var sVERSION_NAME = "MyVersion0";
 
 var APP_CONFIG = {
@@ -30,6 +26,15 @@ var APP_CONFIG = {
       userAgent: "User Agent",
       pageTitle: "Page Title",
       geoLocation: "Geolocation",
+      currPage: "Current Page",
+      prevPage: "Source / Previous Page",
+      name: "Free Call Tracking",
+    },
+    errors: {
+      form: {
+        duplicate:
+          "We found an Form linked to the Spreadsheet and will be using it for manual tracking.",
+      },
     },
   },
   sizes: {
@@ -93,13 +98,3 @@ const getConfig = () => APP_CONFIG;
 
 //proactively inject dependency
 TriggersApp.use(PropertiesService);
-
-// -------------------------------------------------------------------------- header --------------------------------------------------------------------------------
-
-var sTIMESTAMP = "GA Timestamp";
-var sSOURCE = "Source / Previous Page";
-var sCURR_PAGE = "Current Page";
-
-// ------------------------------------------------------------------------- msg ------------------------------------------------------------------------------------
-var sMSG_FORM_EXISTS =
-  "We found an existing form connected to the Spreadsheet and will be using it for manual tracking.";

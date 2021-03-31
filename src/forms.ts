@@ -68,7 +68,7 @@ function createForm(sMyCategory: string, sMyEvent: string) {
     }
 
     alert(
-      sMSG_FORM_EXISTS +
+      APP_CONFIG.strings.errors.form.duplicate +
         (canAccess
           ? ""
           : "\nUnfortunately, we couldn't access it. Please, check if it exists or ask the owner to share")
@@ -77,7 +77,22 @@ function createForm(sMyCategory: string, sMyEvent: string) {
     return { sFormId: "", sUrl: "" };
   }
 
-  var form = FormApp.create(sFORM_NAME).setAllowResponseEdits(false);
+  const {
+    strings: {
+      form: {
+        userAgent,
+        pageTitle,
+        currPage,
+        prevPage,
+        geoLocation,
+        timestamp,
+        visitorId,
+        name,
+      },
+    },
+  } = APP_CONFIG;
+
+  const form = FormApp.create(name).setAllowResponseEdits(false);
 
   try {
     form.setRequireLogin(false);
@@ -85,17 +100,11 @@ function createForm(sMyCategory: string, sMyEvent: string) {
     console.warn(error);
   }
 
-  const {
-    strings: {
-      form: { userAgent, pageTitle, geoLocation, timestamp, visitorId },
-    },
-  } = APP_CONFIG;
-
   form.addTextItem().setTitle(timestamp);
   form.addTextItem().setTitle(visitorId);
   form.addTextItem().setTitle(geoLocation);
-  form.addTextItem().setTitle(sSOURCE);
-  form.addTextItem().setTitle(sCURR_PAGE);
+  form.addTextItem().setTitle(prevPage);
+  form.addTextItem().setTitle(currPage);
   form.addTextItem().setTitle(pageTitle);
   form.addTextItem().setTitle(userAgent);
 
