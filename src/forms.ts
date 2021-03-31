@@ -47,12 +47,15 @@ type FormInfo = {
   sUrl: string;
 };
 
+const nl = (parts: TemplateStringsArray, ...args: string[]) =>
+  "\n" + parts.reduce((a, c, i) => a + c + (args[i] || ""), "");
+
 /**
  * @summary creates a form to be used with the Add-on
  */
 function createForm(sMyCategory: string, sMyEvent: string) {
-  var ss = SpreadsheetApp.getActive();
-  var sCurrFormUrl = ss.getFormUrl();
+  const ss = SpreadsheetApp.getActive();
+  const sCurrFormUrl = ss.getFormUrl();
 
   if (sCurrFormUrl) {
     console.log(`found form url: ${sCurrFormUrl}`);
@@ -69,9 +72,7 @@ function createForm(sMyCategory: string, sMyEvent: string) {
 
     alert(
       APP_CONFIG.strings.errors.form.duplicate +
-        (canAccess
-          ? ""
-          : "\nUnfortunately, we couldn't access it. Please, check if it exists or ask the owner to share")
+        (canAccess ? "" : nl`${APP_CONFIG.strings.errors.form.inaccessible}`)
     );
 
     return { sFormId: "", sUrl: "" };
@@ -134,11 +135,7 @@ function createForm(sMyCategory: string, sMyEvent: string) {
       .build()
   );
 
-  const formId = form.getId();
-
-  console.log(`created form: ${formId}`);
-
-  return getPrefilledUrl(formId);
+  return getPrefilledUrl(form.getId());
 }
 
 interface NoAnalyticsStatus {

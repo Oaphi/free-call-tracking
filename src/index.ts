@@ -34,6 +34,8 @@ var APP_CONFIG = {
       form: {
         duplicate:
           "We found an Form linked to the Spreadsheet and will be using it for manual tracking.",
+        inaccessible:
+          "Unfortunately, we couldn't access it. Please, check if it exists or ask the owner to share",
       },
     },
   },
