@@ -217,28 +217,22 @@ class AdsHelper {
 
     const res = UrlFetchApp.fetch(full, {
       method: "post",
-      contentType: "application/json",
-      headers: {
-        ...AdsHelper.getAuthHeaders(),
-      },
-      muteHttpExceptions: true,
-      followRedirects: true,
-      payload,
+      headers: AdsHelper.getAuthHeaders(loginCustomerId || loginId),
+      ...AdsHelper.getCommonFetchOpts(),
+      payload: JSON.stringify(payload),
     });
 
     const code = res.getResponseCode(),
       resText = res.getContentText();
 
-    console.log(code, resText);
-
     const success = code >= 200 && code < 300;
 
-    //TODO: expand type definition
-    const { results }: { results: R[] } = success
+    const { results = [], nextPageToken }: SearchGoogleAdsResponse<R> = success
       ? JSON.parse(resText)
       : { results: [] };
 
     return {
+      nextPageToken,
       results,
       error: success ? "" : resText,
       success,
