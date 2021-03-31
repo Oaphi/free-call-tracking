@@ -6,12 +6,13 @@
     <title>Settings</title>
 
     <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-    <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Icons"
     />
 
     <?!= style ?>
@@ -26,7 +27,7 @@
       </div>
       <div class="preload-wrapper">
         <div id="preload" class="progress light-blue darken-3">
-          <div class="indeterminate light-blue"></div>
+          <div class="indeterminate white"></div>
         </div>
       </div>
     </header>
@@ -83,7 +84,7 @@
           </div>
         </div>
         <div class="row">
-          <div class="col s12">
+          <div class="input-field col s12">
             <input
               id="gaid"
               type="text"
@@ -92,6 +93,12 @@
               data-tooltip="Your Google Analytics Id"
             />
             <label for="gaid">Analytics Id</label>
+          </div>
+          <div class="input-field col s12">
+            <select id="adsid">
+              <option value="" disabled selected>Select</option>
+            </select>
+            <label>Google Ads Account</label>
           </div>
         </div>
         <div class="row">
@@ -155,6 +162,8 @@
         });
 
         window.addEventListener("DOMContentLoaded", async (ev) => {
+          M.AutoInit();
+
           await gscript(
             "sendPageview",
             getCid(),
@@ -222,7 +231,8 @@
 
           const {
             triggers: { enableDailyClear, enableEditTrigger },
-          } = await run({ funcName: "getSettings" });
+            accounts: { ads = "", analytics = "" },
+          } = await gscript("getSettings");
 
           const clear = document.querySelector("#clear");
           const edit = document.querySelector("#edit");
@@ -254,30 +264,87 @@
             })
           );
 
-          const gaid = document.querySelector("#gaid");
-          gaid.value = await run({ funcName: "getProfileID" });
+          const gaInput = document.getElementById("gaid");
+          const adsSel = document.getElementById("adsid");
 
-          gaid.addEventListener(
+          gaInput.value = analytics;
+
+          M.updateTextFields();
+
+          const options = await getAdsAccounts(({ id, descriptiveName }) => [
+            id,
+            descriptiveName,
+          ]);
+
+          addOptions(adsSel, options);
+
+          console.debug(typeof ads, ads, adsSel);
+
+          M.FormSelect.getInstance(adsSel).destroy();
+
+          adsSel.value = ads; //TODO: change
+
+          const inst = M.FormSelect.init(adsSel);
+
+          document.addEventListener(
             "change",
-            async () =>
-              await run({
-                funcName: "setProfileID",
-                params: [gaid.value],
-                onSuccess: () => notify(`Analytics Id updated`, primBckg),
-              })
+            async ({ target, currentTarget }) => {
+              if (target === currentTarget) return;
+
+              const { id } = target;
+
+              const handlerMap = {
+                gaid: {
+                  action: ({ value }) =>
+                    Promise.all([
+                      gscript("setProfileID", value),
+                      gscript("updateSettings", {
+                        "accounts/analytics": value,
+                      }),
+                    ]),
+                  onSuccess: () => notify(`Analytics Id updated`, primBckg),
+                  onFailure: () =>
+                    notify(`Failed to update Analytics Id`, failureBckg),
+                },
+                adsid: {
+                  action: ({ value }) =>
+                    gscript("updateSettings", {
+                      "accounts/ads": value,
+                    }),
+                  onSuccess: () => notify(`Ads Account updated`, primBckg),
+                  onFailure: () =>
+                    notify(`Failed to update Ads Account`, failureBckg),
+                },
+              };
+
+              const { action, onSuccess, onFailure } = handlerMap[id];
+
+              try {
+                show(preloader, hideCls);
+
+                const status = await action(target);
+
+                status ? onSuccess() : onFailure();
+              } catch ({ message }) {
+                await gscript("logException", "settings", message);
+                onFailure();
+              } finally {
+                hide(preloader, hideCls);
+              }
+            }
           );
 
-          const reset = document.querySelector("#reset");
+          const reset = document.getElementById("reset");
 
           reset.addEventListener("click", async () => {
-            show(preloader, hideCls);
-
             try {
+              show(preloader, hideCls);
+              disable(reset);
+
               await run({
                 funcName: "resetAddon",
-                onEnd: () => hide(preloader, hideCls),
                 onSuccess: ({ status, errors }) => {
-                  gaid.value = "";
+                  gaInput.value = "";
                   tpicker.value = buildTime();
                   clear.checked = true;
                   edit.checked = true;
@@ -291,6 +358,7 @@
               await gscript("logException", "settings", message);
             } finally {
               hide(preloader, hideCls);
+              enable(reset);
             }
           });
 
@@ -299,7 +367,6 @@
       })();
     </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.1.0/uuidv4.min.js"></script>
   </body>
 </html>
