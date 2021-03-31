@@ -134,6 +134,7 @@ const getAppAuthService = () => {
     "https://accounts.google.com/o/oauth2/v2/auth"
   );
   service.setPropertyStore(PropertiesService.getScriptProperties());
+  service.setCache(CacheService.getScriptCache());
   service.setClientId(id);
   service.setClientSecret(secret);
   service.setScope("https://www.googleapis.com/auth/adwords");
@@ -147,6 +148,11 @@ const authCallback = (request: object) => {
   const service = getAppAuthService();
   const status = service.handleCallback(request);
   return HtmlService.createHtmlOutput(status ? "success" : "failure");
+};
+
+const checkAppAccess = () => {
+  const service = getAppAuthService();
+  console.log(service.hasAccess());
 };
 
 const switchAppAccount = () => {
