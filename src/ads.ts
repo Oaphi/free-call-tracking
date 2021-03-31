@@ -58,6 +58,13 @@ type SearchGoogleAdsResponse<R> = {
   fieldMask: string;
 };
 
+type ManagerLinkErrorCode =
+  | "ALREADY_INVITED_BY_THIS_MANAGER"
+  | "ALREADY_MANAGED_IN_HIERARCHY"
+  | "DUPLICATE_CHILD_FOUND"
+  | "TOO_MANY_MANAGERS"
+  | "ACCOUNTS_NOT_COMPATIBLE_FOR_LINKING";
+
 type AdsErrorResponse = {
   error: {
     code: number;
@@ -72,11 +79,7 @@ type AdsErrorResponse = {
         };
         message: string;
         errorCode: {
-          managerLinkError:
-            | "ALREADY_MANAGED_IN_HIERARCHY"
-            | "DUPLICATE_CHILD_FOUND"
-            | "ACCOUNTS_NOT_COMPATIBLE_FOR_LINKING"
-            | "TOO_MANY_MANAGERS"; //TODO: expand
+          managerLinkError: ManagerLinkErrorCode; //TODO: expand
         };
       }[];
     }[];
@@ -85,9 +88,7 @@ type AdsErrorResponse = {
 
 type Values<T> = T[keyof T];
 
-type AdsErrorCodes = Values<
-  AdsErrorResponse["error"]["details"][number]["errors"][number]["errorCode"]
->;
+type AdsErrorCodes = ManagerLinkErrorCode;
 
 class AdsError extends Error {
   constructor(code: AdsErrorCodes, message: string) {
