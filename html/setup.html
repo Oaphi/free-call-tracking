@@ -11,72 +11,14 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
     />
-    <style>
-      :root {
-        --analytics-color: #e3f2fd;
-        --gtm-color: #f9fbe7;
-        --ads-color: #ffebee;
-        --underline-color: #9e9e9e;
-      }
-
-      #toast-container {
-        bottom: auto !important;
-        left: auto !important;
-        top: 20%;
-      }
-
-      #toast-container .toast {
-        cursor: pointer;
-      }
-
-      #toast-container .toast::after {
-        font-family: "Material Icons";
-        content: "close";
-        font-size: 1.5rem;
-        font-weight: 300;
-        float: right;
-        padding-left: 3rem;
-      }
-
-      .toast-error {
-        background-color: var(--theme-failure-color);
-      }
-
-      .removed {
-        display: none;
-      }
-
-      .notice {
-        width: 100%;
-        margin: auto;
-      }
-
-      /* TODO: make independent of Google Ads */
-      .ads-color[type="checkbox"].filled-in:checked + span:not(.lever):after {
-        border: 2px solid var(--underline-color);
-        background-color: var(--underline-color);
-      }
-
-      @media screen and (min-width: 300px) {
-        .input-field {
-          margin-bottom: 0;
-        }
-      }
-
-      @media screen and (min-width: 600px) {
-        .row {
-          margin-bottom: 10px;
-        }
-      }
-    </style>
-
+    <?!= setupStyle ?>
     <?!= style ?>
   </head>
 
   <body class="hidden">
     <div class="preload-wrapper">
       <div id="Preloader1" class="progress light-blue darken-3 hidden">
-        <div class="indeterminate light-blue"></div>
+        <div class="indeterminate white"></div>
       </div>
     </div>
 
@@ -200,6 +142,7 @@
     </form>
 
     <?!= run ?>
+    <?!= utils ?>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
@@ -215,10 +158,6 @@
             preloader: "#Preloader1",
           },
         };
-
-        const disableBtn = (id) => $(`#${id}`).addClass("disabled");
-
-        const enableBtn = (id) => $(`#${id}`).removeClass("disabled");
 
         const showLoader = () => $(config.ids.preloader).removeClass("hidden");
 
@@ -278,10 +217,14 @@
 
           showLoader();
 
-          const customers = await getAdsAccounts();
+          const customers = await getAdsAccounts(({ id, descriptiveName }) => ({
+            name: descriptiveName,
+            id,
+          }));
+
           handleChange("Ads", "id")(customers);
 
-          $("#submit").click(deployAddon);
+          $("#submit").click(debounce(deployAddon));
 
           $("#cancel").click(closeForm);
 
@@ -312,23 +255,6 @@
             duration = 100;
 
           checked ? adsForm.show(duration) : adsForm.hide(duration);
-        };
-
-        const getAdsAccounts = async () => {
-          try {
-            const customers = await run({
-              funcName: "getAllAccounts",
-            });
-
-            return customers.map(({ id, descriptiveName }) => ({
-              name: descriptiveName,
-              id,
-            }));
-          } catch (error) {
-            console.warn(error);
-            showError(`Failed to list Google Ads accounts!`, 4e3);
-            return [];
-          }
         };
 
         /**
@@ -407,24 +333,31 @@
           getEntities("Cont", "Work", "path", "getWorkspacesArrByCont");
 
         async function deployAddon() {
-          const [gaAccount, profileId, gtmAccount, container, workspace] = $(
-            "#GaAcc, #Prop, #Acc, #Cont, #Work"
-          ).map((i, el) => $(el).val());
+          const [
+            gaAccount,
+            gaAccountId,
+            gtmAccountPath,
+            gtmContainerPath,
+            gtmWorkspacePath,
+            adsAccount,
+          ] = $("#GaAcc, #Prop, #Acc, #Cont, #Work, #Ads").map((i, el) =>
+            $(el).val()
+          );
 
-          const sMyCategory = $("#MyCategory").val() || "Call";
-          const sMyEvent = $("#MyEvent").val() || "Call";
+          console.debug(adsAccount, $("#Ads"));
 
           const willLinkAds = $("#gAdsSwitch").is(":checked");
-
-          notify(willLinkAds); //TODO: remove
 
           const issues = [];
 
           if (!gaAccount) issues.push("Please select an Analytics Account!");
-          if (!profileId) issues.push("Please select an Analytics Property!");
-          if (!gtmAccount) issues.push("Please select a Tag Manager Account!");
-          if (!container) issues.push("Please select a Container!");
-          if (!workspace) issues.push("Please select a Workspace!");
+          if (!gaAccountId) issues.push("Please select an Analytics Property!");
+          if (!gtmAccountPath)
+            issues.push("Please select a Tag Manager Account!");
+          if (!gtmContainerPath) issues.push("Please select a Container!");
+          if (!gtmWorkspacePath) issues.push("Please select a Workspace!");
+          if (willLinkAds && !adsAccount)
+            issues.push("Please select an Ads Account");
 
           const { error } = config.classes.notify;
 
@@ -432,7 +365,7 @@
             return issues.forEach((msg) => notify(msg, 4e3, error));
 
           showLoader();
-          disableBtn("submit");
+          disable("submit");
 
           if (willLinkAds) {
             await run({
@@ -448,19 +381,25 @@
             });
           }
 
+          const gaCategory = $("#MyCategory").val() || "Call";
+          const gaEvent = $("#MyEvent").val() || "Call";
+
           await run({
             funcName: "deployAddon",
             params: [
-              profileId,
-              container,
-              workspace,
-              sMyCategory,
-              sMyEvent,
-              gtmAccount,
+              {
+                gaAccountId,
+                gtmContainerPath,
+                gtmWorkspacePath,
+                gtmAccountPath,
+                gaCategory,
+                gaEvent,
+              },
+              adsAccount,
             ],
             onSuccess: closeForm,
             onFailure: showError,
-            onEnd: () => enableBtn("submit"),
+            onEnd: () => enable("submit"),
           });
         }
 
