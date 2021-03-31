@@ -239,6 +239,41 @@ class AdsHelper {
     };
   }
 
+  static bulkSearch<R>(
+    query: string,
+    { pages = Infinity, ...rest }: BulkSearchOptions
+  ) {
+    let currentPageToken: string | undefined,
+      currentPage = 0;
+
+    const fullResults: R[] = [],
+      errors: string[] = [];
+
+    do {
+      const { results, nextPageToken = "", error, success } = this.search<R>(
+        query,
+        {
+          ...rest,
+          pageToken: currentPageToken,
+        }
+      );
+
+      success || errors.push(error);
+
+      fullResults.push(...results);
+
+      currentPageToken = nextPageToken;
+
+      currentPage += 1;
+    } while (currentPageToken && currentPage < pages);
+
+    return {
+      results: fullResults,
+      errors,
+      success: !errors.length,
+    };
+  }
+
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/rest/auth#oauth_20_credentials}
    */
