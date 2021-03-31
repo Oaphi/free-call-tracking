@@ -24,6 +24,20 @@
 
   const close = () => google.script.host.close();
 
+  const debounce = (func, seconds = 1) => {
+    let debounced = false;
+
+    return (...args) => {
+      if (debounced) return;
+
+      debounced = true;
+
+      setTimeout(() => (debounced = false), seconds * 1e3);
+
+      return func(...args);
+    };
+  };
+
   const getCid = () => {
     const cidName = "fct_cid";
 
@@ -42,5 +56,34 @@
     } finally {
       return cid;
     }
+  };
+
+  const getAdsAccounts = async (mapper) => {
+    try {
+      const customers = await gscript("getAllAccounts");
+
+      return customers.map(mapper);
+    } catch (error) {
+      console.warn(error);
+      showError(`Failed to list Google Ads accounts!`, 4e3);
+      return [];
+    }
+  };
+
+  /**
+   * @param {HTMLSelectElement} sel
+   * @param {[string, string][]} options
+   * @return {HTMLSelectElement}
+   */
+  const addOptions = (sel, options) => {
+    const opts = options.map(([val, txt]) => {
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = txt;
+      return opt;
+    });
+
+    sel.append(...opts);
+    return sel;
   };
 </script>
