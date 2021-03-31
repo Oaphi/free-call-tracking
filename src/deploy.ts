@@ -56,8 +56,10 @@ function deployAddonGo() {
     "html",
     "setup.html",
     {
+      utils: "html",
       run: "html",
       style: "html",
+      setupStyle: "html/css",
     },
     {
       ArrAccs: gtagAccounts,
@@ -250,27 +252,45 @@ const installPageViewTrigger = ({
     : trgService.create(trgConfig, path);
 };
 
+type AddonDeploymentOptions = {
+  gaAccountId: string;
+  gtmContainerPath: string;
+  gtmWorkspacePath: string;
+  gtmAccountPath: string;
+  gaCategory: string;
+  gaEvent: string;
+  adsAccountId: string;
+};
+
 /**
  * @summary installs GTM container and variables
  */
-function deployAddon(
-  gaAccountID: string,
-  containerPath: string,
-  wspacePath: string,
-  sMyCategory: string,
-  sMyEvent: string,
-  accountId: string
-) {
-  const { sUrl: sTagCommand } = createForm(sMyCategory, sMyEvent);
+function deployAddon({
+  gaAccountId,
+  gtmContainerPath,
+  gtmWorkspacePath,
+  gtmAccountPath,
+  gaCategory,
+  gaEvent,
+  adsAccountId,
+}: AddonDeploymentOptions) {
+  const gaStatus = setProfileID(gaAccountId); //TODO: move analytics ID entirely to settings
 
-  const status = setProfileID(gaAccountID);
+  if (!gaStatus) return showMsg("Failed to save Analytics ID!");
 
-  if (!status) return showMsg("Failed to save Analytics ID!");
+  const adsStatus = updateSettings({
+    "accounts/ads": adsAccountId,
+    "accounts/analytics": gaAccountId,
+  });
+
+  if (!adsStatus) return showMsg("Failed to save Ads Account ID!");
+
+  const { sUrl: sTagCommand } = createForm(gaCategory, gaEvent);
 
   if (!sTagCommand) return showMsg("Failed to create tracking Form!");
 
   try {
-    const container = HelpersTagManager.getContainer(containerPath);
+    const container = HelpersTagManager.getContainer(gtmContainerPath);
 
     if (!container || !container.containerId)
       return showMsg(`Failed to get GTM container`);
@@ -293,9 +313,9 @@ function deployAddon(
       load: `${prefix}Window Loaded`,
     };
 
-    const vars = HelpersTagManager.listVariables(wspacePath);
+    const vars = HelpersTagManager.listVariables(gtmWorkspacePath);
 
-    const VModel = new VariableModel(vars, wspacePath);
+    const VModel = new VariableModel(vars, gtmWorkspacePath);
 
     VModel.createOrUpdateJS(varNames.title, "document.title");
 
@@ -326,30 +346,31 @@ function deployAddon(
       getUserDefinedVariables_("cid")
     );
 
-    const triggers = HelpersTagManager.listTriggers(wspacePath);
+    const triggers = HelpersTagManager.listTriggers(gtmWorkspacePath);
 
     const { triggerId } = installWindowLoadedTrigger(
       triggers,
-      wspacePath,
+      gtmWorkspacePath,
       triggerNames.load
     );
 
-    const tags = HelpersTagManager.listTags(wspacePath);
+    const tags = HelpersTagManager.listTags(gtmWorkspacePath);
 
     const commonBackoffOptions: Pick<
       BackoffOptions<any>,
-      "comparator" | "scheduler" | "threshold"
+      "comparator" | "scheduler" | "threshold" | "retries"
     > = {
       comparator: ({ code }) => code !== 429,
       scheduler: (wait) => Utilities.sleep(wait),
-      threshold: 1e3,
+      threshold: 2e3,
+      retries: 5,
     };
 
     backoffSync(createOrUpdateTag, {
       onBeforeBackoff: () =>
         console.log(`quota hit: ${createOrUpdateTag.name}`),
       ...commonBackoffOptions,
-    })(tags, tagNames.img, wspacePath, {
+    })(tags, tagNames.img, gtmWorkspacePath, {
       type: "img",
       parameter: [
         { type: "boolean", value: "true", key: "useCacheBuster" },
@@ -363,7 +384,7 @@ function deployAddon(
       onBeforeBackoff: () =>
         console.warn(`quota hit: ${versionWorkspace.name}`),
       ...commonBackoffOptions,
-    })(wspacePath, sVERSION_NAME);
+    })(gtmWorkspacePath, sVERSION_NAME);
 
     const { code, containerVersion } = backoffSync(republishContainer, {
       onBeforeBackoff: () =>
@@ -377,7 +398,7 @@ function deployAddon(
 
     //save GTM info;
     const gtmStatus = setGtmInfo({
-      accountId: accountId.replace("accounts/", ""),
+      accountId: gtmAccountPath.replace("accounts/", ""),
       containerId,
       workspaceId: version.workspaceId,
       versionId: containerVersionId!,
