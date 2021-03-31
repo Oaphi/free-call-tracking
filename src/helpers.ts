@@ -178,9 +178,7 @@ const objectToQuery = (
   const output: string[] = [];
 
   Object.entries(source).forEach(([key, val]) => {
-    if (val === null || val === undefined) {
-      return;
-    }
+    if (val === null || val === undefined) return;
 
     const isObj = typeof val === "object" && val;
 
@@ -263,6 +261,22 @@ const getHighAccessProperty = (key: string, def?: any) => {
 };
 
 /**
+ * @summary gets Analytics profile ID
+ */
+const getProfileID = ({ onError = console.warn } = {}): string => {
+  try {
+    const {
+      properties: { profile },
+    } = APP_CONFIG;
+
+    return getHighAccessProperty(profile) || "";
+  } catch (error) {
+    onError(error);
+    return "";
+  }
+};
+
+/**
  * @summary sets Analytics profile ID
  */
 const setProfileID = (sID: string) => {
@@ -302,22 +316,6 @@ const getGtmInfo = (): GtmInfo => {
     properties: { gtm },
   } = APP_CONFIG;
   return JSON.parse(getProperty(gtm, "{}"));
-};
-
-/**
- * @summary gets Analytics profile ID
- */
-const getProfileID = ({ onError = console.warn } = {}): string => {
-  try {
-    const {
-      properties: { profile },
-    } = APP_CONFIG;
-
-    return getHighAccessProperty(profile) || "";
-  } catch (error) {
-    onError(error);
-    return "";
-  }
 };
 
 /**
