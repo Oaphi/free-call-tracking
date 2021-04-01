@@ -60,6 +60,11 @@ var APP_CONFIG = {
   ids: {
     analytics: "UA-168009246-1",
   },
+  ads: {
+    conversions: {
+      call: "FCT Call Conversions",
+    },
+  },
   tagManager: {
     versions: {
       main: "MyVersion0",
