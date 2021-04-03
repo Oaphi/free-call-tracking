@@ -93,7 +93,7 @@ const rescheduleClearTrigger = ({
 };
 
 const makeNoGAstatus = (): NoAnalyticsStatus => ({
-  status: true,
+  status: false,
   dismissed: false,
 });
 
@@ -155,7 +155,7 @@ const setGaInstallDismissed = ({
 const promptUAinstall = () => {
   const { dismissed, status } = getGaInstalledDismissed();
 
-  if (!status) return;
+  if (!status || dismissed) return;
 
   const ui = SpreadsheetApp.getUi();
 
