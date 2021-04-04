@@ -253,10 +253,10 @@ const installPageViewTrigger = ({
 };
 
 type AddonDeploymentOptions = {
-  gaAccountId: string;
   gtmContainerPath: string;
   gtmWorkspacePath: string;
   gtmAccountPath: string;
+  gaProfile: string;
   gaCategory: string;
   gaEvent: string;
   adsAccountId: string;
@@ -266,21 +266,21 @@ type AddonDeploymentOptions = {
  * @summary installs GTM container and variables
  */
 function deployAddon({
-  gaAccountId,
   gtmContainerPath,
   gtmWorkspacePath,
   gtmAccountPath,
+  gaProfile,
   gaCategory,
   gaEvent,
   adsAccountId,
 }: AddonDeploymentOptions) {
-  const gaStatus = setProfileID(gaAccountId); //TODO: move analytics ID entirely to settings
+  const gaStatus = setProfileID(gaProfile); //TODO: move analytics ID entirely to settings
 
   if (!gaStatus) return showMsg("Failed to save Analytics ID!");
 
   const adsStatus = updateSettings({
     "accounts/ads": adsAccountId,
-    "accounts/analytics": gaAccountId,
+    "accounts/analytics": gaProfile,
   });
 
   if (!adsStatus) return showMsg("Failed to save Ads Account ID!");
