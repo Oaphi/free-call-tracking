@@ -65,6 +65,11 @@ var APP_CONFIG = {
       call: "FCT Call Conversions",
     },
   },
+  analytics: {
+    goals: {
+      name: "FCT Call Goal",
+    },
+  },
   tagManager: {
     versions: {
       main: "MyVersion0",
