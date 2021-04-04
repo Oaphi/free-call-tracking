@@ -116,6 +116,11 @@
     color: var(--theme-primary-color);
   }
 
+  input[type="checkbox"].filled-in:checked + span:not(.lever):after {
+    border: 2px solid var(--theme-primary-color);
+    background-color: var(--theme-primary-color);
+  }
+
   .switch label input[type="checkbox"]:checked + .lever {
     background-color: var(--theme-primary-color);
   }
@@ -148,5 +153,9 @@
 
   .hidden {
     visibility: hidden;
+  }
+
+  .fixed {
+    position: fixed;
   }
 </style>
