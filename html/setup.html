@@ -17,7 +17,7 @@
 
   <body class="hidden">
     <div class="preload-wrapper">
-      <div id="Preloader1" class="progress light-blue darken-3 hidden">
+      <div id="Preloader1" class="progress light-blue darken-3 fixed hidden">
         <div class="indeterminate white"></div>
       </div>
     </div>
@@ -43,6 +43,29 @@
               <option value="" disabled selected>Select</option>
             </select>
             <label>Select your Google Analytics property</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="input-field col s12">
+            <select id="Prof" name="Prof">
+              <option value="" disabled selected>Select</option>
+            </select>
+            <label>Select your Google Analytics profile</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col s12">
+            <label>
+              <input
+                id="createGoal"
+                name="createGoal"
+                class="filled-in"
+                type="checkbox"
+              />
+              <span>Create Analytics Event Goal</span>
+            </label>
           </div>
         </div>
       </div>
@@ -117,7 +140,7 @@
 
         <div class="input-field col s6 m2">
           <input placeholder="Call" id="MyEvent" type="text" />
-          <label for="MyEvent">Event</label>
+          <label for="MyEvent">Action</label>
         </div>
 
         <div class="input-field col s6 m3">
@@ -152,6 +175,14 @@
           classes: {
             notify: {
               error: "toast-error",
+              success: "primary-background",
+              failure: "failure-background",
+            },
+          },
+          times: {
+            notify: {
+              fast: 1e3,
+              slow: 4e3,
             },
           },
           ids: {
@@ -178,12 +209,8 @@
          * @param {HTMLSelectElement} selectElement
          */
         const removeOptions = (selectElement) => {
-          const {
-            options: { length },
-            options,
-          } = selectElement;
-
-          for (const opt of options) opt.remove();
+          const { options } = selectElement;
+          [...options].forEach((o) => o.remove());
         };
 
         function resetSelectPropagation() {
@@ -202,13 +229,18 @@
             gAdsSwitch: changeAdsFormVisibility,
             GaAcc: formChangeGaAccount,
             Acc: formChangeAccount,
+            Prop: formChangeGaProperty,
             Cont: formChangeContainer,
           };
 
           const $doc = $(document);
 
           Object.entries(changeHandlers).forEach(([id, handler]) =>
-            $doc.on("change", `#${id}`, handler)
+            $doc.on("change", `#${id}`, async (...args) => {
+              showLoader();
+              await handler(...args);
+              hideLoader();
+            })
           );
 
           resetSelectPropagation();
@@ -262,14 +294,12 @@
          * @param {string} prop
          */
         const handleChange = (id, prop) => (data) => {
-          hideLoader();
-
           const sel = document.getElementById(id);
           removeOptions(sel);
 
           const { length } = data;
 
-          data.unshift({ name: "Select", path: "" });
+          data.unshift({ name: "Select", [prop]: "" });
 
           const options = data.map((item) => addOption(item.name, item[prop]));
 
@@ -283,28 +313,32 @@
          */
         const handleChangeFailure = (selId) => (err) => {
           $(`#${selId}`).find("option:first").prop("selected", true);
-
           $(`#${selId}`).formSelect();
-
           showError(err);
         };
 
-        const formChangeGaAccount = async () => {
-          const selId = "#GaAcc";
-
-          const sAccId = $(selId).val();
-          if (!sAccId) return;
-          showLoader();
-
+        const formChangeGaAccount = async ({ target: { value } }) => {
           const { status, properties } = await run({
             funcName: "getGaPropertiesArrByAcc",
-            params: [sAccId],
-            onFailure: handleChangeFailure(selId),
+            params: [value],
+            onFailure: handleChangeFailure("#GaAcc"),
           });
 
           if (!status) return showError(`Failed to load Analytics properties!`);
 
           handleChange("Prop", "id")(properties);
+        };
+
+        const formChangeGaProperty = async ({ target: { value } }) => {
+          const sAccId = $("#GaAcc").val();
+
+          const profiles = await run({
+            funcName: "getGaProfiles",
+            params: [sAccId, value],
+            onFailure: handleChangeFailure("#GaAcc"),
+          });
+
+          handleChange("Prof", "id")(profiles);
         };
 
         /**
@@ -313,17 +347,18 @@
          * @param {string} prop
          * @param {string} handlerName
          */
-        const getEntities = (selId, subSelId, prop, handlerName) => {
+        const getEntities = async (selId, subSelId, prop, handlerName) => {
           const sAccPath = $(`#${selId}`).val();
 
           if (!sAccPath) return;
 
-          showLoader();
+          const entities = await run({
+            funcName: handlerName,
+            params: [sAccPath],
+            onFailure: handleChangeFailure(selId),
+          });
 
-          google.script.run
-            .withFailureHandler(handleChangeFailure(selId))
-            .withSuccessHandler(handleChange(subSelId, prop))
-            [handlerName](sAccPath);
+          handleChange(subSelId, prop)(entities);
         };
 
         const formChangeAccount = () =>
@@ -335,23 +370,23 @@
         async function deployAddon() {
           const [
             gaAccount,
-            gaAccountId,
+            gaProperty,
+            gaProfile,
             gtmAccountPath,
             gtmContainerPath,
             gtmWorkspacePath,
             adsAccount,
-          ] = $("#GaAcc, #Prop, #Acc, #Cont, #Work, #Ads").map((i, el) =>
+          ] = $("#GaAcc, #Prop, #Prof, #Acc, #Cont, #Work, #Ads").map((i, el) =>
             $(el).val()
           );
 
-          console.debug(adsAccount, $("#Ads"));
-
           const willLinkAds = $("#gAdsSwitch").is(":checked");
+          const willCreateGoal = $("#createGoal").is(":checked");
 
           const issues = [];
 
           if (!gaAccount) issues.push("Please select an Analytics Account!");
-          if (!gaAccountId) issues.push("Please select an Analytics Property!");
+          if (!gaProperty) issues.push("Please select an Analytics Property!");
           if (!gtmAccountPath)
             issues.push("Please select a Tag Manager Account!");
           if (!gtmContainerPath) issues.push("Please select a Container!");
@@ -359,10 +394,15 @@
           if (willLinkAds && !adsAccount)
             issues.push("Please select an Ads Account");
 
+          if (willCreateGoal && !gaProfile)
+            issues.push(`Please select an Analytics Profile!`);
+
           const { error } = config.classes.notify;
 
           if (issues.length)
-            return issues.forEach((msg) => notify(msg, 4e3, error));
+            return issues.forEach((msg) =>
+              notify(msg, config.times.notify.slow, error)
+            );
 
           showLoader();
           disable("submit");
@@ -371,11 +411,15 @@
             await run({
               funcName: "linkAllAccounts",
               onFailure: () =>
-                showError(`Failed to link your Ads accounts!`, 4e3),
+                showError(
+                  `Failed to link your Ads accounts!`,
+                  config.times.notify.slow
+                ),
               onSuccess: ({ length }) => {
                 notify(
                   `Linked ${length} Ads account${length === 1 ? "" : "s"}`,
-                  4e3
+                  config.times.notify.slow,
+                  config.classes.notify.success
                 );
               },
             });
@@ -384,11 +428,29 @@
           const gaCategory = $("#MyCategory").val() || "Call";
           const gaEvent = $("#MyEvent").val() || "Call";
 
+          if (willCreateGoal) {
+            const goalStatus = await gscript("createEventGoal", {
+              gaAccount,
+              gaProperty,
+              gaProfile,
+              gaCategory,
+              gaEvent,
+            });
+
+            goalStatus
+              ? notify(
+                  `Created Analytics Goal`,
+                  config.times.notify.slow,
+                  config.classes.notify.success
+                )
+              : showError(`Failed to create Analytics Goal!`);
+          }
+
           await run({
             funcName: "deployAddon",
             params: [
               {
-                gaAccountId,
+                gaProperty,
                 gtmContainerPath,
                 gtmWorkspacePath,
                 gtmAccountPath,
