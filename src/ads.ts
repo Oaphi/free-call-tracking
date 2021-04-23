@@ -1,7 +1,66 @@
+type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}`
+  ? `${Lowercase<T>}${Capitalize<SnakeToCamel<U>>}`
+  : S;
+
+type SnakeToCamelObj<T> = T extends object
+  ? {
+      [K in keyof T as SnakeToCamel<K & string>]: SnakeToCamelObj<T[K]>;
+    }
+  : T;
+
+type Values<T> = T[keyof T];
+
+type OmitArrKeys<T> = Exclude<keyof T, keyof (any[] | readonly any[])>;
+
+type ExtractProp<T extends object, K extends string> = {
+  [P in OmitArrKeys<T>]: T[P] extends object ? ExtractProp<T[P], K> : T[P];
+}[OmitArrKeys<T>];
+
+declare interface AdsEnums {
+  Common: {
+    ErrorCode: "RESOURCE_NAME_MALFORMED" | "INVALID_ARGUMENT";
+  };
+
+  ManagerLinks: {
+    Status: "ACTIVE" | "INACTIVE" | "PENDING" | "REFUSED" | "CANCELED";
+    ErrorCode:
+      | "ALREADY_INVITED_BY_THIS_MANAGER"
+      | "ALREADY_MANAGED_IN_HIERARCHY"
+      | "DUPLICATE_CHILD_FOUND"
+      | "TOO_MANY_MANAGERS"
+      | "ACCOUNTS_NOT_COMPATIBLE_FOR_LINKING";
+  };
+
+  /** @see {@link https://developers.google.com/google-ads/api/reference/rpc/v6/ConversionUploadErrorEnum.ConversionUploadError} */
+  ConversionUploads: {
+    ErrorCode: "TOO_RECENT_CONVERSION_ACTION";
+    CallConversions: {
+      ErrorCode:
+        | "EXPIRED_CALL"
+        | "CALL_NOT_FOUND"
+        | "TOO_RECENT_CALL"
+        | "UNPARSEABLE_CALLERS_PHONE_NUMBER";
+    };
+  };
+
+  ConversionActions: {
+    Category: "PHONE_CALL_LEAD" | "LEAD" | "CONTACT";
+    Status: "ENABLED" | "REMOVED" | "HIDDEN";
+    Type: "UPLOAD_CALLS" | "CLICK_TO_CALL" | "WEBSITE_CALL";
+  };
+}
+
+type ErrorCodes = ExtractProp<AdsEnums, "ErrorCode">;
+
+//TODO: improve nested props typings
+/** @see {@link https://developers.google.com/google-ads/api/reference/rpc/v6/Customer} */
 type Customer = {
   resourceName: string;
   callReportingSetting: [object];
-  conversionTrackingSetting: [object];
+  conversionTrackingSetting: {
+    conversionTrackingId: number;
+    crossAccountConversionTrackingId: number;
+  };
   remarketingSetting: [object];
   payPerConversionEligibilityFailureReasons: [object];
   id: string;
@@ -14,34 +73,53 @@ type Customer = {
   testAccount: boolean;
 };
 
-type ManagerLinkStatus =
-  | "ACTIVE"
-  | "INACTIVE"
-  | "PENDING"
-  | "REFUSED"
-  | "CANCELED";
+type WithClientId<T extends object> = T & { clientId: string };
 
-type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}`
-  ? `${Lowercase<T>}${Capitalize<SnakeToCamel<U>>}`
-  : S;
-
-type SnakeToCamelObj<T> = T extends object
-  ? {
-      [K in keyof T as SnakeToCamel<K & string>]: SnakeToCamelObj<T[K]>;
-    }
-  : T;
+type CommonPayload = {
+  resource_name: string;
+};
 
 type CustomerClientLinkPayload = {
   manager_link_id: string;
-  resource_name: string;
   client_customer: string;
   hidden: boolean;
-  status: ManagerLinkStatus;
-};
+  status: AdsEnums["ManagerLinks"]["Status"];
+} & CommonPayload;
 
 type CustomerManagerLinkPayload = {
+  status: AdsEnums["ManagerLinks"]["Status"];
+} & CommonPayload;
+
+type ConversionActionPayload = {
   resource_name: string;
-  status: ManagerLinkStatus;
+  type: AdsEnums["ConversionActions"]["Type"];
+  status: AdsEnums["ConversionActions"]["Status"];
+  name: string;
+  include_in_conversions_metric?: boolean;
+  category: AdsEnums["ConversionActions"]["Category"];
+};
+
+type ConversionPayload<T extends object> = T & {
+  currency_code: string;
+  conversion_action: string;
+  conversion_value: number;
+};
+
+type CallConversionPayload = ConversionPayload<{
+  caller_id: string;
+  call_start_date_time: SparseISO8601DTstring;
+  conversion_date_time: SparseISO8601DTstring;
+}>;
+
+/** @see {@link https://developers.google.com/google-ads/api/reference/rpc/v6/TagSnippet} */
+type TagSnippet = {
+  global_site_tag: string;
+  event_snippet: string;
+};
+
+type ConversionAction = SnakeToCamelObj<ConversionActionPayload> & {
+  id: string;
+  tag_snippets: TagSnippet[];
 };
 
 type CustomerManagerLink = SnakeToCamelObj<CustomerManagerLinkPayload> & {
@@ -58,48 +136,32 @@ type SearchGoogleAdsResponse<R> = {
   fieldMask: string;
 };
 
-type ManagerLinkErrorCode =
-  | "ALREADY_INVITED_BY_THIS_MANAGER"
-  | "ALREADY_MANAGED_IN_HIERARCHY"
-  | "DUPLICATE_CHILD_FOUND"
-  | "TOO_MANY_MANAGERS"
-  | "ACCOUNTS_NOT_COMPATIBLE_FOR_LINKING";
-
-type AdsErrorResponse = {
-  error: {
-    code: number;
-    message: string;
-    status: string;
-    details: {
-      "@type": string;
-      "errors": {
-        location: {
-          operationIndex: string;
-          fieldPathElements?: { fieldName: string }[];
-        };
-        message: string;
-        errorCode: {
-          managerLinkError: ManagerLinkErrorCode; //TODO: expand
-        };
-      }[];
+type AdsErrorOrPartialError = {
+  code: number;
+  message: string;
+  status: string;
+  details: {
+    "@type": string;
+    "errors": {
+      location: {
+        operationIndex: string;
+        fieldPathElements?: { fieldName: string }[];
+      };
+      message: string;
+      trigger?: { stringValue: string };
+      errorCode: {
+        //TODO: expand
+        managerLinkError: AdsEnums["ManagerLinks"]["ErrorCode"];
+        conversionUploadError: AdsEnums["ConversionUploads"]["CallConversions"]["ErrorCode"];
+      };
     }[];
-  };
+  }[];
 };
 
-type Values<T> = T[keyof T];
-
-type AdsErrorCodes = ManagerLinkErrorCode;
-
-class AdsError extends Error {
-  constructor(code: AdsErrorCodes, message: string) {
-    super(AdsError.formatMessage(code, message));
-    this.name = "GoogleAdsError";
-  }
-
-  static formatMessage(code: AdsErrorCodes, message: string) {
-    return `${code} | ${message}`;
-  }
-}
+type AdsErrorResponse = {
+  error: AdsErrorOrPartialError;
+  partialFailureError: AdsErrorOrPartialError;
+};
 
 type SearchOptions = {
   loginCustomerId?: string;
@@ -110,14 +172,62 @@ type SearchOptions = {
 
 type BulkSearchOptions = SearchOptions & { pages?: number };
 
+type CommonMutateOptions = {
+  resourceName?: string;
+};
+
 type MutateCustomerLinkOptions = {
   fromId: string;
   linkId?: string;
   loginId?: string;
-  resourceName?: string;
   toId: string;
-  status?: ManagerLinkStatus;
-};
+  status?: AdsEnums["ManagerLinks"]["Status"];
+} & CommonMutateOptions;
+
+type MutateConversionActionOptions = WithClientId<{
+  name: string;
+  actionId?: string;
+  type: AdsEnums["ConversionActions"]["Type"];
+  status?: AdsEnums["ConversionActions"]["Status"];
+  category?: AdsEnums["ConversionActions"]["Category"];
+  defaultValue?: number;
+  alwaysDefault?: boolean;
+}> &
+  CommonMutateOptions;
+
+type Digit = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "0";
+
+type EveryOfType<A extends readonly any[], T> = keyof {
+  [P in Exclude<keyof A, keyof any[]> as A[P] extends T ? never : P]: P;
+} extends never
+  ? true
+  : false;
+
+type SplitString<
+  T extends string,
+  A extends string[] = []
+> = T extends `${infer F}${infer L}` ? SplitString<L, [...A, F]> : A;
+
+type E164Format<T extends string> = SplitString<T> extends [
+  "+",
+  Digit,
+  ...infer L
+]
+  ? L["length"] extends 12 | 10
+    ? EveryOfType<L, Digit> extends true
+      ? T
+      : never
+    : never
+  : never;
+
+type UploadCallConversionOptions<T extends string> = WithClientId<{
+  phone: E164Format<T>;
+  calledAt?: Date;
+  datetime?: Date;
+  value?: number;
+  currency?: string;
+  actionName: string;
+}>;
 
 const getAppAuthService = () => {
   const store = PropertiesService.getScriptProperties();
@@ -161,7 +271,31 @@ const switchAppAccount = () => {
   console.warn(service.getAuthorizationUrl());
 };
 
-class AdsHelper {
+class AdsError extends Error {
+  constructor(code: ErrorCodes, message: string) {
+    super(AdsError.formatMessage(code, message));
+    this.name = "GoogleAdsError";
+  }
+
+  static formatMessage(code: ErrorCodes, message: string) {
+    return `${code} | ${message}`;
+  }
+}
+
+class Helper {
+  static get userAuthToken() {
+    return ScriptApp.getOAuthToken();
+  }
+
+  static getCommonFetchOpts(): Partial<GoogleAppsScript.URL_Fetch.URLFetchRequestOptions> {
+    return {
+      contentType: "application/json",
+      muteHttpExceptions: true,
+    };
+  }
+}
+
+class AdsHelper extends Helper {
   static version = 6;
 
   static base = `https://googleads.googleapis.com/v${AdsHelper.version}`;
@@ -169,9 +303,7 @@ class AdsHelper {
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/rest/auth#login_customer_id}
    */
-  static get loginId() {
-    return "6921327172";
-  }
+  static loginId = "6921327172";
 
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/first-call/dev-token}
@@ -179,10 +311,6 @@ class AdsHelper {
   static devToken = "OzTAlzi33sZ1RedcmlPvJQ";
 
   static authMode: "user" | "app" = "user";
-
-  static get userAuthToken() {
-    return ScriptApp.getOAuthToken();
-  }
 
   static get appAuthToken() {
     const service = getAppAuthService();
@@ -196,6 +324,10 @@ class AdsHelper {
 
   static mangleId(id: string) {
     return id.replace(/\-/g, "");
+  }
+
+  static toSelect(fields: string[], resource: string) {
+    return fields.map((field) => `${resource}.${field}`).join(", ");
   }
 
   /**
@@ -301,13 +433,6 @@ class AdsHelper {
     };
   }
 
-  static getCommonFetchOpts(): Partial<GoogleAppsScript.URL_Fetch.URLFetchRequestOptions> {
-    return {
-      contentType: "application/json",
-      muteHttpExceptions: true,
-    };
-  }
-
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/account-management/get-account-hierarchy}
    */
@@ -316,19 +441,25 @@ class AdsHelper {
 
     const customers = this.listCustomers(ids);
 
+    const rname = "customer_client";
+
+    const fields = [
+      "client_customer",
+      "level",
+      "manager",
+      "descriptive_name",
+      "currency_code",
+      "time_zone",
+      "id",
+    ];
+
     const query = `
     SELECT
-      customer_client.client_customer,
-      customer_client.level,
-      customer_client.manager,
-      customer_client.descriptive_name,
-      customer_client.currency_code,
-      customer_client.time_zone,
-      customer_client.id
+      ${this.toSelect(fields, rname)}
     FROM
-      customer_client
+      ${rname}
     WHERE
-      customer_client.level = 1
+      ${rname}.level = 1
     `;
 
     const processedIds: Partial<Record<string, 1>> = {};
@@ -374,26 +505,34 @@ class AdsHelper {
     )}/customerClientLinks/${clientId}~${linkId}`;
   }
 
-  static getCustomerResourceName(id: string) {
-    return `customers/${id}`;
+  static getCustomerResourceName(customerId: string) {
+    return `customers/${customerId}`;
+  }
+
+  static getConversionActionResourceName(clientId: string, actionId: string) {
+    return `${this.getCustomerResourceName(
+      clientId
+    )}/conversionActions/${actionId}`;
   }
 
   static getCustomerLink(
     managerId: string,
     clientId: string,
-    status: ManagerLinkStatus = "PENDING"
+    status: AdsEnums["ManagerLinks"]["Status"] = "PENDING"
   ) {
     const name = "customer_client_link";
 
+    const fields = ["manager_link_id", "client_customer"];
+
     const query = `
     SELECT
-      ${name}.manager_link_id,
-      ${name}.client_customer
+      ${this.toSelect(fields, name)}
     FROM
       ${name}
     WHERE
       ${name}.client_customer = "${AdsHelper.getCustomerResourceName(clientId)}"
-    AND ${name}.status = ${status}`;
+      AND ${name}.status = ${status}
+    `;
 
     const { results: [match] = [] } = this.search<{
       customerClientLink: CustomerClientLink;
@@ -429,16 +568,25 @@ class AdsHelper {
     const code = res.getResponseCode(),
       content = JSON.parse(res.getContentText());
 
-    const success = code >= 200 && code < 300;
+    const { error, partialFailureError } = content;
 
-    return { code, success, content };
+    const errOrPartialErr = error || partialFailureError;
+
+    const success = code >= 200 && code < 300 && !errOrPartialErr;
+
+    return {
+      code,
+      success,
+      content,
+      errors: errOrPartialErr || [],
+    };
   }
 
   static handleCustomerLinkError(
     managerId: string,
     clientId: string,
     response: AdsErrorResponse,
-    _status: ManagerLinkStatus //TODO: make used in v2
+    _status: AdsEnums["ManagerLinks"]["Status"] //TODO: make used in v2
   ) {
     const {
       error: {
@@ -453,13 +601,13 @@ class AdsHelper {
           },
         ],
       },
-    }: AdsErrorResponse = response;
+    } = response;
 
     /**
      * @see {@link https://developers.google.com/google-ads/api/reference/rpc/v6/ManagerLinkErrorEnum.ManagerLinkError}
      */
-    const errorStatuses: Record<
-      ManagerLinkErrorCode,
+    const statuses: Record<
+      AdsEnums["ManagerLinks"]["ErrorCode"],
       (mid: string, cid: string) => boolean
     > = {
       ALREADY_INVITED_BY_THIS_MANAGER: () => false,
@@ -471,9 +619,34 @@ class AdsHelper {
       ACCOUNTS_NOT_COMPATIBLE_FOR_LINKING: () => false,
     };
 
-    console.warn(new AdsError(managerLinkError, message), managerLinkError);
+    console.warn(new AdsError(managerLinkError, message));
 
-    return errorStatuses[managerLinkError](managerId, clientId); //TODO: add parameters
+    return statuses[managerLinkError](managerId, clientId); //TODO: add parameters
+  }
+
+  static handleCallUploadError<T extends string>(
+    options: UploadCallConversionOptions<T>,
+    response: AdsErrorResponse
+  ) {
+    const {
+      details: [{ errors }],
+    } = response["error"] || response["partialFailureError"];
+
+    //TODO: add more meaningful handling
+    const statuses: Record<
+      AdsEnums["ConversionUploads"]["CallConversions"]["ErrorCode"],
+      (opts: UploadCallConversionOptions<T>) => boolean
+    > = {
+      TOO_RECENT_CALL: () => false,
+      CALL_NOT_FOUND: () => false,
+      EXPIRED_CALL: () => false,
+      UNPARSEABLE_CALLERS_PHONE_NUMBER: () => false,
+    };
+
+    return errors.every(({ errorCode: { conversionUploadError }, message }) => {
+      console.warn(new AdsError(conversionUploadError, message));
+      return statuses[conversionUploadError](options);
+    });
   }
 
   /**
@@ -522,10 +695,10 @@ class AdsHelper {
       { method: "post", loginId: managerId, payload: op }
     );
 
-    if (!success)
-      return this.handleCustomerLinkError(managerId, clientId, content, status);
-
-    return true;
+    return (
+      success ||
+      this.handleCustomerLinkError(managerId, clientId, content, status)
+    );
   }
 
   /**
@@ -568,40 +741,47 @@ class AdsHelper {
       { method: "post", loginId: loginId || clientId, payload: op }
     );
 
-    if (!success)
-      return this.handleCustomerLinkError(managerId, clientId, content, status);
+    return (
+      success ||
+      this.handleCustomerLinkError(managerId, clientId, content, status)
+    );
+  }
 
-    return true;
+  static getCustomerById(
+    clientId: string,
+    customerId: string = clientId
+  ): Customer | null {
+    const { success, content, errors } = this.fetchAPI(
+      `customers/${customerId}`,
+      {
+        method: "get",
+        loginId: clientId,
+      }
+    );
+
+    success || console.warn(errors);
+
+    return success ? content : null;
   }
 
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/account-management/listing-accounts}
    */
   static listAccesibleAccounts() {
-    const { base } = AdsHelper;
+    const { success, content } = this.fetchAPI(
+      `customers:listAccessibleCustomers`,
+      {
+        method: "get",
+      }
+    );
 
-    const full = `${base}/customers:listAccessibleCustomers`;
-
-    const res = UrlFetchApp.fetch(full, {
-      headers: AdsHelper.getAuthHeaders(),
-      ...AdsHelper.getCommonFetchOpts(),
-    });
-
-    const code = res.getResponseCode(),
-      text = res.getContentText();
-
-    const success = code >= 200 && code < 300;
-
-    if (!success) {
-      logException("customer list", new Error(text));
-      return [];
-    }
+    if (!success) return [];
 
     type ListAccessibleCustomersResponse = {
       resourceNames: string[];
     };
 
-    const { resourceNames }: ListAccessibleCustomersResponse = JSON.parse(text);
+    const { resourceNames }: ListAccessibleCustomersResponse = content;
 
     return resourceNames.map((name) => name.replace("customers/", ""));
   }
@@ -630,18 +810,160 @@ class AdsHelper {
     return succeded.map((res) => JSON.parse(res.getContentText()));
   }
 
+  static getConversionAction({
+    name,
+    clientId,
+  }: WithClientId<Partial<ConversionAction>>): ConversionAction | null {
+    //TODO: only need name now, expand later and add code branch: if id -> GET request
+
+    const rname = "conversion_action";
+
+    const fields = ["id", "name", "owner_customer"];
+
+    const query = `
+    SELECT
+      ${this.toSelect(fields, rname)}
+    FROM
+      ${rname}
+    WHERE
+      ${rname}.name = "${name}"
+    `;
+
+    const {
+      results: [{ conversionAction }],
+      error,
+    } = this.search<{ conversionAction: ConversionAction }>(query, {
+      operatingCustomerId: clientId,
+      loginCustomerId: clientId,
+    });
+
+    if (error) {
+      console.warn(error); //TODO: handle properly
+      return null;
+    }
+
+    return conversionAction;
+  }
+
+  /**
+   * @see {@link https://developers.google.com/google-ads/api/docs/conversions/create-conversion-actions}
+   */
+  static mutateConversionAction({
+    clientId,
+    actionId,
+    resourceName,
+    status = "ENABLED",
+    ...rest
+  }: MutateConversionActionOptions) {
+    const isCreating = resourceName === void 0;
+
+    const action: Partial<ConversionActionPayload> = {
+      status,
+      include_in_conversions_metric: true, //TODO: make configurable?
+      ...rest,
+    };
+
+    if (!isCreating) {
+      if (!resourceName && !actionId)
+        throw new RangeError(
+          `action update must provide action id or resource name`
+        );
+
+      action.resource_name =
+        resourceName ||
+        this.getConversionActionResourceName(clientId, actionId!);
+    }
+
+    const payload = new AdsMutateOperations(clientId);
+    payload.add(action, isCreating);
+
+    const { content, success } = this.fetchAPI(
+      `customers/${clientId}/conversionActions:mutate`,
+      {
+        method: "post",
+        loginId: clientId,
+        payload,
+      }
+    );
+
+    success ||
+      console.log((content as AdsErrorResponse).error.details[0].errors);
+
+    //TODO: handle failure gracefully
+
+    return success;
+  }
+
   /**
    * @see {@link https://developers.google.com/google-ads/api/docs/conversions/upload-calls}
    */
-  static addCallConversion(clientId: string) {}
+  static uploadCallConversion<T extends string>(
+    options: UploadCallConversionOptions<T>
+  ) {
+    const {
+      clientId,
+      phone,
+      actionName,
+      calledAt = new Date(),
+      currency = "USD",
+      datetime = new Date(),
+      value = 1,
+    } = options;
+
+    const payload = new UploadConversionRequest<CallConversionPayload>(
+      clientId
+    );
+
+    payload.add({
+      caller_id: phone,
+      call_start_date_time: toSparseISO8601(calledAt),
+      conversion_action: actionName,
+      conversion_date_time: toSparseISO8601(datetime),
+      conversion_value: value,
+      currency_code: currency,
+    });
+
+    const { success, content } = this.fetchAPI(
+      `customers/${clientId}:uploadCallConversions`,
+      {
+        method: "post",
+        loginId: clientId,
+        payload,
+      }
+    );
+
+    return success || this.handleCallUploadError(options, content);
+  }
 }
 
-class AdsMutatateOperation {
+class Operation {
+  constructor(public customer_id: string) {}
+}
+
+class UploadConversionRequest<
+  T extends ConversionPayload<{}>
+> extends Operation {
+  readonly partial_failure = true;
+
+  conversions: Partial<T>[] = [];
+
+  constructor(customer_id: string, public validate_only = false) {
+    super(customer_id);
+  }
+
+  add(conversion: Partial<T>) {
+    this.conversions.push(conversion);
+  }
+}
+
+class AdsMutatateOperation extends Operation {
   operation: Partial<
     Record<"create" | "update" | "remove" | "update_mask", unknown>
   > = {};
 
-  constructor(public customer_id: string, public setCustomerId = true) {}
+  constructor(customer_id: string, public setCustomerId = true) {
+    super(customer_id);
+  }
 
   static resourceToProtoBuf<T>(resource: T) {
     return Object.keys(resource).join(","); //TODO: conform to ProtoBuff spec
@@ -664,10 +986,21 @@ class AdsMutatateOperation {
   }
 }
 
-class AdsMutateOperations {
+class AdsMutateOperations extends Operation {
   operations: AdsMutatateOperation[] = [];
 
-  constructor(public customer_id: string) {}
+  add<T>(resource: T, isCreating = true) {
+    return isCreating ? this.addCreate(resource) : this.addUpdate(resource);
+  }
+
+  addCreate<T>(resource: T) {
+    const { operations, customer_id } = this;
+
+    const operation = new AdsMutatateOperation(customer_id, false);
+    operation.setCreate(resource);
+
+    operations.push(operation);
+  }
 
   addUpdate<T>(resource: T) {
     const { operations, customer_id } = this;
@@ -687,6 +1020,199 @@ class AdsMutateOperations {
   }
 }
 
-const testHelper = () => {
-  console.log(AdsHelper.getAccountHierarhy());
+const listAccessibleAccounts = () => AdsHelper.listAccesibleAccounts();
+const listCustomers = () => AdsHelper.listCustomers(listAccessibleAccounts());
+const getAllAccounts = () => AdsHelper.getAllCustomers();
+const linkAllAccounts = () => {
+  const customers = AdsHelper.getAllCustomers();
+
+  AdsHelper.authMode = "app";
+
+  const managerId = "4854204549"; //TODO: remove override once prod token is obtained
+
+  const withoutRoot = customers.filter(({ id }) => id !== managerId);
+
+  const succeededPending = withoutRoot.filter(({ id }) =>
+    AdsHelper.mutateCustomerClientLink({
+      fromId: managerId,
+      toId: id,
+    })
+  );
+
+  const customerLinks = succeededPending.map((customer) => ({
+    link: AdsHelper.getCustomerLink(managerId, customer.id),
+    customer,
+  }));
+
+  AdsHelper.authMode = "user";
+
+  const succeededAccepted = customerLinks.filter(
+    ({ link, customer: { manager } }) => {
+      if (!link) return false;
+
+      const { managerLinkId, clientCustomer } = link;
+
+      const a = {
+        nameToCustomerId(resourceName: string) {
+          return resourceName.replace(/customers\/(\d+)/, "$1");
+        },
+      };
+
+      console.log(
+        "testing name to customer",
+        a.nameToCustomerId(clientCustomer)
+      );
+
+      const clientId = clientCustomer.replace("customers/", ""); //TODO: abstract to a method,
+
+      return AdsHelper.mutateCustomerManagerLink({
+        fromId: managerId,
+        toId: clientId,
+        linkId: managerLinkId,
+        loginId: manager ? clientId : "4854204549", //TODO: fixup
+        status: "ACTIVE",
+      });
+    }
+  );
+
+  return succeededAccepted;
+};
+
+const sendCallConversion = <T extends string>({
+  clientId,
+  ...conversionOptions
+}: UploadCallConversionOptions<T>): boolean => {
+  /**
+   * Algo:
+   *  - get conversion action by name from CONFIG
+   *  - if not found, create with name from CONFIG
+   *  - upload call conversion
+   */
+  const {
+    ads: {
+      conversions: { call },
+    },
+  } = getConfig();
+
+  const action = AdsHelper.getConversionAction({ name: call, clientId });
+
+  if (!action) {
+    const created = AdsHelper.mutateConversionAction({
+      clientId,
+      name: call,
+      type: "UPLOAD_CALLS",
+      category: "PHONE_CALL_LEAD",
+    });
+
+    return created
+      ? sendCallConversion({ clientId, ...conversionOptions })
+      : false;
+  }
+
+  return AdsHelper.uploadCallConversion({
+    clientId,
+    ...conversionOptions,
+    actionName: action.resourceName,
+  });
+};
+
+const installGlobalSiteTag = (workspacePath: string, clientId: string) => {
+  const customer = AdsHelper.getCustomerById(clientId);
+
+  if (!customer) return false;
+
+  const {
+    conversionTrackingSetting: { conversionTrackingId },
+  } = customer;
+
+  const tagName = "FCT_Ads";
+
+  const template = `<!-- Global site tag (gtag.js) - Google Ads: ${conversionTrackingId} -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-${conversionTrackingId}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-${conversionTrackingId}');
+</script>`;
+
+  /** @see {@link https://developers.google.com/tag-manager/api/v2/tag-dictionary-reference#html} */
+  return createOrUpdateTag([], tagName, workspacePath, {
+    type: "html",
+    parameter: [
+      {
+        key: "html",
+        type: "template",
+        value: template,
+      },
+    ],
+  });
+};
+
+const testGetCustomer = () => {
+  const [first] = AdsHelper.listAccesibleAccounts();
+  const customer = AdsHelper.getCustomerById(first);
+  console.log(customer);
+  console.log(customer?.conversionTrackingSetting);
+};
+
+const testAccesibleAccounts = () => {
+  console.log(AdsHelper.listAccesibleAccounts());
+};
+
+const testCustomers = () => {
+  const ids = AdsHelper.listAccesibleAccounts();
+  const customers = AdsHelper.listCustomers(ids);
+  console.log({ customers });
+};
+
+const testAccountHierarchy = () => {
+  const accounts = AdsHelper.getAllCustomers();
+  console.log({ accounts });
+};
+
+const testGetAction = () => {
+  const [firstId] = AdsHelper.listAccesibleAccounts();
+  const conversion = AdsHelper.getConversionAction({
+    clientId: firstId,
+    name: "Test Conversion Action",
+  })!;
+  console.log(conversion);
+};
+
+const testMutateAction = () => {
+  const [firstId] = AdsHelper.listAccesibleAccounts();
+  const created = AdsHelper.mutateConversionAction({
+    clientId: firstId,
+    name: "Test Conversion Action",
+    type: "UPLOAD_CALLS",
+    category: "PHONE_CALL_LEAD",
+  });
+
+  console.log(created);
+};
+
+const testCallConversion = () => {
+  const [firstId] = AdsHelper.listAccesibleAccounts();
+  const { resourceName } = AdsHelper.getConversionAction({
+    clientId: firstId,
+    name: "Test Conversion Action",
+  })!;
+
+  const phone = "+1234123456789" as const;
+
+  const uploaded = AdsHelper.uploadCallConversion({
+    clientId: firstId,
+    actionName: resourceName,
+    phone,
+    calledAt: offsetDays(new Date(), -2),
+    value: 1,
+  });
+
+  console.log({
+    firstId,
+    resourceName,
+    uploaded,
+  });
 };
