@@ -11,7 +11,7 @@ function getGaPropertiesArrByAcc(sAccID: string) {
   } = { status: true, properties: [] };
 
   try {
-    var { items } = Analytics?.Management?.Webproperties?.list(sAccID) || {};
+    const { items } = Analytics?.Management?.Webproperties?.list(sAccID) || {};
 
     if (!items) {
       response.properties.push({
@@ -31,22 +31,26 @@ function getGaPropertiesArrByAcc(sAccID: string) {
   return response;
 }
 
+const getGaProfiles = (accountId: string, webPropertyId: string) =>
+  AnalyticsManagementHelper.listProfiles({ accountId, webPropertyId });
+
 /**
  * @see {@link https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters}
  */
 type AnalyticsParameters = {
-  v: 1;
+  v: number;
   tid: string;
   cid: string;
   t: "event";
   ec: string;
   ea: string;
+  ev: number;
   z: number;
-  ni: 1;
+  ni: number;
   ua: string;
-  dh: string;
-  dp: string;
-  dt: string;
+  dh?: string;
+  dp?: string;
+  dt?: string;
   uip?: string;
 };
 
@@ -55,42 +59,360 @@ type AnalyticsParameters = {
  */
 const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
   TriggersApp.guardTracked(e, function onEditEvent({ range }) {
-    var sCurValue = range.getValue();
-    var iRow = range.getRow();
+    const catActPair = range.getValue().toString();
+    const iRow = range.getRow();
 
-    sCurValue += "";
+    if (catActPair === "") return;
 
-    if (sCurValue === "") return;
-
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
 
     if (!ss) return;
 
-    var sheet = ss.getActiveSheet();
+    const sheet = ss.getActiveSheet();
 
-    var [[stamp, timestamp, cid, geo, src, tgt, title, ua]] = sheet
-      .getRange(iRow, 1, 1, sheet.getLastColumn())
-      .getValues();
+    const [
+      [stamp, _timestamp, cid, geo, _src, tgt, title, userAgent],
+    ] = sheet.getRange(iRow, 1, 1, sheet.getLastColumn()).getValues();
 
     if (!cid) return sheet.getRange(`I${iRow}`).clearContent();
 
     const tid = getProfileID();
 
-    const [ec, ea] = sCurValue.split("/");
+    const [category, action] = catActPair.split("/");
 
     const domain = extractDomain(tgt);
     const page = extractPage(tgt);
 
+    const success = AnalyticsMeasurementHelper.collectEvent({
+      tid,
+      cid,
+      category,
+      action,
+      domain,
+      page,
+      title,
+      userAgent,
+      timestamp: stamp,
+      geo,
+    });
+
+    ss.toast(
+      success ? `Successfully sent` : `Failed to send`,
+      "Google Analytics"
+    );
+  });
+
+type CommonAnalyticsOptions = {
+  accountId: string;
+  profileId: string;
+  webPropertyId: string;
+};
+
+type AnalyticsListProfilesOptions = Pick<
+  CommonAnalyticsOptions,
+  "accountId" | "webPropertyId"
+>;
+
+type AnalyticsGetGoalOptions = {
+  goalId: string;
+} & CommonAnalyticsOptions;
+
+type AnalyticsGoal = GoogleAppsScript.Analytics.Schema.Goal & {
+  type: "URL_DESTINATION" | "VISIT_TIME_ON_SITE" | "VISIT_NUM_PAGES" | "EVENT";
+};
+
+type AnalyticsCreateGoalOptions = AnalyticsGoal & CommonAnalyticsOptions;
+
+type AnalyticsListResponse<
+  T extends "analytics#goals" | "analytics#profiles"
+> = {
+  kind: T;
+  totalResults: number;
+  itemsPerPage: number;
+  startIndex: number;
+  username: string;
+  items: {
+    "analytics#goals": GoogleAppsScript.Analytics.Schema.Goal;
+    "analytics#profiles": GoogleAppsScript.Analytics.Schema.Profile;
+  }[T][];
+  previousLink: string;
+  nextLink: string;
+};
+
+class AnalyticsManagementHelper extends Helper {
+  static version = 3;
+
+  static base = `https://www.googleapis.com/analytics/v${AnalyticsManagementHelper.version}/management`;
+
+  static addAuthHeaders(headers: object = {}, token?: string) {
+    return {
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${token || this.userAuthToken}`,
+      },
+    };
+  }
+
+  static getPropertyPath(accountId: string, webPropertyId: string) {
+    return `accounts/${accountId}/webproperties/${webPropertyId}/`;
+  }
+
+  static getProfilePath(
+    accountId: string,
+    webPropertyId: string,
+    profileId: string
+  ) {
+    return `${this.getPropertyPath(
+      accountId,
+      webPropertyId
+    )}profiles/${profileId}/`;
+  }
+
+  static getGoalPath(
+    accountId: string,
+    webPropertyId: string,
+    profileId: string,
+    goalId: string
+  ) {
+    return `${this.getProfilePath(
+      accountId,
+      webPropertyId,
+      profileId
+    )}goals/${goalId}`;
+  }
+
+  /**
+   * @see {@link https://developers.google.com/analytics/devguides/config/mgmt/v3/mgmtReference/management/goals/list}
+   */
+  static listGoals({
+    accountId,
+    profileId,
+    webPropertyId,
+  }: CommonAnalyticsOptions) {
+    const { base } = this;
+
+    const res = UrlFetchApp.fetch(
+      `${base}/${this.getProfilePath(
+        accountId,
+        webPropertyId,
+        profileId
+      )}goals`,
+      {
+        ...this.getCommonFetchOpts(),
+        ...this.addAuthHeaders(),
+      }
+    );
+
+    const code = res.getResponseCode(),
+      content = JSON.parse(res.getContentText());
+
+    const success = code === 200;
+
+    success || console.warn(content);
+
+    if (!success) return [];
+
+    //TODO: expand to include pagination
+    const { items = [] } = content as AnalyticsListResponse<"analytics#goals">;
+
+    return items;
+  }
+
+  /**
+   * @see {@link https://developers.google.com/analytics/devguides/config/mgmt/v3/mgmtReference/management/goals/get}
+   */
+  static getGoal({
+    accountId,
+    profileId,
+    webPropertyId,
+    goalId,
+  }: AnalyticsGetGoalOptions): GoogleAppsScript.Analytics.Schema.Goal {
+    const { base } = this;
+
+    const res = UrlFetchApp.fetch(
+      `${base}/${this.getGoalPath(
+        accountId,
+        webPropertyId,
+        profileId,
+        goalId
+      )}`,
+      {
+        ...this.getCommonFetchOpts(),
+        ...this.addAuthHeaders(),
+      }
+    );
+
+    const code = res.getResponseCode(),
+      content = JSON.parse(res.getContentText());
+
+    const success = code === 200;
+
+    success || console.warn(content);
+
+    return success ? content : null;
+  }
+
+  /**
+   * @see {@link https://developers.google.com/analytics/devguides/config/mgmt/v3/mgmtReference/management/goals/insert}
+   */
+  static createGoal({
+    accountId,
+    profileId,
+    webPropertyId,
+    ...rest
+  }: AnalyticsCreateGoalOptions) {
+    const { base } = this;
+
+    //generates sequential unique id for the goal
+    const goals = this.listGoals({ accountId, profileId, webPropertyId });
+    const goalIds = goals.map(({ id }) => id!).sort();
+    const id = (+goalIds[goalIds.length - 1] + 1).toString();
+
+    const goal: GoogleAppsScript.Analytics.Schema.Goal = {
+      id,
+      ...rest,
+    };
+
+    const res = UrlFetchApp.fetch(
+      `${base}/${this.getProfilePath(
+        accountId,
+        webPropertyId,
+        profileId
+      )}goals`,
+      {
+        ...this.getCommonFetchOpts(),
+        ...this.addAuthHeaders(),
+        method: "post",
+        payload: JSON.stringify(goal),
+      }
+    );
+
+    console.log(res.getContentText());
+
+    return res.getResponseCode() === 200;
+  }
+
+  /**
+   * @see {@link https://developers.google.com/analytics/devguides/config/mgmt/v3/mgmtReference/management/profiles/list}
+   */
+  static listProfiles({
+    accountId,
+    webPropertyId,
+  }: AnalyticsListProfilesOptions) {
+    const { base } = this;
+
+    const res = UrlFetchApp.fetch(
+      `${base}/${this.getPropertyPath(accountId, webPropertyId)}profiles`,
+      {
+        ...this.getCommonFetchOpts(),
+        ...this.addAuthHeaders(),
+      }
+    );
+
+    const code = res.getResponseCode(),
+      content = JSON.parse(res.getContentText());
+
+    const success = code === 200;
+
+    success || console.warn(content);
+
+    if (!success) return [];
+
+    //TODO: expand to include pagination
+    const {
+      items = [],
+    } = content as AnalyticsListResponse<"analytics#profiles">;
+
+    return items;
+  }
+}
+
+const testListGoals = () => {
+  const goals = AnalyticsManagementHelper.listGoals({
+    accountId: "134578661",
+    profileId: "230400611",
+    webPropertyId: "UA-134578661-2",
+  });
+  console.log({ goals });
+};
+
+const testCreateGoal = () => {
+  AnalyticsManagementHelper.createGoal({
+    accountId: "134578661",
+    profileId: "230400611",
+    webPropertyId: "UA-134578661-2",
+    type: "EVENT",
+    eventDetails: {
+      eventConditions: [{}],
+      useEventValue: true,
+    },
+  });
+};
+
+type AnalyticsPageviewOptions = {
+  domain: string;
+  page: string;
+  title: string;
+};
+
+type AnalyticsCollectEventOptions = {
+  value?: AnalyticsParameters["ev"];
+  timestamp: AnalyticsParameters["z"];
+  category: AnalyticsParameters["ec"];
+  action: AnalyticsParameters["ea"];
+  geo: AnalyticsParameters["uip"];
+  userAgent: AnalyticsParameters["ua"];
+} & Partial<AnalyticsPageviewOptions> &
+  Pick<AnalyticsParameters, "cid" | "tid">;
+
+class AnalyticsMeasurementHelper extends Helper {
+  static version = 1;
+
+  static base = `https://www.google-analytics.com`;
+
+  static get isTest() {
+    return APP_CONFIG.ENV === "test";
+  }
+
+  static get fullURL() {
+    const { base, isTest } = this;
+    return `${base}/${isTest ? `debug/collect` : "collect"}`;
+  }
+
+  /**
+   * @see {@link https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters}
+   */
+  static get commonCollectParams() {
+    return {
+      v: this.version,
+      ni: 1,
+      tid: APP_CONFIG.ids.analytics,
+    };
+  }
+
+  static collectEvent({
+    timestamp,
+    value = 1,
+    domain,
+    page,
+    title,
+    tid,
+    cid,
+    category,
+    action,
+    userAgent,
+    geo,
+  }: AnalyticsCollectEventOptions) {
     const queryConfig: AnalyticsParameters = {
-      v: 1,
+      ...this.commonCollectParams,
       tid,
       cid,
       t: "event",
-      ec,
-      ea,
-      z: stamp,
-      ni: 1,
-      ua,
+      ec: category,
+      ea: action,
+      ev: value,
+      z: timestamp,
+      ua: userAgent,
       dh: domain,
       dp: page,
       dt: title,
@@ -100,38 +422,15 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
 
     const query = objectToQuery(queryConfig);
 
-    const url = `${AnalyticsHelper.fullURL}?${query}`;
+    const url = `${AnalyticsMeasurementHelper.fullURL}?${query}`;
 
     const res = UrlFetchApp.fetch(url, {
       muteHttpExceptions: true,
     });
 
-    ss.toast(res.getResponseCode().toString(), "Sent To Analytics");
-  });
+    console.log(res.getContentText());
 
-class AnalyticsHelper {
-  static get baseURL() {
-    return `https://www.google-analytics.com`;
-  }
-
-  static get isTest() {
-    return APP_CONFIG.ENV === "test";
-  }
-
-  static get fullURL() {
-    const { baseURL, isTest } = this;
-    return `${baseURL}/${isTest ? `debug/collect` : "collect"}`;
-  }
-
-  /**
-   * @see {@link https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters}
-   */
-  static get commonParams() {
-    return {
-      v: 1,
-      ni: 1,
-      tid: APP_CONFIG.ids.analytics,
-    };
+    return res.getResponseCode() === 200;
   }
 
   static collectPageview(
@@ -140,10 +439,10 @@ class AnalyticsHelper {
     title: string,
     path: string
   ) {
-    const { fullURL, commonParams } = this;
+    const { fullURL, commonCollectParams } = this;
 
     const query = objectToQuery({
-      ...commonParams,
+      ...commonCollectParams,
       t: "pageview",
       dl: location,
       dt: title,
@@ -161,12 +460,51 @@ class AnalyticsHelper {
   }
 }
 
+type EventGoalCreationOptions = {
+  gaAccount: string;
+  gaProperty: string;
+  gaCategory: string;
+  gaProfile: string;
+  gaEvent: string;
+};
+
+const createEventGoal = ({
+  gaAccount,
+  gaProperty,
+  gaProfile,
+  gaCategory,
+  gaEvent,
+}: EventGoalCreationOptions) =>
+  AnalyticsManagementHelper.createGoal({
+    accountId: gaAccount,
+    webPropertyId: gaProperty,
+    profileId: gaProfile,
+    type: "EVENT",
+    name: getConfig().analytics.goals.name,
+    active: true,
+    eventDetails: {
+      eventConditions: [
+        {
+          type: "CATEGORY",
+          matchType: "EXACT",
+          expression: gaCategory,
+        },
+        {
+          type: "ACTION",
+          matchType: "EXACT",
+          expression: gaEvent,
+        },
+      ],
+      useEventValue: true,
+    },
+  });
+
 /**
  * @summary wrapper to client-side page view
  */
 const sendPageview = (
-  ...args: Parameters<typeof AnalyticsHelper["collectPageview"]>
-) => AnalyticsHelper.collectPageview(...args);
+  ...args: Parameters<typeof AnalyticsMeasurementHelper["collectPageview"]>
+) => AnalyticsMeasurementHelper.collectPageview(...args);
 
 const makeUAparameter = (id: string) => ({
   key: "trackingId",
