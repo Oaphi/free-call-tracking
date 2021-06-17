@@ -15,10 +15,10 @@ var HelpersTagManager = (() => {
     versionId: "",
   };
 
-  const getContainerPath = (used: typeof LastUsed) =>
+  const getContainerPath = (used: TagManagerIds) =>
     `accounts/${used.accountId}/containers/${used.containerId}`;
 
-  const getWorkspacePath = (used: typeof LastUsed) =>
+  const getWorkspacePath = (used: TagManagerIds) =>
     `${getContainerPath(used)}/workspaces/${used.workspaceId}`;
 
   /**
@@ -48,7 +48,7 @@ var HelpersTagManager = (() => {
   /**
    * @summary lists GTM accounts
    */
-  function getAccountsList(): GoogleAppsScript.TagManager.Schema.ListAccountsResponse {
+  function getAccountsList() {
     return TagManager?.Accounts?.list() || { account: [] };
   }
 
@@ -117,11 +117,10 @@ var HelpersTagManager = (() => {
    */
   function listWorkspaces(containerPath?: string) {
     try {
-      const {
-        workspace = [],
-      } = TagManager?.Accounts?.Containers?.Workspaces?.list(
-        containerPath || getContainerPath(LastUsed)
-      ) || { workspace: [] };
+      const { workspace = [] } =
+        TagManager?.Accounts?.Containers?.Workspaces?.list(
+          containerPath || getContainerPath(LastUsed)
+        ) || { workspace: [] };
       return workspace;
     } catch (error) {
       console.warn(`failed to list workspaces: ${error}`);
@@ -160,11 +159,10 @@ var HelpersTagManager = (() => {
    */
   function listTags(path: string) {
     try {
-      const {
-        tag = [],
-      } = TagManager?.Accounts?.Containers?.Workspaces?.Tags?.list(path) || {
-        tag: [],
-      };
+      const { tag = [] } =
+        TagManager?.Accounts?.Containers?.Workspaces?.Tags?.list(path) || {
+          tag: [],
+        };
       return tag;
     } catch (error) {
       console.warn(`failed to list tags: ${error}`);
@@ -177,11 +175,10 @@ var HelpersTagManager = (() => {
    */
   function listVariables(parent: string) {
     try {
-      const {
-        variable = [],
-      } = TagManager?.Accounts?.Containers?.Workspaces?.Variables?.list(
-        parent
-      ) || { variable: [] };
+      const { variable = [] } =
+        TagManager?.Accounts?.Containers?.Workspaces?.Variables?.list(
+          parent
+        ) || { variable: [] };
       return variable;
     } catch (error) {
       console.warn(`failed to list vars: ${error}`);
@@ -194,11 +191,10 @@ var HelpersTagManager = (() => {
    */
   function listTriggers(parent: string) {
     try {
-      const {
-        trigger = [],
-      } = TagManager?.Accounts?.Containers?.Workspaces?.Triggers?.list(
-        parent
-      ) || { trigger: [] };
+      const { trigger = [] } =
+        TagManager?.Accounts?.Containers?.Workspaces?.Triggers?.list(
+          parent
+        ) || { trigger: [] };
       return trigger;
     } catch (error) {
       console.warn(`failed to list triggers: ${error}`);
@@ -264,10 +260,11 @@ var HelpersTagManager = (() => {
    * @summary versions GTM workspace
    */
   function version(path: string, name: string, notes: string = "") {
-    const version: GoogleAppsScript.TagManager.Schema.CreateContainerVersionRequestVersionOptions = {
-      name,
-      notes,
-    };
+    const version: GoogleAppsScript.TagManager.Schema.CreateContainerVersionRequestVersionOptions =
+      {
+        name,
+        notes,
+      };
 
     return TagManager?.Accounts?.Containers?.Workspaces?.create_version(
       version,
