@@ -45,7 +45,6 @@
     "https://www.googleapis.com/auth/tagmanager.publish",
     "https://www.googleapis.com/auth/script.external_request",
     "https://www.googleapis.com/auth/script.scriptapp",
-    "https://www.googleapis.com/auth/forms",
-    "https://www.googleapis.com/auth/adwords"
+    "https://www.googleapis.com/auth/forms"
   ]
 }
