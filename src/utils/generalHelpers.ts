@@ -269,7 +269,9 @@ const getHighAccessProperty = <T>(key: string, def?: T): T | undefined => {
  */
 const getProfileID = ({ onError = console.warn } = {}): string => {
     const {
-        accounts: { analytics },
+        accounts: {
+            analytics: { profile },
+        },
     } = getDefaults();
 
     try {
@@ -282,10 +284,10 @@ const getProfileID = ({ onError = console.warn } = {}): string => {
             getDefaults()
         );
 
-        return prop ? prop.accounts.analytics : analytics;
+        return prop ? prop.accounts.analytics.profile : profile;
     } catch (error) {
         onError(error);
-        return analytics;
+        return profile;
     }
 };
 

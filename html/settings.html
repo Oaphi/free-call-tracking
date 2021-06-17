@@ -96,13 +96,33 @@
                 <div class="row">
                     <div class="input-field col s12">
                         <input
-                            id="gaid"
+                            id="account"
                             type="text"
                             class="validate tooltipped"
                             data-position="bottom"
-                            data-tooltip="Your Google Analytics Id"
+                            data-tooltip="Your Analytics Account"
                         />
-                        <label for="gaid">Analytics Id</label>
+                        <label for="property">Analytics Account</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <input
+                            id="property"
+                            type="text"
+                            class="validate tooltipped"
+                            data-position="bottom"
+                            data-tooltip="Your Analytics Property"
+                        />
+                        <label for="property">Analytics Property</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <input
+                            id="profile"
+                            type="text"
+                            class="validate tooltipped"
+                            data-position="bottom"
+                            data-tooltip="Your Analytics Profile"
+                        />
+                        <label for="profile">Analytics Profile</label>
                     </div>
                     <!-- <div class="input-field col s12">
             <select id="adsid">
@@ -245,10 +265,18 @@
                         });
                     });
 
+                    const settings = await gscript("getSettings");
+
                     const {
                         triggers: { enableDailyClear, enableEditTrigger },
-                        accounts: { ads = "", analytics = "" },
-                    } = await gscript("getSettings");
+                        accounts: {
+                            /* ads = "", */ analytics: {
+                                account,
+                                property,
+                                profile,
+                            },
+                        },
+                    } = settings;
 
                     const clear = document.getElementById("clear");
                     const edit = document.getElementById("edit");
@@ -282,13 +310,17 @@
                         })
                     );
 
-                    const gaInput = document.getElementById("gaid");
-                    // const adsSel = document.getElementById("adsid");
+                    const gaPropInput = document.getElementById("property");
+                    const gaProfInput = document.getElementById("profile");
+                    const gaAccInput = document.getElementById("account");
 
-                    gaInput.value = analytics;
+                    gaPropInput.value = property;
+                    gaProfInput.value = profile;
+                    gaAccInput.value = account;
 
                     M.updateTextFields();
 
+                    // const adsSel = document.getElementById("adsid");
                     // const options = await getAdsAccounts(
                     //     ({ id, descriptiveName }) => [id, descriptiveName]
                     // );
@@ -306,29 +338,27 @@
                             const { id } = target;
 
                             const handlerMap = {
-                                gaid: {
-                                    action: ({ value }) =>
-                                        gscript("updateSettings", {
-                                            "accounts/analytics": value,
-                                        }),
-                                },
+                                property: ({ value }) =>
+                                    gscript("updateSettings", {
+                                        "accounts/analytics/property": value,
+                                    }),
+                                profile: ({ value }) =>
+                                    gscript("updateSettings", {
+                                        "accounts/analytics/profile": value,
+                                    }),
+                                account: ({ value }) =>
+                                    gscript("updateSettings", {
+                                        "accounts/analytics/account": value,
+                                    }),
                                 // adsid: {
                                 //     action: ({ value }) =>
                                 //         gscript("updateSettings", {
                                 //             "accounts/ads": value,
-                                //         }),
-                                //     onSuccess: () =>
-                                //         notify(`Ads Account updated`, primBckg),
-                                //     onFailure: () =>
-                                //         notify(
-                                //             `Failed to update Ads Account`,
-                                //             failureBckg
-                                //         ),
+                                //         })
                                 // },
                             };
 
-                            const { action, onSuccess, onFailure } =
-                                handlerMap[id];
+                            const action = handlerMap[id];
 
                             try {
                                 show(preloader, hideCls);
@@ -337,8 +367,8 @@
 
                                 notify(
                                     status
-                                        ? `Analytics Id updated`
-                                        : `Failed to update Analytics Id`,
+                                        ? `Settings updated`
+                                        : `Failed to update`,
                                     status ? primBckg : failureBckg
                                 );
                             } catch ({ message }) {
@@ -357,7 +387,9 @@
                             disable(reset);
 
                             const { status, errors } = await gscript("reset");
-                            gaInput.value = "";
+                            gaPropInput.value = "";
+                            gaProfInput.value = "";
+                            gaAccInput.value = "";
                             tpicker.value = buildTime();
                             clear.checked = true;
                             edit.checked = true;

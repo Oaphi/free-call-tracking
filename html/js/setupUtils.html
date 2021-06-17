@@ -210,8 +210,8 @@
                 gtmContainerPath,
                 gtmWorkspacePath,
                 // adsAccount,
-            ] = $("#GaAcc, #Prop, #Prof, #Acc, #Cont, #Work, #Ads").map(
-                (i, el) => $(el).val()
+            ] = $("#GaAcc, #Prop, #Prof, #Acc, #Cont, #Work").map((i, el) =>
+                $(el).val()
             );
 
             // const willLinkAds = $("#gAdsSwitch").is(":checked");
@@ -287,12 +287,14 @@
                 funcName: "deployAddon",
                 params: [
                     {
+                        gaAccount,
                         gaProperty,
+                        gaProfile,
+                        gaCategory,
+                        gaEvent,
                         gtmContainerPath,
                         gtmWorkspacePath,
                         gtmAccountPath,
-                        gaCategory,
-                        gaEvent,
                     },
                     // adsAccount,
                 ],

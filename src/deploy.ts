@@ -260,10 +260,12 @@ type AddonDeploymentOptions = {
     gtmContainerPath: string;
     gtmWorkspacePath: string;
     gtmAccountPath: string;
+    gaAccount: string;
+    gaProperty: string;
     gaProfile: string;
     gaCategory: string;
     gaEvent: string;
-    adsAccountId: string;
+    // adsAccountId: string;
 };
 
 /**
@@ -273,6 +275,8 @@ function deployAddon({
     gtmContainerPath,
     gtmWorkspacePath,
     gtmAccountPath,
+    gaAccount,
+    gaProperty,
     gaProfile,
     gaCategory,
     gaEvent,
@@ -280,7 +284,9 @@ function deployAddon({
 AddonDeploymentOptions) {
     const settingsStatus = updateSettings({
         // "accounts/ads": adsAccountId,
-        "accounts/analytics": gaProfile,
+        "accounts/analytics/profile": gaProfile,
+        "accounts/analytics/account": gaAccount,
+        "accounts/analytics/property": gaProperty,
     });
 
     if (!settingsStatus) return showMsg("Failed to save settings!");

@@ -72,7 +72,11 @@ type AppSettings = {
     };
     accounts: {
         ads: string;
-        analytics: string;
+        analytics: {
+            account: string;
+            profile: string;
+            property: string;
+        };
     };
 };
 
@@ -84,7 +88,11 @@ const getDefaults = (): AppSettings => ({
     },
     accounts: {
         ads: "",
-        analytics: "",
+        analytics: {
+            account: "",
+            profile: "",
+            property: "",
+        },
     },
 });
 
@@ -114,7 +122,7 @@ type ExtractPathExpressions<T, Sep extends string = "."> = Exclude<
                         keyof number | keyof string
                     >}`
             : T[P] extends { [x: string]: any }
-            ? `${P}${Sep}${ExtractPathExpressions<T[P]>}` | P
+            ? `${P}${Sep}${ExtractPathExpressions<T[P], Sep>}` | P
             : P]: string;
     },
     symbol
