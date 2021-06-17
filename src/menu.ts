@@ -27,7 +27,7 @@ const showInstructionsOnFirstTime = () => {
     const ui = SpreadsheetApp.getUi();
 
     const output = HtmlService.createHtmlOutput(content);
-    output.setHeight(400);
+    output.setHeight(700);
 
     return ui.showModalDialog(output, "New Version First Time Use");
 };
