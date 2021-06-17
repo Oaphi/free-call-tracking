@@ -44,12 +44,13 @@ function deployAddonGo() {
     if (firstTime) return showInstructionsOnFirstTime();
 
     const analyticsAccounts = getAccounts(
-        () => getGoogleAnalyticsAccounts().items || [],
+        getGoogleAnalyticsAccounts,
         "There is access to Analytics, but no account.",
         "No Google Analytics accounts available. Please create at least one."
     );
 
     const gtagAccounts = getAccounts(
+        //TODO: sync with the GA account list API
         () => HelpersTagManager.getAccountsList().account || [],
         "There is access to GTM, but no account.",
         "No Google Tag Manager accounts found. Please create and setup at least one."
@@ -85,9 +86,7 @@ function deployAddonGo() {
     output.setWidth(width);
     output.setTitle(title);
 
-    return firstTime
-        ? ui.showModalDialog(output, title)
-        : sidebarFromString(output.getContent());
+    return ui.showModalDialog(output, title);
 }
 
 /**
