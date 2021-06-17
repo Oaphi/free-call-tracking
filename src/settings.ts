@@ -76,24 +76,31 @@ type AppSettings = {
     };
 };
 
+const getDefaults = (): AppSettings => ({
+    firstTime: true,
+    triggers: {
+        enableDailyClear: true,
+        enableEditTrigger: true,
+    },
+    accounts: {
+        ads: "",
+        analytics: "",
+    },
+});
+
 const getSettings = (): AppSettings => {
-    const defaults: AppSettings = {
-        firstTime: true,
-        triggers: {
-            enableDailyClear: true,
-            enableEditTrigger: true,
-        },
-        accounts: {
-            ads: "",
-            analytics: "",
-        },
-    };
+    const defaults: AppSettings = getDefaults();
 
     const {
         properties: { settings },
     } = APP_CONFIG;
 
-    return JSON.parse(getProperty(settings, JSON.stringify(defaults)));
+    try {
+        return JSON.parse(getProperty(settings, JSON.stringify(defaults)));
+    } catch (error) {
+        logException("settings", error);
+        return defaults;
+    }
 };
 
 type ExtractPathExpressions<T, Sep extends string = "."> = Exclude<
@@ -138,40 +145,44 @@ const updateSettings = <PE extends ExtractPathExpressions<AppSettings, "/">>(
 ) => {
     const source = getSettings();
 
-    const updates = Object.entries(updatesDict).map(([path, value]) =>
-        fromPath({ path, value })
-    );
+    try {
+        const updates = Object.entries(updatesDict).map(([path, value]) =>
+            fromPath({ path, value })
+        );
 
-    deepAssign({ source, updates });
+        deepAssign({ source, updates });
 
-    source.firstTime = false;
+        source.firstTime = false;
 
-    const {
-        triggers: { enableDailyClear, enableEditTrigger },
-    } = source;
+        const {
+            triggers: { enableDailyClear, enableEditTrigger },
+        } = source;
 
-    const trackedClear = {
-        funcName: handleDailyClear.name,
-        type: TriggersApp.TriggerTypes.CLOCK,
-    };
-    const trackedEdit = {
-        funcName: onEditEvent.name,
-        type: TriggersApp.TriggerTypes.EDIT,
-    };
+        const trackedClear = {
+            funcName: handleDailyClear.name,
+            type: TriggersApp.TriggerTypes.CLOCK,
+        };
+        const trackedEdit = {
+            funcName: onEditEvent.name,
+            type: TriggersApp.TriggerTypes.EDIT,
+        };
 
-    enableDailyClear
-        ? TriggersApp.enableTracked(trackedClear)
-        : TriggersApp.disableTracked(trackedClear);
+        enableDailyClear
+            ? TriggersApp.enableTracked(trackedClear)
+            : TriggersApp.disableTracked(trackedClear);
 
-    enableEditTrigger
-        ? TriggersApp.enableTracked(trackedEdit)
-        : TriggersApp.disableTracked(trackedEdit);
+        enableEditTrigger
+            ? TriggersApp.enableTracked(trackedEdit)
+            : TriggersApp.disableTracked(trackedEdit);
 
-    const {
-        properties: { settings },
-    } = APP_CONFIG;
+        const {
+            properties: { settings },
+        } = APP_CONFIG;
 
-    setProperty(settings, source);
+        setProperty(settings, source);
+    } catch (error) {
+        logException("settings", error);
+    }
 
     return source;
 };

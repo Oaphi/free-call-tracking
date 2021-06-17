@@ -308,12 +308,9 @@
                             const handlerMap = {
                                 gaid: {
                                     action: ({ value }) =>
-                                        Promise.all([
-                                            gscript("setProfileID", value),
-                                            gscript("updateSettings", {
-                                                "accounts/analytics": value,
-                                            }),
-                                        ]),
+                                        gscript("updateSettings", {
+                                            "accounts/analytics": value,
+                                        }),
                                 },
                                 // adsid: {
                                 //     action: ({ value }) =>

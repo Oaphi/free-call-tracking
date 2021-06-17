@@ -278,16 +278,12 @@ function deployAddon({
     gaEvent,
 }: // adsAccountId,
 AddonDeploymentOptions) {
-    const gaStatus = setProfileID(gaProfile); //TODO: move analytics ID entirely to settings
-
-    if (!gaStatus) return showMsg("Failed to save Analytics ID!");
-
-    const adsStatus = updateSettings({
+    const settingsStatus = updateSettings({
         // "accounts/ads": adsAccountId,
         "accounts/analytics": gaProfile,
     });
 
-    if (!adsStatus) return showMsg("Failed to save Ads Account ID!");
+    if (!settingsStatus) return showMsg("Failed to save settings!");
 
     const { sUrl: sTagCommand } = createForm(gaCategory, gaEvent);
 
