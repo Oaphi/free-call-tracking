@@ -1,112 +1,115 @@
 <html>
-  <head>
-    <base target="_blank" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Please select your Account</title>
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
-    />
-    <?!= setupStyle ?>
-    <?!= style ?>
-  </head>
+    <head>
+        <base target="_blank" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Please select your Account</title>
+        <link
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+        />
+        <?!= setupStyle ?>
+        <?!= style ?>
+    </head>
 
-  <body class="hidden">
-    <div class="preload-wrapper">
-      <div id="Preloader1" class="progress light-blue darken-3 fixed hidden">
-        <div class="indeterminate white"></div>
-      </div>
-    </div>
-
-    <form class="main" id="form" novalidate="novalidate">
-      <div class="section">
-        <div class="row">
-          <div class="input-field col s12">
-            <select id="GaAcc">
-              <option value="" disabled selected>Select</option>
-              <? for (var r = 0; r < ArrGaAccs.length; r++) { ?>
-              <!-- prettier-ignore -->
-              <option value="<?= ArrGaAccs[r].id ?>"><?= ArrGaAccs[r].name ?></option>
-              <? } ?>
-            </select>
-            <label>Select Google Analytics account</label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="input-field col s12">
-            <select id="Prop" name="Prop">
-              <option value="" disabled selected>Select</option>
-            </select>
-            <label>Select your Google Analytics property</label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="input-field col s12">
-            <select id="Prof" name="Prof">
-              <option value="" disabled selected>Select</option>
-            </select>
-            <label>Select your Google Analytics profile</label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col s12">
-            <label>
-              <input
-                id="createGoal"
-                name="createGoal"
-                class="filled-in"
-                type="checkbox"
-              />
-              <span>Create Analytics Event Goal</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="row">
-          <div class="input-field col s12">
-            <select id="Acc">
-              <option value="" disabled selected>Select</option>
-              <? for (var r = 0; r < ArrAccs.length; r++) { ?>
-              <!-- prettier-ignore -->
-              <option value="<?= ArrAccs[r].path ?>"><?= ArrAccs[r].name ?></option>
-              <? } ?>
-            </select>
-            <label>Select Google Tag Manager account</label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="input-field col s12">
-            <select id="Cont" name="Cont">
-              <option value="" disabled selected>Select</option>
-            </select>
-            <label>Select Google Tag Manager container</label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="input-field col s12">
-            <select id="Work" name="Work">
-              <option value="" disabled selected>Select</option>
-            </select>
-            <label class="multiline"
-              >Select Google Tag Manager workspace<br />
-              * Default is recommended</label
+    <body class="hidden">
+        <div class="preload-wrapper">
+            <div
+                id="Preloader1"
+                class="progress light-blue darken-3 fixed hidden"
             >
-          </div>
+                <div class="indeterminate white"></div>
+            </div>
         </div>
-      </div>
 
-      <div class="row">
+        <form class="main" id="form" novalidate="novalidate">
+            <div class="section">
+                <div class="row">
+                    <div class="input-field col s12">
+                        <select id="GaAcc">
+                            <option value="" disabled selected>Select</option>
+                            <? for (var r = 0; r < ArrGaAccs.length; r++) { ?>
+                            <!-- prettier-ignore -->
+                            <option value="<?= ArrGaAccs[r].id ?>"><?= ArrGaAccs[r].name ?></option>
+                            <? } ?>
+                        </select>
+                        <label>Select Google Analytics account</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s12">
+                        <select id="Prop" name="Prop">
+                            <option value="" disabled selected>Select</option>
+                        </select>
+                        <label>Select your Google Analytics property</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s12">
+                        <select id="Prof" name="Prof">
+                            <option value="" disabled selected>Select</option>
+                        </select>
+                        <label>Select your Google Analytics profile</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col s12">
+                        <label>
+                            <input
+                                id="createGoal"
+                                name="createGoal"
+                                class="filled-in"
+                                type="checkbox"
+                            />
+                            <span>Create Analytics Event Goal</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="row">
+                    <div class="input-field col s12">
+                        <select id="Acc">
+                            <option value="" disabled selected>Select</option>
+                            <? for (var r = 0; r < ArrAccs.length; r++) { ?>
+                            <!-- prettier-ignore -->
+                            <option value="<?= ArrAccs[r].path ?>"><?= ArrAccs[r].name ?></option>
+                            <? } ?>
+                        </select>
+                        <label>Select Google Tag Manager account</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s12">
+                        <select id="Cont" name="Cont">
+                            <option value="" disabled selected>Select</option>
+                        </select>
+                        <label>Select Google Tag Manager container</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s12">
+                        <select id="Work" name="Work">
+                            <option value="" disabled selected>Select</option>
+                        </select>
+                        <label class="multiline"
+                            >Select Google Tag Manager workspace<br />
+                            * Default is recommended</label
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="row">
         <div class="col s12">
           <label>
             <input
@@ -130,360 +133,48 @@
             <label>Select Ads Account</label>
           </div>
         </div>
-      </div>
+      </div> -->
 
-      <div class="row" id="saveme">
-        <div class="input-field col s6 m2">
-          <input placeholder="Call" id="MyCategory" type="text" />
-          <label for="MyCategory">Category</label>
-        </div>
+            <div class="row" id="saveme">
+                <div class="input-field col s6 m2">
+                    <input placeholder="Call" id="MyCategory" type="text" />
+                    <label for="MyCategory">Category</label>
+                </div>
 
-        <div class="input-field col s6 m2">
-          <input placeholder="Call" id="MyEvent" type="text" />
-          <label for="MyEvent">Action</label>
-        </div>
+                <div class="input-field col s6 m2">
+                    <input placeholder="Call" id="MyEvent" type="text" />
+                    <label for="MyEvent">Action</label>
+                </div>
 
-        <div class="input-field col s6 m3">
-          <button
-            id="submit"
-            class="waves-effect waves-theme btn primary-background"
-            type="button"
-          >
-            <i class="material-icons left">check</i>Deploy
-          </button>
-        </div>
-        <div class="input-field col s6 m3">
-          <button
-            id="cancel"
-            class="waves-effect waves-theme btn neutral-background"
-            type="button"
-          >
-            <i class="material-icons left">cancel</i>Cancel
-          </button>
-        </div>
-      </div>
-    </form>
+                <div class="input-field col s6 m3">
+                    <button
+                        id="submit"
+                        class="waves-effect waves-theme btn primary-background"
+                        type="button"
+                    >
+                        <i class="material-icons left">check</i>Deploy
+                    </button>
+                </div>
+                <div class="input-field col s6 m3">
+                    <button
+                        id="cancel"
+                        class="waves-effect waves-theme btn neutral-background"
+                        type="button"
+                    >
+                        <i class="material-icons left">cancel</i>Cancel
+                    </button>
+                </div>
+            </div>
+        </form>
 
-    <?!= run ?>
-    <?!= utils ?>
+        <?!= run ?>
+        <?!= utils ?>
+        <?!= setupUtils ?>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script>
-      (() => {
-        const config = {
-          classes: {
-            notify: {
-              error: "toast-error",
-              success: "primary-background",
-              failure: "failure-background",
-            },
-          },
-          times: {
-            notify: {
-              fast: 1e3,
-              slow: 4e3,
-            },
-          },
-          ids: {
-            preloader: "#Preloader1",
-          },
-        };
-
-        const showLoader = () => $(config.ids.preloader).removeClass("hidden");
-
-        const hideLoader = () => $(config.ids.preloader).addClass("hidden");
-
-        /**
-         * @param {string} text
-         * @param {string} value
-         */
-        const addOption = (text, value) => {
-          const opt = document.createElement("option");
-          opt.appendChild(document.createTextNode(text));
-          opt.setAttribute("value", value);
-          return opt;
-        };
-
-        /**
-         * @param {HTMLSelectElement} selectElement
-         */
-        const removeOptions = (selectElement) => {
-          const { options } = selectElement;
-          [...options].forEach((o) => o.remove());
-        };
-
-        function resetSelectPropagation() {
-          $(document).click((event) => {
-            const { target, currentTarget } = event;
-            if (target === currentTarget) return;
-            if (target.matches(".select-wrapper")) event.stopPropagation();
-          });
-        }
-
-        $(async () => {
-          M.AutoInit();
-
-          //map of selector : handler
-          const changeHandlers = {
-            gAdsSwitch: changeAdsFormVisibility,
-            GaAcc: formChangeGaAccount,
-            Acc: formChangeAccount,
-            Prop: formChangeGaProperty,
-            Cont: formChangeContainer,
-          };
-
-          const $doc = $(document);
-
-          Object.entries(changeHandlers).forEach(([id, handler]) =>
-            $doc.on("change", `#${id}`, async (...args) => {
-              showLoader();
-              await handler(...args);
-              hideLoader();
-            })
-          );
-
-          resetSelectPropagation();
-
-          $("body").removeClass("hidden");
-
-          showLoader();
-
-          const customers = await getAdsAccounts(({ id, descriptiveName }) => ({
-            name: descriptiveName,
-            id,
-          }));
-
-          handleChange("Ads", "id")(customers);
-
-          $("#submit").click(debounce(deployAddon));
-
-          $("#cancel").click(closeForm);
-
-          hideLoader();
-        });
-
-        /**
-         * @param {string} msg
-         * @param {number} duration
-         * @param {...string} classes
-         */
-        const notify = (msg, duration, ...classes) =>
-          M.toast({
-            html: msg,
-            classes: classes.join(" "),
-            displayLength: duration,
-          });
-
-        /**
-         * @param {Event} event
-         */
-        const changeAdsFormVisibility = (event) => {
-          const {
-            target: { checked },
-          } = event;
-
-          const adsForm = $("#gAdsSetup"),
-            duration = 100;
-
-          checked ? adsForm.show(duration) : adsForm.hide(duration);
-        };
-
-        /**
-         * @param {string} id
-         * @param {string} prop
-         */
-        const handleChange = (id, prop) => (data) => {
-          const sel = document.getElementById(id);
-          removeOptions(sel);
-
-          const { length } = data;
-
-          data.unshift({ name: "Select", [prop]: "" });
-
-          const options = data.map((item) => addOption(item.name, item[prop]));
-
-          sel.append(...options);
-
-          $(sel).formSelect();
-        };
-
-        /**
-         * @param {string} selId
-         */
-        const handleChangeFailure = (selId) => (err) => {
-          $(`#${selId}`).find("option:first").prop("selected", true);
-          $(`#${selId}`).formSelect();
-          showError(err);
-        };
-
-        const formChangeGaAccount = async ({ target: { value } }) => {
-          const { status, properties } = await run({
-            funcName: "getGaPropertiesArrByAcc",
-            params: [value],
-            onFailure: handleChangeFailure("#GaAcc"),
-          });
-
-          if (!status) return showError(`Failed to load Analytics properties!`);
-
-          handleChange("Prop", "id")(properties);
-        };
-
-        const formChangeGaProperty = async ({ target: { value } }) => {
-          const sAccId = $("#GaAcc").val();
-
-          const profiles = await run({
-            funcName: "getGaProfiles",
-            params: [sAccId, value],
-            onFailure: handleChangeFailure("#GaAcc"),
-          });
-
-          handleChange("Prof", "id")(profiles);
-        };
-
-        /**
-         * @param {string} selId
-         * @param {string} subSelId
-         * @param {string} prop
-         * @param {string} handlerName
-         */
-        const getEntities = async (selId, subSelId, prop, handlerName) => {
-          const sAccPath = $(`#${selId}`).val();
-
-          if (!sAccPath) return;
-
-          const entities = await run({
-            funcName: handlerName,
-            params: [sAccPath],
-            onFailure: handleChangeFailure(selId),
-          });
-
-          handleChange(subSelId, prop)(entities);
-        };
-
-        const formChangeAccount = () =>
-          getEntities("Acc", "Cont", "path", "getConteinersArrByAcc");
-
-        const formChangeContainer = () =>
-          getEntities("Cont", "Work", "path", "getWorkspacesArrByCont");
-
-        async function deployAddon() {
-          const [
-            gaAccount,
-            gaProperty,
-            gaProfile,
-            gtmAccountPath,
-            gtmContainerPath,
-            gtmWorkspacePath,
-            adsAccount,
-          ] = $("#GaAcc, #Prop, #Prof, #Acc, #Cont, #Work, #Ads").map((i, el) =>
-            $(el).val()
-          );
-
-          const willLinkAds = $("#gAdsSwitch").is(":checked");
-          const willCreateGoal = $("#createGoal").is(":checked");
-
-          const issues = [];
-
-          if (!gaAccount) issues.push("Please select an Analytics Account!");
-          if (!gaProperty) issues.push("Please select an Analytics Property!");
-          if (!gtmAccountPath)
-            issues.push("Please select a Tag Manager Account!");
-          if (!gtmContainerPath) issues.push("Please select a Container!");
-          if (!gtmWorkspacePath) issues.push("Please select a Workspace!");
-          if (willLinkAds && !adsAccount)
-            issues.push("Please select an Ads Account");
-
-          if (willCreateGoal && !gaProfile)
-            issues.push(`Please select an Analytics Profile!`);
-
-          const { error } = config.classes.notify;
-
-          if (issues.length)
-            return issues.forEach((msg) =>
-              notify(msg, config.times.notify.slow, error)
-            );
-
-          showLoader();
-          disable("submit");
-
-          if (willLinkAds) {
-            await run({
-              funcName: "linkAllAccounts",
-              onFailure: () =>
-                showError(
-                  `Failed to link your Ads accounts!`,
-                  config.times.notify.slow
-                ),
-              onSuccess: ({ length }) => {
-                notify(
-                  `Linked ${length} Ads account${length === 1 ? "" : "s"}`,
-                  config.times.notify.slow,
-                  config.classes.notify.success
-                );
-              },
-            });
-          }
-
-          const gaCategory = $("#MyCategory").val() || "Call";
-          const gaEvent = $("#MyEvent").val() || "Call";
-
-          if (willCreateGoal) {
-            const goalStatus = await gscript("createEventGoal", {
-              gaAccount,
-              gaProperty,
-              gaProfile,
-              gaCategory,
-              gaEvent,
-            });
-
-            goalStatus
-              ? notify(
-                  `Created Analytics Goal`,
-                  config.times.notify.slow,
-                  config.classes.notify.success
-                )
-              : showError(`Failed to create Analytics Goal!`);
-          }
-
-          await run({
-            funcName: "deployAddon",
-            params: [
-              {
-                gaProperty,
-                gtmContainerPath,
-                gtmWorkspacePath,
-                gtmAccountPath,
-                gaCategory,
-                gaEvent,
-              },
-              adsAccount,
-            ],
-            onSuccess: closeForm,
-            onFailure: showError,
-            onEnd: () => enable("submit"),
-          });
-        }
-
-        /**
-         * @param {Error|string} error
-         */
-        const showError = async (error, duration = 1e4) => {
-          hideLoader();
-
-          notify(
-            error || `This is unexpected! We are fixing this`,
-            duration,
-            config.classes.notify.error
-          );
-        };
-
-        const closeForm = () => google.script.host.close();
-
-        $(document).on("click", ".toast", ({ target }) => {
-          M.Toast.getInstance(target).dismiss();
-        });
-      })();
-    </script>
-  </body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script>
+          
+        </script>
+    </body>
 </html>
