@@ -21,6 +21,7 @@
                 deploy: async () => {
                     await gscript("updateSettings", { firstTime: false });
                     await gscript("deployAddonGo");
+                    google.script.host.close();
                 },
             };
 
