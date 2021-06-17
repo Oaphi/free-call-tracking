@@ -50,8 +50,7 @@ function deployAddonGo() {
     );
 
     const gtagAccounts = getAccounts(
-        //TODO: sync with the GA account list API
-        () => HelpersTagManager.getAccountsList().account || [],
+        listTagManagerAccounts,
         "There is access to GTM, but no account.",
         "No Google Tag Manager accounts found. Please create and setup at least one."
     );
@@ -481,15 +480,3 @@ function republishVersion({
         return result;
     }
 }
-
-/**
- * @summary lists account containers
- */
-const getConteinersArrByAcc = (parent: string) =>
-    HelpersTagManager.getConteinersListByAcc(parent).container;
-
-/**
- * @summary lists container workspaces
- */
-const getWorkspacesArrByCont = (parent: string) =>
-    HelpersTagManager.listWorkspaces(parent);
