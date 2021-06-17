@@ -465,8 +465,6 @@ class AdsHelper extends Helper {
     const processedIds: Partial<Record<string, 1>> = {};
 
     const walkAccount = (id: string, managerId = id): Customer[] => {
-      console.log(`walking customer: ${id}, manager: ${managerId}`);
-
       if (processedIds[id]) return [];
 
       const { results } = this.bulkSearch<{ customerClient: Customer }>(query, {
