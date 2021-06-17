@@ -11,6 +11,7 @@ const showInstructionsOnFirstTime = () => {
         utils: "html",
         style: "html",
         run: "html",
+        firstTime: "html/js",
     });
 
     const content = template({
@@ -26,6 +27,8 @@ const showInstructionsOnFirstTime = () => {
     const ui = SpreadsheetApp.getUi();
 
     const output = HtmlService.createHtmlOutput(content);
+    output.setHeight(400);
+
     return ui.showModalDialog(output, "New Version First Time Use");
 };
 
