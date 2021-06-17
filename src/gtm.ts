@@ -293,6 +293,9 @@ var HelpersTagManager = (() => {
             return getWorkspacePath(LastUsed);
         },
 
+        getContainerPath,
+        getWorkspacePath,
+
         getAccount,
         getAccountById,
         getAccountsList,
@@ -321,6 +324,110 @@ var HelpersTagManager = (() => {
 const listTagManagerAccounts = () => {
     const { account = [] } = HelpersTagManager.getAccountsList() || {};
     return account;
+};
+
+const listTagsByName = (wspacePath: string, search: RegExp) => {
+    const tags = HelpersTagManager.listTags(wspacePath);
+    return tags.filter(({ name }) => search.test(name!));
+};
+
+const listTriggersByName = (wspacePath: string, search: RegExp) => {
+    const triggers = HelpersTagManager.listTriggers(wspacePath);
+    return triggers.filter(({ name }) => search.test(name!));
+};
+
+const listVariablesByName = (wspacePath: string, search: RegExp) => {
+    const variables = HelpersTagManager.listVariables(wspacePath);
+    return variables.filter(({ name }) => search.test(name!));
+};
+
+const deleteTag = (wspacePath: string, id: string) => {
+    try {
+        TagManager.Accounts?.Containers?.Workspaces?.Tags?.remove(
+            `${wspacePath}/tags/${id}`
+        );
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+};
+
+const deleteTrigger = (wspacePath: string, id: string) => {
+    try {
+        TagManager.Accounts?.Containers?.Workspaces?.Triggers?.remove(
+            `${wspacePath}/triggers/${id}`
+        );
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+};
+
+const deleteVariable = (wspacePath: string, id: string) => {
+    try {
+        TagManager.Accounts?.Containers?.Workspaces?.Variables?.remove(
+            `${wspacePath}/variables/${id}`
+        );
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+};
+
+/**
+ * @summary cleans up old FCT version
+ * @param {string} accountId
+ * @param {string} containerId
+ * @param {string} workspaceId
+ * @param {string} source
+ * @param {string} flags
+ * @returns {boolean}
+ */
+const cleanupOldVersion = (
+    accountId: string,
+    containerId: string,
+    workspaceId: string,
+    source: string,
+    flags: string
+) => {
+    const search = new RegExp(source, flags);
+
+    const wspacePath = HelpersTagManager.getWorkspacePath({
+        accountId,
+        containerId,
+        workspaceId,
+    });
+
+    const [tag] = listTagsByName(wspacePath, search);
+    if (!tag) return false;
+
+    const [trigger] = listTriggersByName(wspacePath, search);
+    if (!trigger) return false;
+
+    Utilities.sleep(1e3);
+
+    const variables = listVariablesByName(wspacePath, search);
+    if (!variables.length) return false;
+
+    const deletions = [
+        deleteTag(wspacePath, tag.tagId!),
+        deleteTrigger(wspacePath, trigger.triggerId!),
+        ...variables.map((v) => deleteVariable(wspacePath, v.variableId!)),
+    ];
+    if (!deletions.every(Boolean)) return false;
+
+    Utilities.sleep(1e3);
+
+    const version = versionWorkspace(wspacePath, sVERSION_NAME);
+
+    const { code } = republishVersion(version);
+
+    const isSuccess = code === 200;
+    isSuccess || console.log(code);
+    return isSuccess;
 };
 
 /**
