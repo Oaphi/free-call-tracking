@@ -9,11 +9,17 @@
         return `${hh < 10 ? `0${hh}` : hh}:${mm < 10 ? `0${mm}` : mm}`;
     };
 
-    const disable = (id) =>
-        document.getElementById(id).classList.add("disabled");
+    const disable = (elOrId) =>
+        (typeof elOrId === "string"
+            ? document.getElementById(elOrId)
+            : elOrId
+        ).classList.add("disabled");
 
-    const enable = (id) =>
-        document.getElementById(id).classList.remove("disabled");
+    const enable = (elOrId) =>
+        (typeof elOrId === "string"
+            ? document.getElementById(elOrId)
+            : elOrId
+        ).classList.remove("disabled");
 
     const show = ({ classList }, className = "hide") =>
         classList.remove(className);
