@@ -284,32 +284,6 @@
                     clear.checked = enableDailyClear;
                     edit.checked = enableEditTrigger;
 
-                    const updateSettings = async (update) => {
-                        show(preloader, hideCls);
-
-                        await run({
-                            funcName: "updateSettings",
-                            params: [update],
-                            onEnd: () => hide(preloader, hideCls),
-                            onSuccess: () =>
-                                notify("Updated settings", primBckg),
-                            onFailure: () =>
-                                notify("Failed to update", failureBckg),
-                        });
-                    };
-
-                    clear.addEventListener("change", () =>
-                        updateSettings({
-                            "triggers/enableDailyClear": clear.checked,
-                        })
-                    );
-
-                    edit.addEventListener("change", () =>
-                        updateSettings({
-                            "triggers/enableEditTrigger": edit.checked,
-                        })
-                    );
-
                     const gaPropInput = document.getElementById("property");
                     const gaProfInput = document.getElementById("profile");
                     const gaAccInput = document.getElementById("account");
@@ -349,6 +323,14 @@
                                 account: ({ value }) =>
                                     gscript("updateSettings", {
                                         "accounts/analytics/account": value,
+                                    }),
+                                clear: ({ checked }) =>
+                                    gscript("updateSettings", {
+                                        "triggers/enableDailyClear": checked,
+                                    }),
+                                edit: ({ checked }) =>
+                                    gscript("updateSettings", {
+                                        "triggers/enableEditTrigger": checked,
                                     }),
                                 // adsid: {
                                 //     action: ({ value }) =>
