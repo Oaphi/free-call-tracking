@@ -39,6 +39,10 @@ function deployAddonGo() {
 
     const ui = SpreadsheetApp.getUi();
 
+    const { firstTime } = getSettings();
+
+    if (firstTime) return showInstructionsOnFirstTime();
+
     const analyticsAccounts = getAccounts(
         () => getGoogleAnalyticsAccounts().items || [],
         "There is access to Analytics, but no account.",
@@ -80,8 +84,6 @@ function deployAddonGo() {
     output.setHeight(height);
     output.setWidth(width);
     output.setTitle(title);
-
-    const { firstTime } = getSettings();
 
     return firstTime
         ? ui.showModalDialog(output, title)
@@ -276,14 +278,14 @@ function deployAddon({
     gaProfile,
     gaCategory,
     gaEvent,
-    adsAccountId,
-}: AddonDeploymentOptions) {
+}: // adsAccountId,
+AddonDeploymentOptions) {
     const gaStatus = setProfileID(gaProfile); //TODO: move analytics ID entirely to settings
 
     if (!gaStatus) return showMsg("Failed to save Analytics ID!");
 
     const adsStatus = updateSettings({
-        "accounts/ads": adsAccountId,
+        // "accounts/ads": adsAccountId,
         "accounts/analytics": gaProfile,
     });
 
