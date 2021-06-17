@@ -33,14 +33,11 @@ const getAccounts = <T>(
 /**
  * @summary setup process running on add-on deployment
  */
-function deployAddonGo() {
+const deployAddonGo = () => {
     prepareTriggersForUse();
     recordNewOwner();
 
-    const ui = SpreadsheetApp.getUi();
-
     const { firstTime } = getSettings();
-
     if (firstTime) return showInstructionsOnFirstTime();
 
     const analyticsAccounts = getAccounts(
@@ -85,8 +82,9 @@ function deployAddonGo() {
     output.setWidth(width);
     output.setTitle(title);
 
+    const ui = SpreadsheetApp.getUi();
     return ui.showModalDialog(output, title);
-}
+};
 
 /**
  * @summary creates a GTM variable or updates it
