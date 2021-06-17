@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>First Time Install</title>
+
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Material+Icons"
+        />
+
+        <?!= style ?>
+    </head>
+    <body>
+        <?!= utils ?>
+        <?!= run ?>
+        <?!= firstTime ?>
+
+        <div class="section">
+            <div class="row">
+                <div class="col s12">
+                    <p>
+                        It seems like this is your fist deployment of the new
+                        version of Free Call Tracking! If you are a new user,
+                        please skip right through to the deployment screen by
+                        clicking on the button below:
+                    </p>
+                </div>
+                <div class="col s12">
+                    <a
+                        id="deploy"
+                        class="waves-effect waves-light btn primary-background"
+                        >Deploy</a
+                    >
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s12">
+                    <blockquote class="primary">
+                        <p
+                            >If you are a user of the previous version, please
+                            remove the Tag Manager tags, triggers, and variables
+                            installed by the Add-on.</p
+                        >
+                    </blockquote>
+                    <p>
+                        To help you, we can automatically detect and remove
+                        those for you. Should you prefer to do it manually,
+                        simply click the deploy button above, otherwise please
+                        choose an account from the list below:
+                    </p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s12">
+                    <div class="preload-wrapper">
+                        <div
+                            id="preload"
+                            class="progress light-blue darken-3 hidden"
+                        >
+                            <div class="indeterminate white"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="input-field col s12">
+                    <select id="Acc">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label>Select Tag Manager account</label>
+                </div>
+                <div class="input-field col s12">
+                    <select id="Cont" name="Cont">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label>Select Tag Manager container</label>
+                </div>
+                <div class="input-field col s12">
+                    <select id="Work" name="Work">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label class="multiline"
+                        >Select Tag Manager workspace</label
+                    >
+                </div>
+                <div id="actions" class="col s12">
+                    <a
+                        id="clean"
+                        class="
+                            waves-effect waves-light
+                            btn
+                            primary-background
+                            disabled
+                        "
+                        >Clean</a
+                    >
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
