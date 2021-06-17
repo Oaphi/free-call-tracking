@@ -3,3 +3,6 @@ docs
 
 *.d.ts
 *ids.txt
+
+# mini-script for switching GAS projects
+clsp.*
