@@ -1,5 +1,5 @@
 const nl = (parts: TemplateStringsArray, ...args: string[]) =>
-  "\n" + parts.reduce((a, c, i) => a + c + (args[i] || ""), "");
+    "\n" + parts.reduce((a, c, i) => a + c + (args[i] || ""), "");
 
-const toEventPair = (category = "Event", event = "Event") =>
-  `${category}/${event}`;
+const toEventPair = (category = "Call", event = "Call") =>
+    `${category}/${event}`;
