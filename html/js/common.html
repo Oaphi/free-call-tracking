@@ -1,0 +1,101 @@
+<script>
+    const mapToOpts = ({ id, name }) => [id, name];
+
+    const clearSelect = ({ options }, leave = 0) =>
+        [...options].slice(leave).forEach((option) => option.remove());
+
+    const reinitSelect = (sel, value = "") => {
+        sel.value = value;
+        const { options } = M.FormSelect.getInstance(sel);
+        return M.FormSelect.init(sel, options);
+    };
+
+    const appendOptions = (sel, options) => {
+        const opts = options.map(([val, txt]) => {
+            const opt = document.createElement("option");
+            opt.value = val;
+            opt.textContent = txt;
+            return opt;
+        });
+        sel.append(...opts);
+        return sel;
+    };
+
+    const updateProperties = async (analyticsId, value = "") => {
+        const propSel = document.getElementById("property");
+
+        const properties = await gscript(
+            "listAnalyticsProperties",
+            analyticsId
+        );
+
+        clearSelect(propSel, 1);
+        const propIds = properties.map(mapToOpts);
+        appendOptions(propSel, propIds);
+        reinitSelect(propSel, value);
+    };
+
+    const updateProfiles = async (analyticsId, propertyId, value = "") => {
+        const profSel = document.getElementById("profile");
+        const profiles = await gscript(
+            "listAnalyticsProfiles",
+            analyticsId,
+            propertyId
+        );
+
+        clearSelect(profSel, 1);
+        const profIds = profiles.map(mapToOpts);
+        appendOptions(profSel, profIds);
+        reinitSelect(profSel, value);
+    };
+
+    const setupAnalytics = async (settings) => {
+        const { account, property, profile } = settings;
+
+        const accSel = document.getElementById("account");
+        const propSel = document.getElementById("property");
+        const profSel = document.getElementById("profile");
+
+        const accounts = await gscript("getGoogleAnalyticsAccounts");
+
+        const accIds = accounts.map(mapToOpts);
+        appendOptions(accSel, accIds);
+
+        updateProperties(account, property);
+        updateProfiles(account, property, profile);
+
+        reinitSelect(accSel, account);
+        reinitSelect(propSel, property);
+        reinitSelect(profSel, profile);
+
+        document.addEventListener(
+            "change",
+            async ({ target, currentTarget }) => {
+                if (target === currentTarget) return;
+
+                const { id, parentElement, value } = target;
+
+                const actionMap = {
+                    account: () => updateProperties(value),
+                    property: () => updateProfiles(accSel.value, value),
+                };
+
+                const handler = actionMap[id];
+                if (handler) handler();
+
+                await gscript("updateSettings", {
+                    [`accounts/analytics/${id}`]: value,
+                });
+
+                //@ts-expect-error
+                settings[id] = value;
+
+                const { nextElementSibling: label } = parentElement;
+                notify(
+                    `${label?.textContent || "Setting"} saved`,
+                    "primary-background"
+                );
+            }
+        );
+    };
+</script>

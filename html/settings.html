@@ -95,33 +95,23 @@
                 </div>
                 <div class="row">
                     <div class="input-field col s12">
-                        <input
-                            id="account"
-                            type="text"
-                            class="validate tooltipped"
-                            data-position="bottom"
-                            data-tooltip="Your Analytics Account"
-                        />
-                        <label for="property">Analytics Account</label>
+                        <select id="account" name="account">
+                            <option value="" disabled selected>Select</option>
+                        </select>
+                        <label for="account">Analytics Account</label>
                     </div>
+
                     <div class="input-field col s12">
-                        <input
-                            id="property"
-                            type="text"
-                            class="validate tooltipped"
-                            data-position="bottom"
-                            data-tooltip="Your Analytics Property"
-                        />
+                        <select id="property" name="property">
+                            <option value="" disabled selected>Select</option>
+                        </select>
                         <label for="property">Analytics Property</label>
                     </div>
+
                     <div class="input-field col s12">
-                        <input
-                            id="profile"
-                            type="text"
-                            class="validate tooltipped"
-                            data-position="bottom"
-                            data-tooltip="Your Analytics Profile"
-                        />
+                        <select id="profile" name="profile">
+                            <option value="" disabled selected>Select</option>
+                        </select>
                         <label for="profile">Analytics Profile</label>
                     </div>
                     <!-- <div class="input-field col s12">
@@ -145,9 +135,10 @@
 
         <?!= run ?>
         <?!= utils ?>
+        <?!= common ?>
 
         <script>
-            (() => {
+            ((_w, d) => {
                 const primBckg = "primary-background";
                 const failureBckg = "failure-background";
                 const hideCls = "hidden";
@@ -269,13 +260,7 @@
 
                     const {
                         triggers: { enableDailyClear, enableEditTrigger },
-                        accounts: {
-                            /* ads = "", */ analytics: {
-                                account,
-                                property,
-                                profile,
-                            },
-                        },
+                        accounts: { /* ads = "", */ analytics },
                     } = settings;
 
                     const clear = document.getElementById("clear");
@@ -284,13 +269,7 @@
                     clear.checked = enableDailyClear;
                     edit.checked = enableEditTrigger;
 
-                    const gaPropInput = document.getElementById("property");
-                    const gaProfInput = document.getElementById("profile");
-                    const gaAccInput = document.getElementById("account");
-
-                    gaPropInput.value = property;
-                    gaProfInput.value = profile;
-                    gaAccInput.value = account;
+                    await setupAnalytics(analytics);
 
                     M.updateTextFields();
 
@@ -312,18 +291,6 @@
                             const { id } = target;
 
                             const handlerMap = {
-                                property: ({ value }) =>
-                                    gscript("updateSettings", {
-                                        "accounts/analytics/property": value,
-                                    }),
-                                profile: ({ value }) =>
-                                    gscript("updateSettings", {
-                                        "accounts/analytics/profile": value,
-                                    }),
-                                account: ({ value }) =>
-                                    gscript("updateSettings", {
-                                        "accounts/analytics/account": value,
-                                    }),
                                 clear: ({ checked }) =>
                                     gscript("updateSettings", {
                                         "triggers/enableDailyClear": checked,
@@ -361,7 +328,7 @@
                         }
                     );
 
-                    const reset = document.getElementById("reset");
+                    const reset = d.getElementById("reset");
 
                     reset.addEventListener("click", async () => {
                         try {
@@ -369,9 +336,11 @@
                             disable(reset);
 
                             const { status, errors } = await gscript("reset");
-                            gaPropInput.value = "";
-                            gaProfInput.value = "";
-                            gaAccInput.value = "";
+
+                            reinitSelect(d.getElementById("account"));
+                            reinitSelect(d.getElementById("property"));
+                            reinitSelect(d.getElementById("profile"));
+
                             tpicker.value = buildTime();
                             clear.checked = true;
                             edit.checked = true;
@@ -390,7 +359,7 @@
 
                     hide(preloader, hideCls);
                 });
-            })();
+            })(window, document);
         </script>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.1.0/uuidv4.min.js"></script>
