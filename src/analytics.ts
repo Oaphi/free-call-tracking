@@ -293,9 +293,7 @@ class AnalyticsManagementHelper extends Helper {
             }
         );
 
-        console.log(res.getContentText());
-
-        return res.getResponseCode() === 200;
+        return this.processResponse(res);
     }
 
     /**
@@ -408,6 +406,8 @@ class AnalyticsMeasurementHelper extends Helper {
         userAgent,
         geo,
     }: AnalyticsCollectEventOptions) {
+        console.log({ category, action, value });
+
         const queryConfig: AnalyticsParameters = {
             ...this.commonCollectParams,
             tid,
@@ -433,9 +433,7 @@ class AnalyticsMeasurementHelper extends Helper {
             muteHttpExceptions: true,
         });
 
-        console.log(res.getContentText());
-
-        return res.getResponseCode() === 200;
+        return this.processResponse(res);
     }
 
     static collectPageview(
@@ -459,9 +457,7 @@ class AnalyticsMeasurementHelper extends Helper {
             muteHttpExceptions: true,
         });
 
-        console.log(res.getContentText());
-
-        return res.getResponseCode() === 200;
+        return this.processResponse(res);
     }
 }
 
@@ -595,3 +591,71 @@ const installGAtag = () => {
         return false;
     }
 };
+
+type GASettings = {
+    analyticsId?: string;
+    propertyId?: string;
+    profileId?: string;
+};
+
+interface AnalyticsListHelper extends GASettings {}
+
+const errable =
+    (returnOnError: unknown, msg: string) =>
+    <T extends (...args: any[]) => any>(
+        _tgt: object,
+        _key: string,
+        descr: TypedPropertyDescriptor<T>
+    ) => {
+        const nakedValue = descr.value!;
+
+        return {
+            ...descr,
+            value: function (...args: Parameters<typeof nakedValue>) {
+                try {
+                    return nakedValue.apply(this, args);
+                } catch (error) {
+                    console.warn(msg.replace("%e", error));
+                    return returnOnError;
+                }
+            },
+        };
+    };
+
+class AnalyticsListHelper extends Helper {
+    constructor(ids: GASettings = {}) {
+        super();
+        Object.assign(this, ids);
+    }
+
+    @errable([], "failed to list GA accounts: %e")
+    listAccounts() {
+        const { items = [] } = Analytics.Management?.Accounts?.list() || {};
+        return items;
+    }
+
+    @errable([], "failed to list GA properties: %e")
+    listProperties({ analyticsId }: GASettings = {}) {
+        const { items = [] } =
+            Analytics.Management?.Webproperties?.list(
+                analyticsId || this.analyticsId!
+            ) || {};
+        return items;
+    }
+
+    @errable([], "failed to list GA profiles: %e")
+    listProfiles({ analyticsId, propertyId }: GASettings = {}) {
+        const { items = [] } =
+            Analytics.Management?.Profiles?.list(
+                analyticsId || this.analyticsId!,
+                propertyId || this.propertyId!
+            ) || {};
+        return items;
+    }
+}
+const listAnalyticsAccounts = () => new AnalyticsListHelper().listAccounts();
+const listAnalyticsProperties = (analyticsId: string) =>
+    new AnalyticsListHelper({ analyticsId }).listProperties();
+
+const listAnalyticsProfiles = (analyticsId: string, propertyId: string) =>
+    new AnalyticsListHelper({ analyticsId, propertyId }).listProfiles();
