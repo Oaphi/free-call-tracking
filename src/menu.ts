@@ -75,6 +75,7 @@ function settingsGo() {
         utils: "html",
         style: "html",
         run: "html",
+        common: "html/js",
     });
 
     const content = template({
