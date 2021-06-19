@@ -78,7 +78,11 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
 
         if (!cid) return sheet.getRange(`I${iRow}`).clearContent();
 
-        const tid = getProfileID();
+        const {
+            accounts: {
+                analytics: { property },
+            },
+        } = getSettings();
 
         const [category, action] = catActPair.split("/");
 
@@ -86,7 +90,7 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
         const page = extractPage(tgt);
 
         const success = AnalyticsMeasurementHelper.collectEvent({
-            tid,
+            tid: property,
             cid,
             category,
             action,
@@ -406,17 +410,17 @@ class AnalyticsMeasurementHelper extends Helper {
         userAgent,
         geo,
     }: AnalyticsCollectEventOptions) {
-        console.log({ category, action, value });
+        const z = Math.trunc(new Date(timestamp).valueOf());
 
         const queryConfig: AnalyticsParameters = {
             ...this.commonCollectParams,
             tid,
             cid,
+            z,
             t: "event",
             ec: category,
             ea: action,
             ev: value,
-            z: timestamp,
             ua: userAgent,
             dh: domain,
             dp: page,
