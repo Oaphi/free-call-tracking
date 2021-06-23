@@ -65,11 +65,9 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
         const catActPair = range.getValue().toString();
         const iRow = range.getRow();
 
-        if (catActPair === "") return;
-
         const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-        if (!ss) return;
+        if (!catActPair || !ss) return;
 
         const sheet = ss.getActiveSheet();
 
@@ -101,6 +99,8 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
             timestamp: stamp,
             geo,
         });
+
+        if (!success) promptUAinstall();
 
         ss.toast(
             success ? `Successfully sent` : `Failed to send`,
