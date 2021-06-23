@@ -10,37 +10,46 @@ const decodeVars = (url: string) =>
 /**
  * @summary prefills form URL with variables
  */
-function getPrefilledUrl(sFormId: string): FormInfo {
-    var form = FormApp.openById(sFormId);
-    var items = form.getItems();
+const getPrefilledUrl = (sFormId: string): FormInfo => {
+    const defaults: FormInfo = { sFormId: "", sUrl: "" };
 
-    // Skip headers, then build URLs for each row in Sheet1.
-    // Create a form response object, and prefill it
-    var formResponse = form.createResponse();
+    try {
+        const form = FormApp.openById(sFormId);
+        const items = form.getItems();
 
-    const setResponse = makeResponseSetter(formResponse);
+        const formResponse = form.createResponse();
 
-    const {
-        tagManager: {
-            variables: { clid, time, uagent, title, geo },
-        },
-    } = APP_CONFIG;
+        const setResponse = makeResponseSetter(formResponse);
 
-    setResponse(items[0], `{{${time}}}`);
-    setResponse(items[1], `{{${clid}}}`);
-    setResponse(items[2], `{{${geo}}}`);
-    setResponse(items[3], "{{Referrer}}");
-    setResponse(items[4], "{{Page Hostname}}{{Page Path}}");
-    setResponse(items[5], `{{${title}}}`);
-    setResponse(items[6], `{{${uagent}}}`);
+        const {
+            tagManager: {
+                variables: { clid, time, uagent, title, geo },
+            },
+        } = APP_CONFIG;
 
-    // Get prefilled form URL
-    var url = formResponse.toPrefilledUrl().replace("viewform", "formResponse");
+        const [iTime, iClid, iGeo, iRef, iHost, iTitle, iAgent] = items;
 
-    const sUrl = decodeVars(url);
+        setResponse(iTime, `{{${time}}}`);
+        setResponse(iClid, `{{${clid}}}`);
+        setResponse(iGeo, `{{${geo}}}`);
+        setResponse(iRef, "{{Referrer}}");
+        setResponse(iHost, "{{Page Hostname}}{{Page Path}}");
+        setResponse(iTitle, `{{${title}}}`);
+        setResponse(iAgent, `{{${uagent}}}`);
 
-    return { sFormId, sUrl };
-}
+        // Get prefilled form URL
+        const url = formResponse
+            .toPrefilledUrl()
+            .replace("viewform", "formResponse");
+
+        const sUrl = decodeVars(url);
+
+        return Object.assign(defaults, { sFormId, sUrl });
+    } catch (error) {
+        console.warn(`failed to prefill URL: ${error}`);
+        return defaults;
+    }
+};
 
 type FormInfo = {
     sFormId: string;
