@@ -356,12 +356,12 @@ const uniqify = (arr: any[] = []): any[] => [...new Set(arr).values()];
 const loadDependency = (path: string, name: string) =>
     HtmlService.createHtmlOutputFromFile(`${path}/${name}`).getContent();
 
-declare interface Logger {
+interface Logger {
     logs: Map<number, string>;
     clear(): void;
     dump(): void;
     iso(num: Number): string;
-    log(msg: string): void;
+    log(msg: string): Logger;
 }
 
 const makeLogger = (): Logger => {
@@ -377,6 +377,7 @@ const makeLogger = (): Logger => {
         log(msg: string) {
             const [stamp, log] = [Date.now(), msg];
             this.logs.set(stamp, log);
+            return this;
         },
         dump() {
             const { logs } = this;
@@ -485,7 +486,9 @@ const withCatch =
 
 const uuid = () => Utilities.getUuid();
 
-type Tail<A extends any[]> = A extends [ head: any, ...tail: infer T ] ? T : never;
+type Tail<A extends any[]> = A extends [head: any, ...tail: infer T]
+    ? T
+    : never;
 
 const makeRunTimes =
     (num = 1) =>
