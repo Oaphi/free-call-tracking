@@ -1,14 +1,25 @@
 /// <reference path="../triggers.d.ts" />
-
-const getDailyClearConfig = () => {
-    const defaultConfig = JSON.stringify({ days: 1, atMinute: 0, atHour: 0 });
-    return JSON.parse(getProperty(APP_CONFIG.properties.clear, defaultConfig));
-};
 interface DailyClearOptions {
     days?: number;
     atHour?: number;
     atMinute?: number;
 }
+
+type CommonAnalyticsInstallOptions = {
+    sheet?: GoogleAppsScript.Spreadsheet.Sheet;
+};
+
+type AnalyticsInstallGetterOptions = CommonAnalyticsInstallOptions;
+
+type AnalyticsInstallSetterOptions = {
+    dismissed?: boolean;
+} & CommonAnalyticsInstallOptions;
+
+const getDailyClearConfig = () => {
+    const defaults: DailyClearOptions = { days: 1, atMinute: 0, atHour: 0 };
+    const defaultConfig = JSON.stringify(defaults);
+    return JSON.parse(getProperty(APP_CONFIG.properties.clear, defaultConfig));
+};
 
 const setDailyClearConfig = (config: DailyClearOptions) => {
     const { days = 1, atMinute = 0, atHour = 0 } = config;
@@ -138,16 +149,6 @@ const getGaInstalledDismissed = (sheet = getFormSheet()) => {
 
     return analyticsStatus;
 };
-
-type CommonAnalyticsInstallOptions = {
-    sheet?: GoogleAppsScript.Spreadsheet.Sheet;
-};
-
-type AnalyticsInstallGetterOptions = CommonAnalyticsInstallOptions;
-
-type AnalyticsInstallSetterOptions = {
-    dismissed?: boolean;
-} & CommonAnalyticsInstallOptions;
 
 /**
  * @summary sets metadata that install of UA is dismissed
