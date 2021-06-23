@@ -485,9 +485,14 @@ const withCatch =
 
 const uuid = () => Utilities.getUuid();
 
+type Tail<A extends any[]> = A extends [ head: any, ...tail: infer T ] ? T : never;
+
 const makeRunTimes =
     (num = 1) =>
-    (callback: (idx: number, ...arg: any[]) => any, ...args: any[]) => {
+    <T extends (idx: number, ...arg: any[]) => any>(
+        callback: T,
+        ...args: Tail<Parameters<T>>
+    ) => {
         let i = 0;
         while (i < num) {
             callback(i, ...args);
