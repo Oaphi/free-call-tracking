@@ -364,7 +364,7 @@ AddonDeploymentOptions) {
             BackoffOptions<any>,
             "comparator" | "scheduler" | "threshold" | "retries"
         > = {
-            comparator: ({ code }) => code !== 429,
+            comparator: ({ code } = {}) => code !== 429,
             scheduler: (wait) => Utilities.sleep(wait),
             threshold: 2e3,
             retries: 5,
@@ -430,9 +430,7 @@ AddonDeploymentOptions) {
  * @summary creates a new GTM Workspace version
  */
 const versionWorkspace = (workspacePath: string, name: string) => {
-    const response = HelpersTagManager.version(workspacePath, name);
-
-    if (!response) throw new Error(`Failed to version GTM container`);
+    const response = HelpersTagManager.version(workspacePath, name) || {};
 
     const { compilerError, containerVersion, newWorkspacePath } = response;
 
