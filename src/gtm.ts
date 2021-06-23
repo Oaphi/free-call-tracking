@@ -266,16 +266,20 @@ var HelpersTagManager = (() => {
      * @summary versions GTM workspace
      */
     function version(path: string, name: string, notes: string = "") {
-        const version: GoogleAppsScript.TagManager.Schema.CreateContainerVersionRequestVersionOptions =
-            {
-                name,
-                notes,
-            };
+        try {
+            const version: GoogleAppsScript.TagManager.Schema.CreateContainerVersionRequestVersionOptions =
+                { name, notes };
 
-        return TagManager?.Accounts?.Containers?.Workspaces?.create_version(
-            version,
-            path
-        );
+            return (
+                TagManager?.Accounts?.Containers?.Workspaces?.create_version(
+                    version,
+                    path
+                ) || null
+            );
+        } catch (error) {
+            console.log("failed to create a new version");
+            return null;
+        }
     }
 
     return {
