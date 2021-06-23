@@ -48,6 +48,25 @@ type FormInfo = {
 };
 
 /**
+ * @summary syncs spreadsheet formatting
+ */
+const syncFormatting = (sh: GoogleAppsScript.Spreadsheet.Sheet) => {
+    const run = makeRunTimes(6);
+    run((i) => sh.autoResizeColumn(i + 1));
+    sh.getRange("E2:E").setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+    sh.getRange("H2:H").setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+    sh.hideColumns(2, 3);
+};
+
+/**
+ * @summary formats form sheet
+ */
+const formatFormSheet = () => {
+    const sh = getFormSheet();
+    sh && syncFormatting(sh);
+};
+
+/**
  * @summary creates a form to be used with the Add-on
  */
 function createForm(sMyCategory: string, sMyEvent: string) {
@@ -116,13 +135,7 @@ function createForm(sMyCategory: string, sMyEvent: string) {
 
     sh.setName(sSHEET_FORM);
 
-    const run = makeRunTimes(6);
-
-    run((i, sheet) => sheet.autoResizeColumn(i + 1), sh);
-
-    sh.getRange("H2:H").setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
-
-    sh.hideColumns(2);
+    syncFormatting(sh);
 
     sh.getRange("I2:I" + sh.getMaxRows()).setDataValidation(
         SpreadsheetApp.newDataValidation()
