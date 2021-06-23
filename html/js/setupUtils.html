@@ -50,6 +50,22 @@
             });
         }
 
+        window.addEventListener("error", ({ message, srcElement }) => {
+            notify(
+                "Something went wrong",
+                config.times.notify.fast,
+                config.classes.notify.failure
+            );
+        });
+
+        window.addEventListener("unhandledrejection", ({ reason, promise }) => {
+            notify(
+                "Something went wrong",
+                config.times.notify.fast,
+                config.classes.notify.failure
+            );
+        });
+
         window.addEventListener("load", async () => {
             M.AutoInit();
 
@@ -77,6 +93,38 @@
             $("body").removeClass("hidden");
 
             showLoader();
+
+            const [
+                gaAccount,
+                gaProperty,
+                gaProfile,
+                // adsAccount,
+            ] = $("#GaAcc, #Prop, #Prof, #Acc, #Cont, #Work");
+
+            const settings = await gscript("getSettings");
+
+            const {
+                accounts: {
+                    analytics: { account, property, profile },
+                },
+            } = settings;
+
+            if (account) {
+                gaAccount.value = account;
+                $(gaAccount).formSelect();
+                await formChangeGaAccount({ target: gaAccount });
+            }
+
+            if (property) {
+                gaProperty.value = property;
+                $(gaProperty).formSelect();
+                await formChangeGaProperty({ target: gaProperty });
+            }
+
+            if (profile) {
+                gaProfile.value = profile;
+                $(gaProfile).formSelect();
+            }
 
             // const customers = await getAdsAccounts(
             //     ({ id, descriptiveName }) => ({
