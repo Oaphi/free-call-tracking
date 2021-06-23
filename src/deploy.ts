@@ -218,15 +218,6 @@ const createOrUpdateTag = (
         : tagService.create(applied, path);
 };
 
-const installWindowLoadedTrigger = (
-    triggers: GoogleAppsScript.TagManager.Schema.Trigger[],
-    path: string,
-    name: string
-) =>
-    createOrUpdateTrigger(triggers, name, path, {
-        type: "windowLoaded",
-    });
-
 interface PageViewInstallOptions {
     triggers: GoogleAppsScript.TagManager.Schema.Trigger[];
     name: string;
@@ -351,13 +342,6 @@ AddonDeploymentOptions) {
         );
 
         const triggers = HelpersTagManager.listTriggers(gtmWorkspacePath);
-
-        const { triggerId } = installWindowLoadedTrigger(
-            triggers,
-            gtmWorkspacePath,
-            triggerNames.load
-        );
-
         const tags = HelpersTagManager.listTags(gtmWorkspacePath);
 
         const commonBackoffOptions: Pick<
@@ -369,6 +353,14 @@ AddonDeploymentOptions) {
             threshold: 2e3,
             retries: 5,
         };
+
+        const { triggerId } = backoffSync(createOrUpdateTrigger, {
+            onBeforeBackoff: () =>
+                console.log(`quota hit: ${createOrUpdateTrigger.name}`),
+            ...commonBackoffOptions,
+        })(triggers, triggerNames.load, gtmWorkspacePath, {
+            type: "windowLoaded",
+        });
 
         backoffSync(createOrUpdateTag, {
             onBeforeBackoff: () =>
