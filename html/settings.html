@@ -51,11 +51,18 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col s12">
+                    <div class="col s4">
                         <a
                             id="clearNow"
                             class="waves-effect light-blue darken-3 btn"
                             >Clear Now</a
+                        >
+                    </div>
+                    <div class="col s4">
+                        <a
+                            id="formatNow"
+                            class="waves-effect light-blue darken-3 btn"
+                            >Format Now</a
                         >
                     </div>
                 </div>
@@ -245,15 +252,27 @@
 
                     const clearNow = document.getElementById("clearNow");
                     clearNow.addEventListener("click", async () => {
-                        show(preloader, hideCls);
+                        try {
+                            await gscript("handleDailyClear");
+                            notify("Cleared!", primBckg);
+                        } catch (error) {
+                            notify("Failed to clear!", failureBckg);
+                        } finally {
+                            hide(preloader, hideCls);
+                        }
+                    });
 
-                        await run({
-                            funcName: "handleDailyClear",
-                            onEnd: () => hide(preloader, hideCls),
-                            onSuccess: () => notify("Cleared!", primBckg),
-                            onFailure: () =>
-                                notify("Failed to clear!", failureBckg),
-                        });
+                    const formatNow = document.getElementById("formatNow");
+                    formatNow.addEventListener("click", async () => {
+                        try {
+                            show(preloader, hideCls);
+                            await gscript("formatFormSheet");
+                            notify("Formatted!", primBckg);
+                        } catch (error) {
+                            notify("Failed to format!", failureBckg);
+                        } finally {
+                            hide(preloader, hideCls);
+                        }
                     });
 
                     const settings = await gscript("getSettings");
