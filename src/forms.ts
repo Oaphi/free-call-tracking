@@ -190,11 +190,7 @@ function onFormSubmit({
             value: noGAmeta,
         });
 
-        TriggersApp.getOrInstallTrigger({
-            callbackName: promptUAinstall.name,
-            type: TriggersApp.TriggerTypes.CHANGE,
-            unique: true,
-        });
+        if (isFirstActionableRowEmpty(sheet)) removeFirstActionableRow(sheet);
     } catch (error) {
         onError(error);
     }

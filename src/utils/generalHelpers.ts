@@ -16,84 +16,6 @@ interface ClearSheetOptions extends CommonOptions {
     type?: ClearTypes;
 }
 
-interface ClearHandler {
-    (
-        sheet: GoogleAppsScript.Spreadsheet.Sheet
-    ): GoogleAppsScript.Spreadsheet.Sheet;
-}
-
-/**
- * @summary clears a sheet
- */
-const clearSheet = ({
-    sheet,
-    skipRows,
-    range,
-    name,
-    type = "all",
-    onError = (err) => console.warn(err),
-}: ClearSheetOptions = {}) => {
-    try {
-        const targetSheet = range
-            ? range.getSheet()
-            : sheet ||
-              SpreadsheetApp.getActiveSpreadsheet().getSheetByName(
-                  name || SpreadsheetApp.getActiveSheet().getSheetName()
-              );
-
-        if (!targetSheet) return false;
-
-        if (skipRows) {
-            const mrows = targetSheet.getMaxRows();
-            const mcols = targetSheet.getMaxColumns();
-
-            const rng = targetSheet.getRange(1, 1, mrows, mcols);
-
-            const values = rng.getValues();
-            const notes = rng.getNotes();
-            const formulas = rng.getFormulas();
-            const formats = rng.getNumberFormats();
-
-            const updated = formulas.map((_, ri) => {
-                const shouldSkip = skipRows.includes(ri + 1);
-
-                notes[ri].forEach((note) => (shouldSkip ? note : ""));
-                formats[ri].forEach((format) => (shouldSkip ? format : ""));
-
-                return _.map((cell, ci) =>
-                    shouldSkip ? cell || values[ri][ci] : ""
-                );
-            });
-
-            rng.setValues(updated);
-            return true;
-        }
-
-        const typeMap: Map<
-            string,
-            (
-                sh: GoogleAppsScript.Spreadsheet.Sheet
-            ) => GoogleAppsScript.Spreadsheet.Sheet
-        > = new Map([
-            ["all", (sh) => sh.clear()],
-            ["format", (sh) => sh.clearFormats()],
-            ["notes", (sh) => sh.clearNotes()],
-            ["values", (sh) => sh.clearContents()],
-        ]);
-
-        const typeHandler = typeMap.get(type);
-
-        if (!typeHandler) throw new RangeError("clear handler not found");
-
-        typeHandler(targetSheet);
-
-        return true;
-    } catch (error) {
-        onError(error);
-        return false;
-    }
-};
-
 interface ExpandParamsOptions {
     encode?: boolean;
     key: string;
@@ -625,3 +547,11 @@ const backoffSync: Backoffer = (
         } while (retries > 0);
     };
 };
+
+const removeFirstActionableRow = (sheet: GoogleAppsScript.Spreadsheet.Sheet) =>
+    sheet.deleteRow(sheet.getFrozenRows() + 1);
+
+const isFirstActionableRowEmpty = (sheet: GoogleAppsScript.Spreadsheet.Sheet) =>
+    sheet
+        .getRange(sheet.getFrozenRows() + 1, 1, 1, sheet.getMaxColumns())
+        .isBlank();
