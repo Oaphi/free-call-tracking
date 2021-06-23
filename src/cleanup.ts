@@ -22,26 +22,18 @@ const handleDailyClear = () => {
     const sheet = getFormSheet();
     const logger = makeLogger();
     if (!sheet) return logger.log("form sheet missing").dump();
-    const keepRows = 1 + sheet.getFrozenRows();
+
+    const frozen = sheet.getFrozenRows();
+
+    const keepRows = 1 + frozen;
     const nrows = sheet.getMaxRows();
 
-    if (nrows - keepRows <= 0) return;
+    sheet.getRange(frozen + 1, 1, 1, sheet.getMaxColumns()).clearContent();
 
-    sheet.deleteRows(keepRows + 1, nrows - keepRows);
-};
+    const diff = nrows - keepRows;
+    if (diff <= 0) return;
 
-/**
- * @summary immediately cleans the form sheet
- */
-const clearFormSheet = () => {
-    const sheet = getFormSheet();
-    if (!sheet) return;
-    return clearSheet({
-        onError: console.warn,
-        skipRows: [1],
-        type: "values",
-        sheet,
-    });
+    sheet.deleteRows(keepRows + 1, diff);
 };
 
 /**
