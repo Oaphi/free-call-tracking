@@ -49,12 +49,12 @@ interface EventListener {
     }
 
     window.addEventListener("error", async ({ message }) => {
-        await gscript("logException", "settings", message);
+        await gscript("logException", "setup", message);
         notify("Something went wrong", config.classes.notify.failure);
     });
 
     window.addEventListener("unhandledrejection", async ({ reason = "" }) => {
-        await gscript("logException", "settings", reason.toString());
+        await gscript("logException", "setup", reason.toString());
         notify("Something went wrong", config.classes.notify.failure);
     });
 
