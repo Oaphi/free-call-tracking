@@ -25,7 +25,7 @@ interface Document {
         }
     );
 
-    w.addEventListener("DOMContentLoaded", async (ev) => {
+    w.addEventListener("DOMContentLoaded", async () => {
         M.AutoInit();
 
         await gscript(
@@ -191,9 +191,9 @@ interface Document {
                     errors: string[];
                 }>("reset");
 
-                reinitSelect(d.getElementById("account"));
-                reinitSelect(d.getElementById("property"));
-                reinitSelect(d.getElementById("profile"));
+                reinitSelect(d.getElementById("account")!);
+                reinitSelect(d.getElementById("property")!);
+                reinitSelect(d.getElementById("profile")!);
 
                 tpicker.value = buildTime();
                 clear.checked = true;

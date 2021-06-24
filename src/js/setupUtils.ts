@@ -185,7 +185,7 @@ interface EventListener {
         notify(err.toString(), config.classes.notify.failure);
     };
 
-    const formChangeGaAccount: EventListener = async ({ target }) => {
+    const formChangeGaAccount: EventListener = async ({ target }: Event) => {
         const { value } = <HTMLSelectElement>target;
 
         const { status, properties } = await run({
@@ -206,7 +206,7 @@ interface EventListener {
     /**
      * @summary handles Analytics account dropdown chage
      */
-    const formChangeGaProperty: EventListener = async ({ target }) => {
+    const formChangeGaProperty: EventListener = async ({ target }: Event) => {
         const { value } = <HTMLSelectElement>target;
 
         const sAccId = $("#GaAcc").val();

@@ -83,7 +83,7 @@
                 type: "containers" | "workspaces" | "accounts",
                 mapper: (e: T) => Option
             ): EventListener =>
-            async ({ target }) => {
+            async ({ target }: Event) => {
                 const { value } = <HTMLSelectElement>target;
                 try {
                     show(preload, "hidden");

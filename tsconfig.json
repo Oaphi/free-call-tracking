@@ -13,7 +13,7 @@
         ],
         "moduleResolution": "node",
         "target": "es2019",
-        "lib": ["es2019", "DOM"],
+        "lib": ["es2019", "DOM", "DOM.Iterable"],
         "downlevelIteration": true,
         "pretty": true,
         "experimentalDecorators": true,
