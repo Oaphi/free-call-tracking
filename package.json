@@ -17,7 +17,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/chai": "^4.2.19",
-    "@types/google-apps-script": "^1.0.22",
+    "@types/google-apps-script": "^1.0.34",
     "@types/google-apps-script-oauth2": "^38.0.0",
     "@types/google.script.client-side": "^0.1.1",
     "@types/gulp": "^4.0.8",
