@@ -1,0 +1,163 @@
+:root {
+    --theme-primary-color: #0277bd;
+    --theme-primary-color--opaque: rgba(2, 119, 189, 0.4);
+    --theme-failure-color: #c62828;
+    --theme-neutral-color: #c0c0c0;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+    margin-top: 2em;
+}
+
+.dense {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.primary-quote {
+    border-left-color: var(--theme-primary-color);
+}
+
+.neutral-quote {
+    border-left-color: var(--theme-neutral-color);
+}
+
+.primary-text {
+    color: var(--theme-primary-color);
+}
+
+.primary-background,
+.btn.primary-background:hover {
+    background-color: var(--theme-primary-color);
+}
+
+.neutral-background,
+.btn.neutral-background:hover {
+    background-color: var(--theme-neutral-color);
+}
+
+.failure-background,
+.btn.failure-background:hover {
+    background-color: var(--theme-failure-color);
+}
+
+.select-wrapper :is(.dropdown-trigger, .dropdown-content li span) {
+    color: var(--theme-primary-color);
+}
+
+.select-wrapper input.select-dropdown:focus {
+    color: var(--theme-primary-color);
+    border-bottom: 1px solid var(--theme-primary-color);
+}
+
+.select-wrapper + label.multiline {
+    top: -35px !important;
+}
+
+:is(button, .btn):focus {
+    background-color: var(--theme-primary-color);
+}
+
+/* button waves effect color extension */
+.waves-effect.waves-theme .waves-ripple {
+    /* The alpha value allows the text and background color
+   of the button to still show through. */
+    background-color: var(--theme-primary-color);
+}
+
+.timepicker-analog-display {
+    transform: scale(0.8);
+}
+
+.timepicker-digital-display {
+    background-color: var(--theme-primary-color);
+}
+
+.timepicker-plate {
+    left: -15px;
+}
+
+.timepicker-canvas-bg,
+.timepicker-canvas-bearing {
+    fill: var(--theme-primary-color);
+}
+
+.timepicker-canvas line {
+    stroke: var(--theme-primary-color);
+}
+
+.timepicker-tick:hover {
+    background-color: var(--theme-primary-color--opaque);
+}
+
+.timepicker-close {
+    color: var(--theme-primary-color);
+}
+
+blockquote.primary {
+    border-left-color: var(--theme-primary-color);
+}
+
+input[type="text"]:not(.browser-default):focus:not([readonly]) {
+    border-bottom: 1px solid var(--theme-primary-color);
+    -webkit-box-shadow: 0 1px 0 0 var(--theme-primary-color);
+    box-shadow: 0 1px 0 0 var(--theme-primary-color);
+}
+
+input[type="text"]:not(.browser-default):focus:not([readonly]) + label {
+    color: var(--theme-primary-color);
+}
+
+input[type="checkbox"].filled-in:checked + span:not(.lever):after {
+    border: 2px solid var(--theme-primary-color);
+    background-color: var(--theme-primary-color);
+}
+
+.switch label input[type="checkbox"]:checked + .lever {
+    background-color: var(--theme-primary-color);
+}
+
+.switch label .lever:before {
+    background-color: var(--theme-primary-color--opaque);
+}
+
+.switch label input[type="checkbox"]:checked + .lever:after {
+    background-color: var(--theme-primary-color);
+}
+
+.footer-link {
+    margin-left: 10px;
+    top: -10px;
+    position: relative;
+}
+
+.preload-wrapper {
+    height: 1em;
+}
+
+.page-footer {
+    max-height: 65px;
+}
+
+.donate-btn {
+    font-size: x-small;
+}
+
+.hidden {
+    visibility: hidden;
+}
+
+.fixed {
+    position: fixed;
+}
