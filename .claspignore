@@ -6,3 +6,6 @@
 *.png
 
 **/assets/**/*
+
+# Gulp config
+gulpfile*

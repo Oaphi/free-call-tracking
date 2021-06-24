@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "noImplicitAny": true,
         "noImplicitThis": true,
         "forceConsistentCasingInFileNames": true,
         "removeComments": true,
