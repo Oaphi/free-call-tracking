@@ -1,10 +1,21 @@
 **/node_modules/**
+
+# Configuration files
 .eslintrc*
+.mocharc*
 
-*.d.ts
+# Type declaration files
+**/*.d.ts
 
-*.png
+# Client-side source
+src/js/**/*
+src/css/**/*
+src/html/**/*
 
+# Tests
+test/**/*
+
+# Marketing assets
 **/assets/**/*
 
 # Gulp config
