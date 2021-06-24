@@ -3,6 +3,13 @@ interface CommonOptions {
     logger?: Logger;
 }
 
+type Lead = {
+    hash: string;
+    email: string;
+    emails: string[];
+    length: number;
+};
+
 const userToEmail = (user: GoogleAppsScript.Base.User) => user.getEmail();
 
 const getEditors = () => SpreadsheetApp.getActiveSpreadsheet().getEditors();
@@ -60,8 +67,6 @@ const recordNewOwner = ({
 
     const ownerEmail = userToEmail(user);
 
-    logger.log("got admin emails");
-
     try {
         const {
             properties: { lead: prop },
@@ -72,25 +77,18 @@ const recordNewOwner = ({
         );
 
         if (savedUid && savedHash === getHash(savedUid, ownerEmail, emails)) {
-            logger.log("already recorded, no changes");
-            logger.dump();
+            logger.log("already recorded, no changes").dump();
             return true;
         }
 
         const uid = savedUid || Utilities.getUuid();
-
         const hash = getHash(uid, ownerEmail, emails);
 
-        console.log(uid, hash);
-
-        const lead = {
+        const lead: Lead = {
             hash,
             email: ownerEmail,
             emails,
-            get length() {
-                const { emails } = this;
-                return emails.length;
-            },
+            length: emails.length,
         };
 
         const resp = UrlFetchApp.fetch(`${users}?action=lead`, {
@@ -111,8 +109,7 @@ const recordNewOwner = ({
             return false;
         }
 
-        logger.log(`web app responded: ${getStatusMsg(resp)}`);
-        logger.dump();
+        logger.log(`web app responded: ${getStatusMsg(resp)}`).dump();
 
         const val = { uid, hash };
 
