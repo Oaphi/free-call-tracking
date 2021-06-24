@@ -35,10 +35,10 @@ const run = ({
 /**
  * @summary mini-version of the above
  */
-const gscript = (
+const gscript = <T = any>(
     funcName: string,
     ...params: google.script.Parameter[]
-): Promise<any> => {
+): Promise<T> => {
     return new Promise((res, rej) => {
         google.script.run
             .withSuccessHandler(res)
