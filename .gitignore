@@ -6,3 +6,6 @@ docs
 
 # mini-script for switching GAS projects
 clsp.*
+
+# CLASP id config
+.clasp.json
