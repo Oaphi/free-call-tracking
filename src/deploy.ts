@@ -54,14 +54,12 @@ const deployAddonGo = () => {
 
     const output = loadTemplate(
         true,
-        "html",
-        "setup.html",
+        "dist",
+        "setup",
         {
-            utils: "html",
-            run: "html",
-            style: "html",
-            setupStyle: "html/css",
-            setupUtils: "html/js",
+            ...commonDependencies,
+            setupStyle: "dist/css",
+            setupUtils: "dist/js",
         },
         {
             ArrAccs: gtagAccounts,

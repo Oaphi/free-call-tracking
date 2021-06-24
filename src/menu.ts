@@ -3,15 +3,19 @@ function onInstall(e: GoogleAppsScript.Events.AddonOnInstall) {
     return onOpen(e);
 }
 
+const commonDependencies: { [x: string]: string } = {
+    utils: "dist/js",
+    run: "dist/js",
+    style: "dist/css",
+};
+
 /**
  * @summary shows instructions on first-time use
  */
 const showInstructionsOnFirstTime = () => {
-    const templ = loadTemplate(false, "html", "firstTimePrompt.html", {
-        utils: "html",
-        style: "html",
-        run: "html",
-        firstTime: "html/js",
+    const templ = loadTemplate(false, "dist", "firstTimePrompt", {
+        ...commonDependencies,
+        firstTime: "dist/js",
     });
 
     const content = template({
@@ -71,11 +75,10 @@ function settingsGo() {
 
     recordNewOwner();
 
-    const templ = loadTemplate(false, "html", "settings.html", {
-        utils: "html",
-        style: "html",
-        run: "html",
-        common: "html/js",
+    const templ = loadTemplate(false, "dist", "settings", {
+        ...commonDependencies,
+        common: "dist/js",
+        settingsUtils: "dist/js",
     });
 
     const content = template({
@@ -97,10 +100,8 @@ function settingsGo() {
 function helpGo() {
     recordNewOwner();
 
-    const templ = loadTemplate(false, "html", "help.html", {
-        utils: "html",
-        style: "html",
-        run: "html",
+    const templ = loadTemplate(false, "dist", "help", {
+        ...commonDependencies,
     });
 
     const content = template({

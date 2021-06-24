@@ -105,22 +105,16 @@ const promptUAinstall = () => {
 
     const ui = SpreadsheetApp.getUi();
 
-    const commonDeps = {
-        style: "html",
-        run: "html",
-        utils: "html",
-    };
-
     const templateMap = {
         true: () =>
-            loadTemplate(true, "html", "dismissedNotice", {
-                ...commonDeps,
-                dismissPrompt: "html/js",
+            loadTemplate(true, "dist", "dismissedNotice", {
+                ...commonDependencies,
+                dismissPrompt: "dist/js",
             }),
         false: () =>
-            loadTemplate(true, "html", "installGA", {
-                ...commonDeps,
-                uaPrompt: "html/js",
+            loadTemplate(true, "dist", "installGA", {
+                ...commonDependencies,
+                uaPrompt: "dist/js",
             }),
     };
 
