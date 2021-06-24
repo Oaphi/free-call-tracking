@@ -412,7 +412,7 @@ AddonDeploymentOptions) {
             `Published "${name}" container (version ${containerVersionId})`
         );
     } catch (e) {
-        console.warn(e);
+        console.warn(`failed to deploy: ${e}`);
         showMsg(`Failed to deploy Add-on`);
         return e;
     }
@@ -426,11 +426,11 @@ const versionWorkspace = (workspacePath: string, name: string) => {
 
     const { compilerError, containerVersion, newWorkspacePath } = response;
 
-    if (compilerError)
+    if (compilerError || !newWorkspacePath)
         throw new Error(`Failed to create GTM container version`);
 
     //update returns old workspace ID, but new ID in path
-    const workspaceId = newWorkspacePath!.replace(/.+workspaces\//, "");
+    const workspaceId = newWorkspacePath.replace(/.+workspaces\//, "");
 
     return {
         ...containerVersion,
