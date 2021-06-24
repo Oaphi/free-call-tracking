@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Settings</title>
+
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Material+Icons"
+        />
+
+        <?!= style ?>
+    </head>
+
+    <body>
+        <header>
+            <div class="nav-wrapper valign-wrapper col s12 light-blue darken-3">
+                <div class="container">
+                    <h5 class="white-text">Settings</h5>
+                </div>
+            </div>
+            <div class="preload-wrapper">
+                <div id="preload" class="progress light-blue darken-3">
+                    <div class="indeterminate white"></div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="container">
+                <div class="row dense">
+                    <div class="col s12">
+                        <div class="input-field">
+                            <input
+                                id="clearAt"
+                                name="clearAt"
+                                placeholder="00:00"
+                                type="text"
+                                class="timepicker tooltipped"
+                                data-position="bottom"
+                                data-tooltip="Time when the sheet is cleared"
+                            />
+                            <label for="clearAt">Clear At</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col s4">
+                        <a
+                            id="clearNow"
+                            class="waves-effect light-blue darken-3 btn"
+                            >Clear Now</a
+                        >
+                    </div>
+                    <div class="col s4">
+                        <a
+                            id="formatNow"
+                            class="waves-effect light-blue darken-3 btn"
+                            >Format Now</a
+                        >
+                    </div>
+                </div>
+                <div class="row valign-wrapper">
+                    <div class="col s10">
+                        <p class="dense" for="clear">Discard data daily</p>
+                    </div>
+                    <div class="col s2">
+                        <div class="switch">
+                            <label>
+                                <input
+                                    id="clear"
+                                    name="enableDailyClear"
+                                    type="checkbox"
+                                />
+                                <span class="lever right"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row valign-wrapper">
+                    <div class="col s10">
+                        <p class="dense" for="edit">Enable edit trigger</p>
+                    </div>
+                    <div class="col s2">
+                        <div class="switch">
+                            <label>
+                                <input
+                                    id="edit"
+                                    name="enableEditTrigger"
+                                    type="checkbox"
+                                />
+                                <span class="lever right"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        <select id="account" name="account">
+                            <option value="" disabled selected>Select</option>
+                        </select>
+                        <label for="account">Analytics Account</label>
+                    </div>
+
+                    <div class="input-field col s12">
+                        <select id="property" name="property">
+                            <option value="" disabled selected>Select</option>
+                        </select>
+                        <label for="property">Analytics Property</label>
+                    </div>
+
+                    <div class="input-field col s12">
+                        <select id="profile" name="profile">
+                            <option value="" disabled selected>Select</option>
+                        </select>
+                        <label for="profile">Analytics Profile</label>
+                    </div>
+                    <!-- <div class="input-field col s12">
+            <select id="adsid">
+              <option value="" disabled selected>Select</option>
+            </select>
+            <label>Google Ads Account</label>
+          </div> -->
+                </div>
+                <div class="row">
+                    <div class="col s12">
+                        <a
+                            id="reset"
+                            class="waves-effect light-blue darken-3 btn"
+                            >Reset</a
+                        >
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <?!= run ?>
+        <?!= utils ?>
+        <?!= common ?>
+        <?!= settingsUtils ?>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.1.0/uuidv4.min.js"></script>
+    </body>
+</html>
