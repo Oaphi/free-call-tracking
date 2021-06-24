@@ -1,0 +1,16 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "target": "es5",
+        "outDir": "../../dist/js",
+        "types": [
+            "materialize-css",
+            "google-apps-script",
+            "google.script.client-side"
+        ],
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
+        "skipLibCheck": true
+    },
+    "include": ["."],
+    "exclude": []
+}
