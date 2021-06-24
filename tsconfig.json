@@ -1,18 +1,20 @@
 {
-  "compilerOptions": {
-    "noImplicitThis": true,
-    "forceConsistentCasingInFileNames": true,
-    "removeComments": true,
-    "module": "none",
-    "types": ["node", "google-apps-script", "google-apps-script-oauth2"],
-    "moduleResolution": "node",
-    "target": "es2019",
-    "lib": ["es2019", "DOM"],
-    "downlevelIteration": true,
-    "pretty": true,
-    "experimentalDecorators": true,
-    "strict": true,
-    "rootDir": "src",
-    "noUnusedLocals": true
-  }
+    "compilerOptions": {
+        "noImplicitThis": true,
+        "forceConsistentCasingInFileNames": true,
+        "removeComments": true,
+        "module": "none",
+        "types": ["node", "google-apps-script", "google-apps-script-oauth2"],
+        "moduleResolution": "node",
+        "target": "es2019",
+        "lib": ["es2019", "DOM"],
+        "downlevelIteration": true,
+        "pretty": true,
+        "experimentalDecorators": true,
+        "strict": true,
+        "rootDir": "src",
+        "noUnusedLocals": true
+    },
+    "include": ["src"],
+    "exclude": ["dist", "src/js"]
 }
