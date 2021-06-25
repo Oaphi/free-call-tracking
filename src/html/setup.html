@@ -18,7 +18,7 @@
     <body class="hidden">
         <div class="preload-wrapper">
             <div
-                id="Preloader1"
+                id="preloader"
                 class="progress light-blue darken-3 fixed hidden"
             >
                 <div class="indeterminate white"></div>
@@ -76,7 +76,7 @@
             <div class="section">
                 <div class="row">
                     <div class="input-field col s12">
-                        <select id="Acc">
+                        <select id="account" name="account">
                             <option value="" disabled selected>Select</option>
                             <? for (var r = 0; r < ArrAccs.length; r++) { ?>
                             <!-- prettier-ignore -->
@@ -89,7 +89,7 @@
 
                 <div class="row">
                     <div class="input-field col s12">
-                        <select id="Cont" name="Cont">
+                        <select id="container" name="container">
                             <option value="" disabled selected>Select</option>
                         </select>
                         <label>Select Tag Manager container</label>
@@ -98,7 +98,7 @@
 
                 <div class="row">
                     <div class="input-field col s12">
-                        <select id="Work" name="Work">
+                        <select id="workspace" name="workspace">
                             <option value="" disabled selected>Select</option>
                         </select>
                         <label class="multiline"
@@ -167,8 +167,10 @@
             </div>
         </form>
 
+        <?!= config ?>
         <?!= run ?>
         <?!= utils ?>
+        <?!= common ?>
         <?!= setupUtils ?>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>

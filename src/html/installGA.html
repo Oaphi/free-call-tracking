@@ -1,58 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Universal Analytics install</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Universal Analytics install</title>
 
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
-    />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Icons"
-    />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Material+Icons"
+        />
 
-    <?!= style ?>
-  </head>
+        <?!= style ?>
+    </head>
 
-  <body>
-    <div class="container">
-      <div class="row">
-        <div class="col s12">
-          <blockquote class="primary-quote">
-            This will install a
-            <a
-              href="https://support.google.com/tagmanager/answer/6107124?hl=en"
-              target="_blank"
-              referrerpolicy="no-referrer"
-              >Universal Analytics tag</a
-            >
-            using your Google Tag Manager account. Please, make sure your
-            website does not have Analytics configured!
-          </blockquote>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col s12">
+                    <blockquote class="primary-quote">
+                        This will install a
+                        <a
+                            href="https://support.google.com/tagmanager/answer/6107124?hl=en"
+                            target="_blank"
+                            referrerpolicy="no-referrer"
+                            >Universal Analytics tag</a
+                        >
+                        using your Google Tag Manager account. Please, make sure
+                        your website does not have Analytics configured!
+                    </blockquote>
 
-          <p>Would you like to create a Universal Analytics tag?</p>
+                    <p>Would you like to create a Universal Analytics tag?</p>
 
-          <a id="yes" class="waves-effect waves-light btn primary-background"
-            >Yes</a
-          >
-          <a id="no" class="waves-effect waves-light btn neutral-background"
-            >No</a
-          >
+                    <a
+                        id="yes"
+                        class="waves-effect waves-light btn primary-background"
+                        >Yes</a
+                    >
+                    <a
+                        id="no"
+                        class="waves-effect waves-light btn neutral-background"
+                        >No</a
+                    >
+                </div>
+                <div class="col s12">
+                    <div id="preload" class="progress primary-background hide">
+                        <div class="indeterminate white"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col s12">
-          <div id="preload" class="progress primary-background hide">
-            <div class="indeterminate white"></div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <?!= run ?>
-    <?!= utils ?>
-    <?!= uaPrompt ?>
-  </body>
+        <?!= config ?>
+        <?!= run ?>
+        <?!= utils ?>
+        <?!= uaPrompt ?>
+    </body>
 </html>

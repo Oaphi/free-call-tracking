@@ -4,6 +4,8 @@ function onInstall(e: GoogleAppsScript.Events.AddonOnInstall) {
 }
 
 const commonDependencies: { [x: string]: string } = {
+    config: "dist/js",
+    common: "dist/js",
     utils: "dist/js",
     run: "dist/js",
     style: "dist/css",
@@ -77,7 +79,6 @@ function settingsGo() {
 
     const templ = loadTemplate(false, "dist", "settings", {
         ...commonDependencies,
-        common: "dist/js",
         settingsUtils: "dist/js",
     });
 
