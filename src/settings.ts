@@ -77,6 +77,11 @@ type AppSettings = {
             profile: string;
             property: string;
         };
+        tagManager: {
+            account: string;
+            container: string;
+            workspace: string;
+        };
     };
 };
 
@@ -92,6 +97,11 @@ const getDefaults = (): AppSettings => ({
             account: "",
             profile: "",
             property: "",
+        },
+        tagManager: {
+            account: "",
+            container: "",
+            workspace: "",
         },
     },
 });
