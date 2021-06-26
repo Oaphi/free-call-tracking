@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha -r ts-node/register",
     "build": "gulp",
-    "push": "clasp push --force"
+    "push": "npm run build && clasp push --force"
   },
   "keywords": [
     "tracking",
