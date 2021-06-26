@@ -1,9 +1,34 @@
 type Option = [value: string, text: string];
 
-const mapToOpts = ({ id, name }: { id: string; name: string }): Option => [
-    id,
-    name,
-];
+type ChangeHandler = (
+    sel: HTMLSelectElement,
+    ...params: string[]
+) => Promise<void>;
+
+type IdChangeHandler<T> = {
+    [P in keyof T]: (v: string) => ReturnType<ChangeHandler>;
+};
+
+type AnalyticsSettings = {
+    account: string;
+    property: string;
+    profile: string;
+};
+
+type TagManagerSettings = {
+    account: string;
+    container: string;
+    workspace: string;
+};
+
+type Prefixed<T, K extends string> = {
+    [P in keyof T as `${K}-${Exclude<P, symbol>}`]: T[P];
+};
+
+type PfxGTMSettings = Prefixed<TagManagerSettings, "gtm">;
+
+const mapToOpts = ({ id, name }: { id?: string; name?: string }) =>
+    <Option>[id, name];
 
 const clearSelect = ({ options }: HTMLSelectElement, leave = 0) =>
     [...options].slice(leave).forEach((option) => option.remove());
@@ -24,84 +49,177 @@ const appendOptions = (sel: HTMLSelectElement, options: Option[]) => {
     return sel;
 };
 
-const updateProperties = async (analyticsId: string, value = "") => {
-    const propSel = document.getElementById<HTMLSelectElement>("property")!;
+/**
+ * @summary generic change handler
+ */
+const makeChangeHandler =
+    <P extends { name?: string }>(prop: keyof P, sel: HTMLSelectElement) =>
+    (data: P[], value = "") => {
+        clearSelect(sel, 1);
+        const opts = data.map((item) => [item[prop], item.name]);
+        appendOptions(sel, <Option[]>opts);
+        reinitSelect(sel, value);
+    };
 
-    const properties = await gscript("listAnalyticsProperties", analyticsId);
-
-    clearSelect(propSel, 1);
-    const propIds = properties.map(mapToOpts);
-    appendOptions(propSel, propIds);
-    reinitSelect(propSel, value);
+type EntityGetterOptions<T> = {
+    key: keyof T;
+    cbk: string;
+    val: string;
+    params?: google.script.Parameter[];
 };
 
-const updateProfiles = async (
-    analyticsId: string,
-    propertyId: string,
-    value = ""
+const getEntities = async <T>(
+    sel: HTMLSelectElement,
+    { key, cbk, val, params = [] }: EntityGetterOptions<T>
 ) => {
-    const profSel = document.getElementById<HTMLSelectElement>("profile")!;
-
-    const profiles = await gscript(
-        "listAnalyticsProfiles",
-        analyticsId,
-        propertyId
-    );
-
-    clearSelect(profSel, 1);
-    const profIds = profiles.map(mapToOpts);
-    appendOptions(profSel, profIds);
-    reinitSelect(profSel, value);
+    const entities = await gscript<T[]>(cbk, ...params);
+    return makeChangeHandler<T>(key, sel)(entities, val);
 };
 
-type UserSettings = {
-    account: string;
-    property: string;
-    profile: string;
-};
+const updateGAaccounts: ChangeHandler = (sel, val = "") =>
+    getEntities<GoogleAppsScript.Analytics.Schema.Account>(sel, {
+        key: "id",
+        cbk: "getGoogleAnalyticsAccounts",
+        val,
+    });
 
-const setupAnalytics = async (settings: UserSettings) => {
+const updateGAproperties: ChangeHandler = (sel, accountId, val = "") =>
+    getEntities<GoogleAppsScript.Analytics.Schema.Webproperty>(sel, {
+        key: "id",
+        cbk: "listAnalyticsProperties",
+        params: [accountId],
+        val,
+    });
+
+const updateGAprofiles: ChangeHandler = (
+    sel,
+    accountId,
+    propertyId,
+    val = ""
+) =>
+    getEntities<GoogleAppsScript.Analytics.Schema.Profile>(sel, {
+        key: "id",
+        cbk: "listAnalyticsProfiles",
+        params: [accountId, propertyId],
+        val,
+    });
+
+const updateGTMaccounts: ChangeHandler = (sel, val = "") =>
+    getEntities<GoogleAppsScript.TagManager.Schema.Account>(sel, {
+        key: "accountId",
+        cbk: "listTagManagerAccounts",
+        val,
+    });
+
+const updateGTMcontainers: ChangeHandler = (sel, accountId, val = "") =>
+    getEntities<GoogleAppsScript.TagManager.Schema.Container>(sel, {
+        key: "containerId",
+        cbk: "getConteinersArrByAcc",
+        params: [accountId],
+        val,
+    });
+
+const updateGTMwspaces: ChangeHandler = (
+    sel,
+    accountId,
+    containerId,
+    val = ""
+) =>
+    getEntities<GoogleAppsScript.TagManager.Schema.Workspace>(sel, {
+        key: "workspaceId",
+        cbk: "getWorkspacesArrByCont",
+        params: [accountId, containerId],
+        val,
+    });
+
+const setupAnalytics = async (settings: AnalyticsSettings) => {
     const { account, property, profile } = settings;
 
-    const accSel = document.getElementById<HTMLSelectElement>("account")!;
-    const propSel = document.getElementById<HTMLSelectElement>("property")!;
-    const profSel = document.getElementById<HTMLSelectElement>("profile")!;
+    const ids: (keyof AnalyticsSettings)[] = ["account", "property", "profile"];
 
-    const accounts = await gscript("getGoogleAnalyticsAccounts");
+    const [acc, prop, prof] = ids.map(
+        (id) => document.getElementById<HTMLSelectElement>(id)!
+    );
 
-    const accIds = accounts.map(mapToOpts);
-    appendOptions(accSel, accIds);
+    await updateGAaccounts(acc, account);
+    if (prop) await updateGAproperties(prop, account, property);
+    if (prof) await updateGAprofiles(prof, account, property, profile);
 
-    updateProperties(account, property);
-    updateProfiles(account, property, profile);
+    document.addEventListener("change", async ({ target }) => {
+        const el = <HTMLSelectElement>target;
 
-    reinitSelect(accSel, account);
-    reinitSelect(propSel, property);
-    reinitSelect(profSel, profile);
+        const { id, parentElement, value } = el;
 
-    document.addEventListener("change", async ({ target, currentTarget }) => {
-        if (target === currentTarget) return;
-
-        const { id, parentElement, value } = <HTMLSelectElement>target;
-
-        const actionMap: { [x: string]: () => Promise<void> } = {
-            account: () => updateProperties(value),
-            property: () => updateProfiles(accSel.value, value),
+        const actionMap: IdChangeHandler<AnalyticsSettings> = {
+            account: (v) => updateGAproperties(prop, v),
+            property: (v) => updateGAprofiles(prof, acc.value, v),
+            profile: () => Promise.resolve(),
         };
 
-        const handler = actionMap[<keyof UserSettings>id];
-        if (handler) handler();
+        const handler = actionMap[<keyof AnalyticsSettings>id];
+        if (!handler) return;
+
+        await handler(value);
 
         await gscript("updateSettings", {
             [`accounts/analytics/${id}`]: value,
         });
 
-        settings[<keyof UserSettings>id] = value;
+        settings[<keyof AnalyticsSettings>id] = value;
 
         const { nextElementSibling: label } = parentElement!;
         notify(
             `${label?.textContent || "Setting"} saved`,
-            "primary-background"
+            config.classes.notify.success
+        );
+    });
+};
+
+const setupTagManager = async (settings: TagManagerSettings) => {
+    const { account, container, workspace } = settings;
+
+    const ids: (keyof PfxGTMSettings)[] = [
+        "gtm-account",
+        "gtm-container",
+        "gtm-workspace",
+    ];
+
+    const [acc, con, wrk] = ids.map(
+        (id) => document.getElementById<HTMLSelectElement>(id)!
+    );
+
+    await updateGTMaccounts(acc, account);
+    if (container) await updateGTMcontainers(con, account, container);
+    if (workspace) await updateGTMwspaces(wrk, account, container, workspace);
+
+    document.addEventListener("change", async ({ target }) => {
+        const el = <HTMLSelectElement>target;
+
+        const { id, parentElement, value } = el;
+
+        const actionMap: IdChangeHandler<PfxGTMSettings> = {
+            "gtm-account": (v) => updateGTMcontainers(con, v),
+            "gtm-container": (v) => updateGTMwspaces(wrk, acc.value, v),
+            "gtm-workspace": () => Promise.resolve(),
+        };
+
+        const handler = actionMap[<keyof PfxGTMSettings>id];
+        if (!handler) return;
+
+        await handler(value);
+
+        const unpfxed = <keyof TagManagerSettings>id.replace("gtm-", "");
+
+        await gscript("updateSettings", {
+            [`accounts/tagManager/${unpfxed}`]: value,
+        });
+
+        settings[unpfxed] = value;
+
+        const { nextElementSibling: label } = parentElement!;
+        notify(
+            `${label?.textContent || "Setting"} saved`,
+            config.classes.notify.success
         );
     });
 };
