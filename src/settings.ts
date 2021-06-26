@@ -1,6 +1,7 @@
-/**
- * @summary parse an object from path and value
- */
+type Indexable = {
+    [x: string]: string | number | boolean | null | undefined | Indexable;
+};
+
 const fromPath = <V>(
     options: {
         path?: string;
@@ -9,7 +10,7 @@ const fromPath = <V>(
 ) => {
     const { path = "", value } = options;
 
-    const output: Record<string, unknown> = {};
+    const output: Indexable = {};
 
     path.split(/\/|\\/).reduce(
         (a, c, i, paths) =>
@@ -21,47 +22,25 @@ const fromPath = <V>(
     return output;
 };
 
-type DeepAssignOpts = Errable<{
-    source?: Record<string, unknown>;
-    updates?: Record<string, unknown>[];
-    objGuard?: (obj: unknown) => boolean;
-}>;
+const deepAssign = <T extends Indexable>(tgt: T, ...src: Indexable[]): T => {
+    src.forEach((source) => {
+        Object.entries(source).forEach(([key, val]) => {
+            const tgtVal = tgt[key];
 
-/**
- * @summary deep assigns object props
- */
-const deepAssign = ({
-    source = {},
-    updates = [],
-    objGuard = <T extends object>(obj: T | unknown): obj is T =>
-        typeof obj === "object" && !!obj,
-    onError = console.warn,
-}: DeepAssignOpts): Record<string, unknown> => {
-    try {
-        return updates.reduce((ac, up) => {
-            const entries = Object.entries(up);
+            if (
+                typeof tgtVal === "object" &&
+                tgtVal &&
+                typeof val === "object" &&
+                val
+            )
+                return deepAssign(tgtVal, val);
 
-            const objEntries = entries.filter(([_, v]) => objGuard(v));
-            const restEntries = entries.filter(([_, v]) => !objGuard(v));
+            //@ts-expect-error
+            tgt[key] = val;
+        });
+    });
 
-            Object.assign(source, Object.fromEntries(restEntries));
-
-            objEntries.reduce(
-                (a, [k, v]) =>
-                    (a[k] = deepAssign({
-                        source: (a[k] as typeof source) || {}, //TODO: improve typing
-                        updates: [v] as typeof updates,
-                    })),
-                ac
-            );
-
-            return ac;
-        }, source);
-    } catch (error) {
-        onError(error);
-    }
-
-    return source;
+    return tgt;
 };
 
 type AppSettings = {
@@ -107,14 +86,18 @@ const getDefaults = (): AppSettings => ({
 });
 
 const getSettings = (): AppSettings => {
-    const defaults: AppSettings = getDefaults();
+    const defaults = getDefaults();
 
     const {
         properties: { settings },
     } = APP_CONFIG;
 
     try {
-        return JSON.parse(getProperty(settings, JSON.stringify(defaults)));
+        const stored: AppSettings = JSON.parse(
+            getProperty(settings, JSON.stringify(defaults))
+        );
+        //ensures structural updates don't break defaults
+        return deepAssign(defaults, stored);
     } catch (error) {
         logException("settings", error);
         return defaults;
@@ -168,7 +151,7 @@ const updateSettings = <PE extends ExtractPathExpressions<AppSettings, "/">>(
             fromPath({ path, value })
         );
 
-        deepAssign({ source, updates });
+        deepAssign(source, ...updates);
 
         source.firstTime = false;
 
