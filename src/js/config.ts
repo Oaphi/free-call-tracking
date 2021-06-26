@@ -17,6 +17,12 @@ type AppSettings = {
             workspace: string;
         };
     };
+    setup: {
+        analytics: {
+            category: string;
+            action: string;
+        };
+    };
 };
 
 const config = {

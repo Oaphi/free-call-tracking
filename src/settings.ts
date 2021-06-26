@@ -62,6 +62,12 @@ type AppSettings = {
             workspace: string;
         };
     };
+    setup: {
+        analytics: {
+            category: string;
+            action: string;
+        };
+    };
 };
 
 const getDefaults = (): AppSettings => ({
@@ -81,6 +87,12 @@ const getDefaults = (): AppSettings => ({
             account: "",
             container: "",
             workspace: "",
+        },
+    },
+    setup: {
+        analytics: {
+            category: "Call",
+            action: "Call",
         },
     },
 });

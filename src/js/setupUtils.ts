@@ -83,8 +83,9 @@ interface EventListener {
         //     });
         // }
 
-        const gaCategory = $("#MyCategory").val() || "Call";
-        const gaEvent = $("#MyEvent").val() || "Call";
+        const gaCategory =
+            d.getElementById<HTMLInputElement>("category")!.value;
+        const gaEvent = d.getElementById<HTMLInputElement>("action")!.value;
 
         // if (willCreateGoal) {
         //     const goalStatus = await gscript("createEventGoal", {
@@ -150,12 +151,21 @@ interface EventListener {
 
             const {
                 accounts: { analytics, tagManager },
+                setup: {
+                    analytics: { action, category },
+                },
             } = await gscript<AppSettings>("getSettings");
 
             await Promise.all([
                 setupAnalytics(analytics),
                 setupTagManager(tagManager),
             ]);
+
+            const gaCat = d.getElementById<HTMLInputElement>("category")!;
+            const gaAct = d.getElementById<HTMLInputElement>("action")!;
+
+            gaCat.value = category;
+            gaAct.value = action;
         } catch ({ message }) {
             await gscript("logException", "setup", message);
             notify("Something went wrong", config.classes.notify.failure);
