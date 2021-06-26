@@ -11,11 +11,8 @@
     /**
      * @summary check if can enable actions
      */
-    const checkSettings = (
-        accSel: HTMLSelectElement,
-        contSel: HTMLSelectElement,
-        wspaceSel: HTMLSelectElement
-    ) => [accSel, contSel, wspaceSel].every(({ value }) => !!value);
+    const checkGTM = (info: AppSettings["accounts"]["tagManager"]) =>
+        Object.values(info).every(Boolean);
 
     const preload = d.getElementById("preload")!;
 
@@ -59,75 +56,24 @@
     w.addEventListener("load", async () => {
         M.AutoInit();
 
-        show(preload, "hidden");
-        const accounts = await gscript<
-            GoogleAppsScript.TagManager.Schema.Account[]
-        >("listTagManagerAccounts");
-        const accOpts = accounts.map(
-            ({ accountId, name }) => <Option>[accountId!, name!]
-        );
+        const {
+            accounts: { tagManager },
+        } = await gscript<AppSettings>("getSettings");
 
-        hide(preload, "hidden");
+        await setupTagManager(tagManager);
 
-        const accSel = d.getElementById<HTMLSelectElement>("Acc")!;
-        const contSel = d.getElementById<HTMLSelectElement>("Cont")!;
-        const workSel = d.getElementById<HTMLSelectElement>("Work")!;
-
-        addOptions(accSel, accOpts);
-        M.FormSelect.init(accSel);
-
-        const makeSelChange =
-            <T>(
-                cbk: string,
-                path: string,
-                type: "containers" | "workspaces" | "accounts",
-                mapper: (e: T) => Option
-            ): EventListener =>
-            async ({ target }: Event) => {
-                const { value } = <HTMLSelectElement>target;
-                try {
-                    show(preload, "hidden");
-                    const entities = await gscript<T[]>(cbk, path + value);
-                    addOptions(contSel, entities.map(mapper));
-                    M.FormSelect.init(contSel);
-                } catch ({ message }) {
-                    await gscript("logException", "FTE", message);
-                    notify(`Failed to load ${type}`, "failure-background");
-                } finally {
-                    hide(preload, "hidden");
-                    checkSettings(accSel, contSel, workSel) && enableActions();
-                }
-            };
-
-        accSel.addEventListener(
+        d.addEventListener(
             "change",
-            makeSelChange<GoogleAppsScript.TagManager.Schema.Container>(
-                "getConteinersArrByAcc",
-                `accounts/`,
-                "containers",
-                ({ containerId, name }) => <Option>[containerId, name]
-            )
+            () => checkGTM(tagManager) && enableActions()
         );
-
-        contSel.addEventListener(
-            "change",
-            makeSelChange<GoogleAppsScript.TagManager.Schema.Workspace>(
-                "getWorkspacesArrByCont",
-                `accounts/${accSel.value}/containers/`,
-                "workspaces",
-                ({ workspaceId, name }) => <Option>[workspaceId, name]
-            )
-        );
-
-        workSel.addEventListener("change", () => {
-            checkSettings(accSel, contSel, workSel) && enableActions();
-        });
 
         const cleanBtn = d.getElementById("clean")!;
         cleanBtn.addEventListener("click", async () => {
             show(preload, "hidden");
 
-            const ids = [accSel, contSel, workSel].map(({ value }) => value);
+            const { account, container, workspace } = tagManager;
+
+            const ids = [account, container, workspace];
 
             const regex =
                 /(?:caller on site|window loaded|cid|getClientId|getTime)[\w-]+/i;
