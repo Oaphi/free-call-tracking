@@ -15,8 +15,11 @@ var HelpersTagManager = (() => {
         versionId: "",
     };
 
+    const getAccountPath = (used: TagManagerIds) =>
+        `accounts/${used.accountId}`;
+
     const getContainerPath = (used: TagManagerIds) =>
-        `accounts/${used.accountId}/containers/${used.containerId}`;
+        `${getAccountPath(used)}/containers/${used.containerId}`;
 
     const getWorkspacePath = (used: TagManagerIds) =>
         `${getContainerPath(used)}/workspaces/${used.workspaceId}`;
@@ -297,6 +300,7 @@ var HelpersTagManager = (() => {
             return getWorkspacePath(LastUsed);
         },
 
+        getAccountPath,
         getContainerPath,
         getWorkspacePath,
 
@@ -437,14 +441,18 @@ const cleanupOldVersion = (
 /**
  * @summary lists account containers
  */
-const getConteinersArrByAcc = (parent: string) => {
+const getConteinersArrByAcc = (accountId: string) => {
     const { container = [] } =
-        HelpersTagManager.getConteinersListByAcc(parent) || {};
+        HelpersTagManager.getConteinersListByAcc(
+            HelpersTagManager.getAccountPath({ accountId })
+        ) || {};
     return container;
 };
 
 /**
  * @summary lists container workspaces
  */
-const getWorkspacesArrByCont = (parent: string) =>
-    HelpersTagManager.listWorkspaces(parent);
+const getWorkspacesArrByCont = (accountId: string, containerId: string) =>
+    HelpersTagManager.listWorkspaces(
+        HelpersTagManager.getContainerPath({ accountId, containerId })
+    );
