@@ -1,149 +1,8 @@
 interface EventListener {
     (evt: Event): void | Promise<void>;
 }
-(() => {
-    const config = {
-        classes: {
-            notify: {
-                error: "toast-error",
-                success: "primary-background",
-                failure: "failure-background",
-            },
-        },
-        times: {
-            notify: {
-                fast: 1e3,
-                slow: 4e3,
-            },
-        },
-        ids: {
-            preloader: "#Preloader1",
-        },
-    };
 
-    /**
-     * @summary adds a select option
-     */
-    const addOption = (text: string, value: string) => {
-        const opt = document.createElement("option");
-        opt.appendChild(document.createTextNode(text));
-        opt.setAttribute("value", value);
-        return opt;
-    };
-
-    /**
-     * @summary removes select options
-     */
-    const removeOptions = (selectElement: HTMLSelectElement) => {
-        const { options } = selectElement;
-        [...options].forEach((o) => o.remove());
-    };
-
-    function resetSelectPropagation() {
-        document.addEventListener("click", (event) => {
-            const { target, currentTarget } = event;
-            if (target === currentTarget) return;
-            if ((<HTMLElement>target).matches(".select-wrapper"))
-                event.stopPropagation();
-        });
-    }
-
-    window.addEventListener("error", async ({ message }) => {
-        await gscript("logException", "setup", message);
-        notify("Something went wrong", config.classes.notify.failure);
-    });
-
-    window.addEventListener("unhandledrejection", async ({ reason = "" }) => {
-        await gscript("logException", "setup", reason.toString());
-        notify("Something went wrong", config.classes.notify.failure);
-    });
-
-    window.addEventListener("load", async () => {
-        const preloader = document.getElementById(config.ids.preloader)!;
-
-        M.AutoInit();
-
-        //map of selector : handler
-        const changeHandlers = {
-            // gAdsSwitch: changeAdsFormVisibility,
-            GaAcc: formChangeGaAccount,
-            Acc: formChangeAccount,
-            Prop: formChangeGaProperty,
-            Cont: formChangeContainer,
-        };
-
-        Object.entries(changeHandlers).forEach(([id, handler]) => {
-            document.addEventListener("change", async (evt) => {
-                const { target } = evt;
-
-                if (id !== (<HTMLElement>target).id) return;
-
-                show(preloader);
-                await handler(evt);
-                hide(preloader);
-            });
-        });
-
-        resetSelectPropagation();
-
-        document.body.classList.remove("hidden");
-
-        show(preloader);
-
-        const [
-            gaAccount,
-            gaProperty,
-            gaProfile,
-            // adsAccount,
-        ] = $<HTMLSelectElement>("#GaAcc, #Prop, #Prof, #Acc, #Cont, #Work");
-
-        const settings = await gscript("getSettings");
-
-        const {
-            accounts: {
-                analytics: { account, property, profile },
-            },
-        } = settings;
-
-        if (account) {
-            gaAccount.value = account;
-            $(gaAccount).formSelect();
-            //@ts-expect-error
-            await formChangeGaAccount({ target: gaAccount });
-        }
-
-        if (property) {
-            gaProperty.value = property;
-            $(gaProperty).formSelect();
-            //@ts-expect-error
-            await formChangeGaProperty({ target: gaProperty });
-        }
-
-        if (profile) {
-            gaProfile.value = profile;
-            $(gaProfile).formSelect();
-        }
-
-        // const customers = await getAdsAccounts(
-        //     ({ id, descriptiveName }) => ({
-        //         name: descriptiveName,
-        //         id,
-        //     })
-        // );
-
-        // handleChange("Ads", "id")(customers);
-
-        const bouncedDeploy = debounce(deployAddon);
-
-        const submitBtn = document.getElementById("submit")!;
-        submitBtn.addEventListener("click", () => bouncedDeploy(preloader));
-
-        const cancelBtn = document.getElementById("cancel")!;
-        cancelBtn.addEventListener("click", () => google.script.host.close());
-
-        hide(preloader);
-    });
-
+((w, d) => {
     // /**
     //  * @summary event listener for changing Ads group visibility
     //  */
@@ -158,97 +17,16 @@ interface EventListener {
     //     checked ? adsForm.show(duration) : adsForm.hide(duration);
     // };
 
-    /**
-     * @summary generic change handler
-     */
-    const handleChange =
-        (id: string, prop: string) =>
-        (data: { name: string; [x: string]: string }[]) => {
-            const sel = <HTMLSelectElement>document.getElementById(id);
-            removeOptions(sel);
-
-            data.unshift({ name: "Select", [prop]: "" });
-
-            const opts = data.map((item) => addOption(item.name, item[prop]));
-
-            sel.append(...opts);
-
-            $(sel).formSelect();
-        };
-
-    /**
-     * @summary processes change failure
-     */
-    const handleChangeFailure = (selId: string) => (err: Error) => {
-        $(`#${selId}`).find("option:first").prop("selected", true);
-        $(`#${selId}`).formSelect();
-        notify(err.toString(), config.classes.notify.failure);
-    };
-
-    const formChangeGaAccount: EventListener = async ({ target }: Event) => {
-        const { value } = <HTMLSelectElement>target;
-
-        const { status, properties } = await run({
-            funcName: "getGaPropertiesArrByAcc",
-            params: [value],
-            onFailure: handleChangeFailure("#GaAcc"),
-        });
-
-        if (!status)
-            return void notify(
-                `Failed to load Analytics properties!`,
-                config.classes.notify.failure
-            );
-
-        handleChange("Prop", "id")(properties);
-    };
-
-    /**
-     * @summary handles Analytics account dropdown chage
-     */
-    const formChangeGaProperty: EventListener = async ({ target }: Event) => {
-        const { value } = <HTMLSelectElement>target;
-
-        const sAccId = $("#GaAcc").val();
-
-        const profiles = await run({
-            funcName: "getGaProfiles",
-            params: [sAccId, value],
-            onFailure: handleChangeFailure("#GaAcc"),
-        });
-
-        handleChange("Prof", "id")(profiles);
-    };
-
-    /**
-     * @summary extracts entities for the inputs
-     */
-    const getEntities = async (
-        selId: string,
-        subSelId: string,
-        prop: string,
-        handlerName: string
-    ) => {
-        const sAccPath = $(`#${selId}`).val();
-
-        if (!sAccPath) return;
-
-        const entities = await run({
-            funcName: handlerName,
-            params: [sAccPath],
-            onFailure: handleChangeFailure(selId),
-        });
-
-        handleChange(subSelId, prop)(entities);
-    };
-
-    const formChangeAccount: EventListener = () =>
-        getEntities("Acc", "Cont", "path", "getConteinersArrByAcc");
-
-    const formChangeContainer: EventListener = () =>
-        getEntities("Cont", "Work", "path", "getWorkspacesArrByCont");
-
     async function deployAddon(preloader: HTMLElement) {
+        const ids = [
+            "account",
+            "property",
+            "profile",
+            "gtm-account",
+            "gtm-container",
+            "gtm-workspace",
+        ];
+
         const [
             gaAccount,
             gaProperty,
@@ -256,9 +34,8 @@ interface EventListener {
             gtmAccountPath,
             gtmContainerPath,
             gtmWorkspacePath,
-            // adsAccount,
-        ] = $("#GaAcc, #Prop, #Prof, #Acc, #Cont, #Work").map((i, el) =>
-            $(el).val()
+        ] = ids.map(
+            (id) => document.getElementById<HTMLSelectElement>(id)?.value
         );
 
         // const willLinkAds = $("#gAdsSwitch").is(":checked");
@@ -278,9 +55,9 @@ interface EventListener {
         // if (willCreateGoal && !gaProfile)
         //     issues.push(`Please select an Analytics Profile!`);
 
-        const { error } = config.classes.notify;
+        const { failure } = config.classes.notify;
 
-        if (issues.length) return issues.forEach((msg) => notify(msg, error));
+        if (issues.length) return issues.forEach((msg) => notify(msg, failure));
 
         show(preloader);
 
@@ -349,9 +126,62 @@ interface EventListener {
         }
     }
 
-    document.addEventListener("click", ({ target }) => {
+    w.addEventListener("load", async () => {
+        const preloader = document.getElementById(config.ids.preloader)!;
+
+        w.addEventListener("error", async ({ message }) => {
+            await gscript("logException", "setup", message);
+            notify("Something went wrong", config.classes.notify.failure);
+            hide(preloader);
+        });
+
+        w.addEventListener("unhandledrejection", async ({ reason = "" }) => {
+            await gscript("logException", "setup", reason.toString());
+            notify("Something went wrong", config.classes.notify.failure);
+            hide(preloader);
+        });
+
+        M.AutoInit();
+
+        d.body.classList.remove("hidden");
+
+        try {
+            show(preloader);
+
+            const {
+                accounts: { analytics, tagManager },
+            } = await gscript<AppSettings>("getSettings");
+
+            await Promise.all([
+                setupAnalytics(analytics),
+                setupTagManager(tagManager),
+            ]);
+        } catch ({ message }) {
+            await gscript("logException", "setup", message);
+            notify("Something went wrong", config.classes.notify.failure);
+        } finally {
+            hide(preloader);
+        }
+
+        // const customers = await getAdsAccounts(
+        //     ({ id, descriptiveName }) => ({
+        //         name: descriptiveName,
+        //         id,
+        //     })
+        // );
+
+        const bouncedDeploy = debounce(deployAddon);
+
+        const submitBtn = d.getElementById("submit")!;
+        submitBtn.addEventListener("click", () => bouncedDeploy(preloader));
+
+        const cancelBtn = d.getElementById("cancel")!;
+        cancelBtn.addEventListener("click", () => google.script.host.close());
+    });
+
+    d.addEventListener("click", ({ target }) => {
         const el = <HTMLElement>target;
         if (!el.matches(".toast")) return;
         M.Toast.getInstance(el).dismiss();
     });
-})();
+})(window, document);
