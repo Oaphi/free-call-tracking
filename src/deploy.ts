@@ -118,7 +118,7 @@ class TagModel {
             this.path
         ).getContent();
 
-        const tag = createOrUpdateTag(this.tags, name, this.path, {
+        const tag = installTag(this.tags, name, this.path, {
             liveOnly: false,
             parameter: [
                 {
@@ -181,7 +181,7 @@ class VariableModel {
 /**
  * @summary creates a GTM variable or updates it
  */
-const createOrUpdateTrigger = (
+const installTrigger = (
     triggers: GoogleAppsScript.TagManager.Schema.Trigger[],
     nameToFind: string,
     path: string,
@@ -200,7 +200,7 @@ const createOrUpdateTrigger = (
 /**
  * @summary creates a GTM tag or updates it
  */
-const createOrUpdateTag = (
+const installTag = (
     tags: GoogleAppsScript.TagManager.Schema.Tag[],
     nameToFind: string,
     path: string,
@@ -247,9 +247,6 @@ type AddonDeploymentOptions = {
     gtmContainerPath: string;
     gtmWorkspacePath: string;
     gtmAccountPath: string;
-    gaAccount: string;
-    gaProperty: string;
-    gaProfile: string;
     gaCategory: string;
     gaEvent: string;
     // adsAccountId: string;
@@ -262,22 +259,10 @@ function deployAddon({
     gtmContainerPath,
     gtmWorkspacePath,
     gtmAccountPath,
-    gaAccount,
-    gaProperty,
-    gaProfile,
     gaCategory,
     gaEvent,
 }: // adsAccountId,
 AddonDeploymentOptions) {
-    const settingsStatus = updateSettings({
-        // "accounts/ads": adsAccountId,
-        "accounts/analytics/profile": gaProfile,
-        "accounts/analytics/account": gaAccount,
-        "accounts/analytics/property": gaProperty,
-    });
-
-    if (!settingsStatus) return showMsg("Failed to save settings!");
-
     const { sUrl: sTagCommand } = createForm(gaCategory, gaEvent);
 
     if (!sTagCommand) return showMsg("Failed to create tracking Form!");
@@ -307,6 +292,10 @@ AddonDeploymentOptions) {
         };
 
         const vars = HelpersTagManager.listVariables(gtmWorkspacePath);
+        const triggers = HelpersTagManager.listTriggers(gtmWorkspacePath);
+        const tags = HelpersTagManager.listTags(gtmWorkspacePath);
+
+        Utilities.sleep(1e3); //reduce chances of rate limiting
 
         const VModel = new VariableModel(vars, gtmWorkspacePath);
 
@@ -339,9 +328,6 @@ AddonDeploymentOptions) {
             getUserDefinedVariables_("cid")
         );
 
-        const triggers = HelpersTagManager.listTriggers(gtmWorkspacePath);
-        const tags = HelpersTagManager.listTags(gtmWorkspacePath);
-
         const commonBackoffOptions: Pick<
             BackoffOptions<any>,
             "comparator" | "scheduler" | "threshold" | "retries"
@@ -352,17 +338,15 @@ AddonDeploymentOptions) {
             retries: 5,
         };
 
-        const { triggerId } = backoffSync(createOrUpdateTrigger, {
-            onBeforeBackoff: () =>
-                console.log(`quota hit: ${createOrUpdateTrigger.name}`),
+        const { triggerId } = backoffSync(installTrigger, {
+            onBeforeBackoff: () => console.log(`quota: ${installTrigger.name}`),
             ...commonBackoffOptions,
         })(triggers, triggerNames.load, gtmWorkspacePath, {
             type: "windowLoaded",
         });
 
-        backoffSync(createOrUpdateTag, {
-            onBeforeBackoff: () =>
-                console.log(`quota hit: ${createOrUpdateTag.name}`),
+        backoffSync(installTag, {
+            onBeforeBackoff: () => console.log(`quota: ${installTag.name}`),
             ...commonBackoffOptions,
         })(tags, tagNames.img, gtmWorkspacePath, {
             type: "img",
@@ -380,13 +364,13 @@ AddonDeploymentOptions) {
 
         const version = backoffSync(versionWorkspace, {
             onBeforeBackoff: () =>
-                console.warn(`quota hit: ${versionWorkspace.name}`),
+                console.warn(`quota: ${versionWorkspace.name}`),
             ...commonBackoffOptions,
         })(gtmWorkspacePath, sVERSION_NAME);
 
         const { code, containerVersion } = backoffSync(republishVersion, {
             onBeforeBackoff: () =>
-                console.warn(`quota hit: ${republishVersion.name}`),
+                console.warn(`quota: ${republishVersion.name}`),
             ...commonBackoffOptions,
         })(version);
 
@@ -404,11 +388,7 @@ AddonDeploymentOptions) {
 
         if (!gtmStatus) return showMsg("Failed to save GTM data!");
 
-        updateSettings({ firstTime: false });
-
-        showMsg(
-            `Published "${name}" container (version ${containerVersionId})`
-        );
+        showMsg(`Updated "${name}" container (version ${containerVersionId})`);
     } catch (e) {
         console.warn(`failed to deploy: ${e}`);
         showMsg(`Failed to deploy Add-on`);

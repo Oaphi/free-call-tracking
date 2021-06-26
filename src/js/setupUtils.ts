@@ -45,6 +45,7 @@ interface EventListener {
 
         if (!gaAccount) issues.push("Please select an Analytics Account!");
         if (!gaProperty) issues.push("Please select an Analytics Property!");
+        if (!gaProfile) issues.push("Please select an Analytics Profile!");
         if (!gtmAccountPath)
             issues.push("Please select a Tag Manager Account!");
         if (!gtmContainerPath) issues.push("Please select a Container!");
@@ -107,9 +108,6 @@ interface EventListener {
 
         try {
             await gscript("deployAddon", {
-                gaAccount,
-                gaProperty,
-                gaProfile,
                 gaCategory,
                 gaEvent,
                 gtmContainerPath,
