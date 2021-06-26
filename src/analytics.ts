@@ -560,7 +560,7 @@ const installGAtag = () => {
 
         if (!triggerId) return false;
 
-        const installed = createOrUpdateTag(
+        const installed = installTag(
             tags,
             ua, //note: tag name must be unique (the function checks for tag existense, though)
             HelpersTagManager.workspacePath,
