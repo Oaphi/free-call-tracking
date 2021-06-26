@@ -105,7 +105,6 @@ interface EventListener {
         //           )
         //         : showError(`Failed to create Analytics Goal!`);
         // }
-
         try {
             await gscript("deployAddon", {
                 gaCategory,
@@ -116,9 +115,10 @@ interface EventListener {
             });
 
             google.script.host.close();
-        } catch (error) {
-            console.debug({ error });
-            notify("Something went wrong");
+        } catch ({ message }) {
+            await gscript("logException", "setup", message);
+            notify("Failed to deploy", config.classes.notify.failure);
+            show(document.getElementById("multiaccount")!);
         } finally {
             enable("submit");
             hide(preloader);
@@ -138,6 +138,7 @@ interface EventListener {
             await gscript("logException", "setup", reason.toString());
             notify("Something went wrong", config.classes.notify.failure);
             hide(preloader);
+            show(document.getElementById("multiaccount")!);
         });
 
         M.AutoInit();
