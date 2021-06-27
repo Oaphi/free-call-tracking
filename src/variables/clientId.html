@@ -1,0 +1,21 @@
+<script>
+  function getClientId() {
+
+    function isLegacy() {
+      return typeof ga !== "undefined";
+    }
+
+    try {
+
+      if (isLegacy()) {
+        var tracker = ga.getAll()[0];
+        return "'" + tracker.get('clientId');
+      }
+
+      return "";
+
+    } catch (err) {
+      return "";
+    }
+  }
+</script>
