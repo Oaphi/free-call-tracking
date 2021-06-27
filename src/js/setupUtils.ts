@@ -31,25 +31,21 @@ interface EventListener {
             gaAccount,
             gaProperty,
             gaProfile,
-            gtmAccountPath,
-            gtmContainerPath,
-            gtmWorkspacePath,
-        ] = ids.map(
-            (id) => document.getElementById<HTMLSelectElement>(id)?.value
-        );
+            accountId,
+            containerId,
+            workspaceId,
+        ] = ids.map((id) => d.getElementById<HTMLSelectElement>(id)?.value);
 
         // const willLinkAds = $("#gAdsSwitch").is(":checked");
         // const willCreateGoal = $("#createGoal").is(":checked");
 
-        const issues = [];
-
+        const issues: string[] = [];
         if (!gaAccount) issues.push("Please select an Analytics Account!");
         if (!gaProperty) issues.push("Please select an Analytics Property!");
         if (!gaProfile) issues.push("Please select an Analytics Profile!");
-        if (!gtmAccountPath)
-            issues.push("Please select a Tag Manager Account!");
-        if (!gtmContainerPath) issues.push("Please select a Container!");
-        if (!gtmWorkspacePath) issues.push("Please select a Workspace!");
+        if (!accountId) issues.push("Please select a Tag Manager Account!");
+        if (!containerId) issues.push("Please select a Container!");
+        if (!workspaceId) issues.push("Please select a Workspace!");
         // if (willLinkAds && !adsAccount)
         //     issues.push("Please select an Ads Account");
 
@@ -84,9 +80,8 @@ interface EventListener {
         //     });
         // }
 
-        const gaCategory =
-            d.getElementById<HTMLInputElement>("category")!.value;
-        const gaEvent = d.getElementById<HTMLInputElement>("action")!.value;
+        const category = d.getElementById<HTMLInputElement>("category")!.value;
+        const action = d.getElementById<HTMLInputElement>("action")!.value;
 
         // if (willCreateGoal) {
         //     const goalStatus = await gscript("createEventGoal", {
@@ -106,12 +101,14 @@ interface EventListener {
         //         : showError(`Failed to create Analytics Goal!`);
         // }
         try {
+
+
             await gscript("deployAddon", {
-                gaCategory,
-                gaEvent,
-                gtmContainerPath,
-                gtmWorkspacePath,
-                gtmAccountPath,
+                category,
+                action,
+                containerId,
+                workspaceId,
+                accountId,
             });
 
             google.script.host.close();

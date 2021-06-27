@@ -87,7 +87,7 @@ const deployAddonGo = () => {
 /**
  * @summary creates a GTM variable or updates it
  */
-const createOrUpdateVar = (
+const installVariable = (
     vars: GoogleAppsScript.TagManager.Schema.Variable[],
     nameToFind: string,
     path: string,
@@ -115,7 +115,7 @@ class TagModel {
 
     createHTML(name: string, pathToFile: string) {
         const value = HtmlService.createHtmlOutputFromFile(
-            this.path
+            this.path || pathToFile
         ).getContent();
 
         const tag = installTag(this.tags, name, this.path, {
@@ -147,8 +147,10 @@ class VariableModel {
         this.path = path;
     }
 
-    createOrUpdateCustomJS(name: string, value: string) {
-        const variable = createOrUpdateVar(this.variables, name, this.path, {
+    installCustomJS(name: string, value: string) {
+        const { variables, path } = this;
+
+        const variable = installVariable(variables, name, path, {
             type: "jsm",
             parameter: [
                 {
@@ -162,8 +164,8 @@ class VariableModel {
         this.variables.push(variable);
     }
 
-    createOrUpdateJS(name: string, value: string) {
-        const variable = createOrUpdateVar(this.variables, name, this.path, {
+    installJS(name: string, value: string) {
+        const variable = installVariable(this.variables, name, this.path, {
             type: "j",
             parameter: [
                 {
@@ -244,36 +246,88 @@ const installPageViewTrigger = ({
 };
 
 type AddonDeploymentOptions = {
-    gtmContainerPath: string;
-    gtmWorkspacePath: string;
-    gtmAccountPath: string;
-    gaCategory: string;
-    gaEvent: string;
+    containerId: string;
+    workspaceId: string;
+    accountId: string;
+    category: string;
+    action: string;
     // adsAccountId: string;
+};
+
+type VariableOptions = Pick<
+    AddonDeploymentOptions,
+    "accountId" | "containerId" | "workspaceId"
+>;
+
+type VariableNames = {
+    title: string;
+    uagent: string;
+    geo: string;
+    clid: string;
+    time: string;
+    cid: string;
+};
+
+/**
+ * @summary creates or updates required variables
+ */
+const installVariables = (
+    ids: VariableOptions,
+    { title, uagent, geo, clid, cid, time }: VariableNames,
+    publicId?: string
+) => {
+    try {
+        HelpersTagManager.setIds(ids);
+
+        const wspacePath = HelpersTagManager.getWorkspacePath();
+        const vars = HelpersTagManager.listVariables(wspacePath);
+
+        const VModel = new VariableModel(vars, wspacePath);
+
+        VModel.installJS(title, "document.title");
+
+        VModel.installCustomJS(uagent, getUserVariables_("userAgent"));
+        VModel.installCustomJS(geo, getUserVariables_("geolocation"));
+
+        VModel.installCustomJS(
+            clid,
+            getUserVariables_("clientId", {
+                vars: { publicId },
+            })
+        );
+
+        VModel.installCustomJS(time, getUserVariables_("getTime"));
+        VModel.installCustomJS(cid, getUserVariables_("cid"));
+
+        return true;
+    } catch (error) {
+        console.warn(`failed to install vars: ${error}`);
+        return false;
+    }
 };
 
 /**
  * @summary installs GTM container and variables
  */
 function deployAddon({
-    gtmContainerPath,
-    gtmWorkspacePath,
-    gtmAccountPath,
-    gaCategory,
-    gaEvent,
+    containerId,
+    workspaceId,
+    accountId,
+    category,
+    action,
 }: // adsAccountId,
 AddonDeploymentOptions) {
-    const { sUrl: sTagCommand } = createForm(gaCategory, gaEvent);
+    const { sUrl: sTagCommand } = createForm(category, action);
 
     if (!sTagCommand) return showMsg("Failed to create tracking Form!");
 
     try {
-        const container = HelpersTagManager.getContainer(gtmContainerPath);
+        HelpersTagManager.setIds({ containerId, accountId, workspaceId });
 
-        if (!container || !container.containerId)
-            return showMsg(`Failed to get GTM container`);
+        const container = HelpersTagManager.getContainerById(containerId);
+        if (!container) return showMsg(`Failed to get GTM container`);
 
-        const { publicId, containerId } = container;
+        const { publicId } = container;
 
         const {
             tagManager: {
@@ -291,42 +345,20 @@ AddonDeploymentOptions) {
             load: `${prefix}Window Loaded`,
         };
 
-        const vars = HelpersTagManager.listVariables(gtmWorkspacePath);
-        const triggers = HelpersTagManager.listTriggers(gtmWorkspacePath);
-        const tags = HelpersTagManager.listTags(gtmWorkspacePath);
+        const wspacePath = HelpersTagManager.getWorkspacePath();
+
+        const installedVars = installVariables(
+            { accountId, containerId, workspaceId },
+            varNames,
+            publicId
+        );
+
+        if (!installedVars) return showMsg("Failed to install GTM variables!");
 
         Utilities.sleep(1e3); //reduce chances of rate limiting
 
-        const VModel = new VariableModel(vars, gtmWorkspacePath);
-
-        VModel.createOrUpdateJS(varNames.title, "document.title");
-
-        VModel.createOrUpdateCustomJS(
-            varNames.uagent,
-            getUserDefinedVariables_("userAgent")
-        );
-
-        VModel.createOrUpdateCustomJS(
-            varNames.geo,
-            getUserDefinedVariables_("geolocation")
-        );
-
-        VModel.createOrUpdateCustomJS(
-            varNames.clid,
-            getUserDefinedVariables_("clientId", {
-                vars: { publicId },
-            })
-        );
-
-        VModel.createOrUpdateCustomJS(
-            varNames.time,
-            getUserDefinedVariables_("getTime")
-        );
-
-        VModel.createOrUpdateCustomJS(
-            varNames.cid,
-            getUserDefinedVariables_("cid")
-        );
+        const triggers = HelpersTagManager.listTriggers(wspacePath);
+        const tags = HelpersTagManager.listTags(wspacePath);
 
         const commonBackoffOptions: Pick<
             BackoffOptions<any>,
@@ -341,14 +373,14 @@ AddonDeploymentOptions) {
         const { triggerId } = backoffSync(installTrigger, {
             onBeforeBackoff: () => console.log(`quota: ${installTrigger.name}`),
             ...commonBackoffOptions,
-        })(triggers, triggerNames.load, gtmWorkspacePath, {
+        })(triggers, triggerNames.load, wspacePath, {
             type: "windowLoaded",
         });
 
         backoffSync(installTag, {
             onBeforeBackoff: () => console.log(`quota: ${installTag.name}`),
             ...commonBackoffOptions,
-        })(tags, tagNames.img, gtmWorkspacePath, {
+        })(tags, tagNames.img, wspacePath, {
             type: "img",
             parameter: [
                 { type: "boolean", value: "true", key: "useCacheBuster" },
@@ -366,7 +398,7 @@ AddonDeploymentOptions) {
             onBeforeBackoff: () =>
                 console.warn(`quota: ${versionWorkspace.name}`),
             ...commonBackoffOptions,
-        })(gtmWorkspacePath, sVERSION_NAME);
+        })(wspacePath, sVERSION_NAME);
 
         const { code, containerVersion } = backoffSync(republishVersion, {
             onBeforeBackoff: () =>
@@ -380,7 +412,7 @@ AddonDeploymentOptions) {
 
         //save GTM info;
         const gtmStatus = setGtmInfo({
-            accountId: gtmAccountPath.replace("accounts/", ""),
+            accountId,
             containerId,
             workspaceId: version.workspaceId,
             versionId: containerVersionId!,
