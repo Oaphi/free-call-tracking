@@ -15,13 +15,13 @@ var HelpersTagManager = (() => {
         versionId: "",
     };
 
-    const getAccountPath = (used: TagManagerIds) =>
+    const getAccountPath = (used: TagManagerIds = LastUsed) =>
         `accounts/${used.accountId}`;
 
-    const getContainerPath = (used: TagManagerIds) =>
+    const getContainerPath = (used: TagManagerIds = LastUsed) =>
         `${getAccountPath(used)}/containers/${used.containerId}`;
 
-    const getWorkspacePath = (used: TagManagerIds) =>
+    const getWorkspacePath = (used: TagManagerIds = LastUsed) =>
         `${getContainerPath(used)}/workspaces/${used.workspaceId}`;
 
     /**
