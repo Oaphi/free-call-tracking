@@ -167,6 +167,12 @@ const setupAnalytics = async (settings: AnalyticsSettings) => {
 
         settings[<keyof AnalyticsSettings>id] = value;
 
+        const custom = new CustomEvent("ga-change", {
+            bubbles: true,
+            detail: settings,
+        });
+        document.dispatchEvent(custom);
+
         const { nextElementSibling: label } = parentElement!;
         notify(
             `${label?.textContent || "Setting"} saved`,
