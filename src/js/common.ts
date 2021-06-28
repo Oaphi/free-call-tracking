@@ -230,8 +230,8 @@ const setupTagManager = async (settings: TagManagerSettings) => {
     });
 };
 
-/**
- * @summary check if can enable actions
- */
 const checkGTM = (info: AppSettings["accounts"]["tagManager"]) =>
+    Object.values(info).every(Boolean);
+
+const checkAnalytics = (info: AppSettings["accounts"]["analytics"]) =>
     Object.values(info).every(Boolean);
