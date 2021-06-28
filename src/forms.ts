@@ -155,9 +155,10 @@ function createForm(sMyCategory: string, sMyEvent: string): FormInfo {
     return getPrefilledUrl(form.getId());
 }
 
-interface NoAnalyticsStatus {
+type NoAnalyticsStatus = {
     status: boolean;
     dismissed: boolean;
+    deployed: boolean;
 }
 
 /**
