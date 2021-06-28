@@ -216,6 +216,12 @@ const setupTagManager = async (settings: TagManagerSettings) => {
 
         settings[unpfxed] = value;
 
+        const custom = new CustomEvent("gtm-change", {
+            bubbles: true,
+            detail: settings,
+        });
+        document.dispatchEvent(custom);
+
         const { nextElementSibling: label } = parentElement!;
         notify(
             `${label?.textContent || "Setting"} saved`,
