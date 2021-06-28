@@ -517,9 +517,6 @@ const makeUAparameter = (id: string) => ({
     value: id,
 });
 
-//@ts-ignore
-const alert = (msg: string) => SpreadsheetApp.getUi().alert(msg);
-
 /**
  * @summary installs Google Analytics container
  */

@@ -78,32 +78,9 @@ const formatFormSheet = () => {
 /**
  * @summary creates a form to be used with the Add-on
  */
-function createForm(sMyCategory: string, sMyEvent: string) {
-    const ss = SpreadsheetApp.getActive();
+function createForm(sMyCategory: string, sMyEvent: string): FormInfo {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sCurrFormUrl = ss.getFormUrl();
-
-    if (sCurrFormUrl) {
-        console.log(`found form url: ${sCurrFormUrl}`);
-
-        let canAccess = true;
-
-        try {
-            const existing = FormApp.openByUrl(sCurrFormUrl);
-            return getPrefilledUrl(existing.getId());
-        } catch (error) {
-            console.warn(error);
-            canAccess = false;
-        }
-
-        alert(
-            APP_CONFIG.strings.errors.form.duplicate +
-                (canAccess
-                    ? ""
-                    : nl`${APP_CONFIG.strings.errors.form.inaccessible}`)
-        );
-
-        return { sFormId: "", sUrl: "" };
-    }
 
     const {
         strings: {
@@ -117,8 +94,27 @@ function createForm(sMyCategory: string, sMyEvent: string) {
                 visitorId,
                 name,
             },
+            errors: {
+                form: { duplicate, inaccessible },
+            },
         },
     } = APP_CONFIG;
+
+    if (sCurrFormUrl) {
+        let canAccess = true;
+
+        try {
+            const existing = FormApp.openByUrl(sCurrFormUrl);
+            return getPrefilledUrl(existing.getId());
+        } catch (error) {
+            console.warn(error);
+            canAccess = false;
+        }
+
+        showMsg(duplicate + (canAccess ? "" : nl`${inaccessible}`));
+
+        return { sFormId: "", sUrl: "" };
+    }
 
     const form = FormApp.create(name).setAllowResponseEdits(false);
 
