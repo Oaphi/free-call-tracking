@@ -5,52 +5,95 @@ type HandlerConfig = {
     onError: (msg: string) => void;
 };
 
-(() => {
-    M.AutoInit();
+((w, d) => {
+    w.addEventListener("load", async () => {
+        const preload = d.getElementById("preload")!;
 
-    const handlerMap: { [x: string]: HandlerConfig } = {
-        yes: {
-            action: () => gscript("installGAtag"),
-            onSuccess: () => notify("Successfully installed tag"),
-            onFailure: () => notify("Failed to install tag"),
-            onError: () => notify("Something went wrong during install"),
-        },
-        no: {
-            action: () => gscript("setGaInstallDismissed"),
-            onSuccess: () => google.script.host.close(),
-            onFailure: () => {}, //noop
-            onError: () =>
-                notify(
-                    `Failed to save (you will be prompted again if no UA tag is found)`
-                ),
-        },
-    };
+        w.addEventListener("error", async ({ message }) => {
+            await gscript("logException", "install_ua", message);
+            notify("Something went wrong", config.classes.notify.failure);
+            hide(preload, "hidden");
+        });
 
-    const ids = Object.keys(handlerMap);
+        w.addEventListener("unhandledrejection", async ({ reason = "" }) => {
+            await gscript("logException", "install_ua", reason.toString());
+            notify("Something went wrong", config.classes.notify.failure);
+            hide(preload, "hidden");
+        });
 
-    document.addEventListener("click", async ({ target }) => {
-        const { id } = <HTMLElement>target;
+        M.AutoInit();
 
-        if (!ids.includes(id)) return;
+        const {
+            accounts: { tagManager, analytics },
+        } = await gscript<AppSettings>("getSettings");
 
-        const { action, onSuccess, onFailure, onError } = handlerMap[id];
+        await setupAnalytics(analytics);
+        await setupTagManager(tagManager);
+        checkGTM(tagManager) && checkAnalytics(analytics) && enable("yes");
 
-        const preload = document.getElementById("preload")!;
+        const handlerMap: { [x: string]: HandlerConfig } = {
+            yes: {
+                action: () => gscript("installGAtag"),
+                onSuccess: () =>
+                    notify(
+                        "Successfully installed tag",
+                        config.classes.notify.success
+                    ),
+                onFailure: () =>
+                    notify(
+                        "Failed to install tag",
+                        config.classes.notify.failure
+                    ),
+                onError: () =>
+                    notify(
+                        "Something went wrong during install",
+                        config.classes.notify.failure
+                    ),
+            },
+            no: {
+                action: () => gscript("setGaInstallDismissed"),
+                onSuccess: () => google.script.host.close(),
+                onFailure: () => google.script.host.close(),
+                onError: () =>
+                    notify(
+                        `Failed to save (you will be prompted if no tag is found)`,
+                        config.classes.notify.failure
+                    ),
+            },
+        };
 
-        try {
-            show(preload);
+        const ids = Object.keys(handlerMap);
 
-            ids.forEach(disable);
+        const listener: EventListener = () =>
+            void checkGTM(tagManager) &&
+            checkAnalytics(analytics) &&
+            enable("yes");
 
-            const status = await action();
+        d.addEventListener("gtm-change", listener);
+        d.addEventListener("ga-change", listener);
 
-            status ? onSuccess() : onFailure();
-        } catch ({ message }) {
-            await gscript("logException", "settings", message);
-            onError(message);
-        } finally {
-            hide(preload);
-            ids.forEach(enable);
-        }
+        d.addEventListener("click", async ({ target }) => {
+            const { id } = <HTMLElement>target;
+
+            if (!ids.includes(id)) return;
+
+            const { action, onSuccess, onFailure, onError } = handlerMap[id];
+
+            try {
+                show(preload, "hidden");
+
+                ids.forEach(disable);
+
+                const status = await action();
+
+                status ? onSuccess() : onFailure();
+            } catch ({ message }) {
+                await gscript("logException", "install_ua", message);
+                onError(message);
+            } finally {
+                hide(preload, "hidden");
+                ids.forEach(enable);
+            }
+        });
     });
-})();
+})(window, document);

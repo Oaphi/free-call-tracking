@@ -521,38 +521,49 @@ const makeUAparameter = (id: string) => ({
  * @summary installs Google Analytics container
  */
 const installGAtag = () => {
-    const gtmInfo = getGtmInfo();
-
-    const { accountId, containerId } = gtmInfo;
-
-    const analyticsId = getProfileID();
-
     try {
-        HelpersTagManager.getAccountById(accountId);
-        HelpersTagManager.getContainerById(containerId);
+        const gtmInfo = getGtmInfo();
+
+        const {
+            accounts: {
+                tagManager: { account, container, workspace },
+                analytics: { property },
+            },
+        } = getSettings();
+
+        HelpersTagManager.setIds({
+            accountId: account,
+            containerId: container,
+            workspaceId: workspace,
+        });
+
+        HelpersTagManager.getAccountById(account);
+        HelpersTagManager.getContainerById(container);
 
         const {
             tagManager: {
                 tags: { ua },
                 triggers: { view },
+                versions: { main },
             },
         } = APP_CONFIG;
 
         const version = HelpersTagManager.getLiveVersion();
-
         if (!version) return false;
 
         const { trigger: triggers = [], tag: tags = [] } = version;
 
-        const [{ workspaceId }] = HelpersTagManager.listWorkspaces();
+        const path = HelpersTagManager.getWorkspacePath();
 
-        HelpersTagManager.setIds({ workspaceId });
+        const existsTrigger = triggers.find(({ name }) => name === view);
+        const existsTag = tags.find(({ name }) => name === ua);
+        if (existsTrigger || existsTag) return true;
 
         //!important: GA tag must fire as soon as possible or `ga` is defined later than we submit
         const { triggerId } = installPageViewTrigger({
             triggers,
             name: view,
-            path: HelpersTagManager.workspacePath,
+            path,
         });
 
         if (!triggerId) return false;
@@ -560,21 +571,15 @@ const installGAtag = () => {
         const installed = installTag(
             tags,
             ua, //note: tag name must be unique (the function checks for tag existense, though)
-            HelpersTagManager.workspacePath,
+            path,
             {
                 type: "ua",
-                parameter: [makeUAparameter(analyticsId)],
+                parameter: [makeUAparameter(property)],
                 firingTriggerId: [triggerId],
             }
         );
 
-        const {
-            tagManager: {
-                versions: { main },
-            },
-        } = APP_CONFIG;
-
-        const updated = versionWorkspace(HelpersTagManager.workspacePath, main);
+        const updated = versionWorkspace(path, main);
         const { code, containerVersion } = republishVersion(updated);
 
         if (code !== 200) return false;
@@ -584,7 +589,9 @@ const installGAtag = () => {
         gtmInfo.workspaceId = installed.workspaceId!;
         setGtmInfo(gtmInfo);
 
-        deleteAllMetadata({ sheet: getFormSheet() });
+        //remove metadata about GA prompt
+        const sheet = getFormSheet();
+        sheet && deleteAllMetadata({ sheet });
 
         return true;
     } catch (error) {

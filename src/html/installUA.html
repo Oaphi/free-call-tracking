@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Universal Analytics install</title>
+
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Material+Icons"
+        />
+
+        <?!= style ?>
+    </head>
+
+    <body>
+        <div class="section">
+            <div class="row">
+                <div class="col s12">
+                    <blockquote class="primary-quote">
+                        This will install a
+                        <a
+                            href="https://support.google.com/tagmanager/answer/6107124?hl=en"
+                            target="_blank"
+                            referrerpolicy="no-referrer"
+                            >Universal Analytics tag</a
+                        >
+                        using your Google Tag Manager account. Please, make sure
+                        your website does not have Analytics configured!
+                    </blockquote>
+
+                    <p
+                        >Would you like to create a Universal Analytics tag?
+                        Please make sure you selected the Analytics and Tag
+                        Manager accounts, container, and workspace first</p
+                    >
+
+                    <a
+                        id="yes"
+                        class="
+                            waves-effect waves-light
+                            btn
+                            primary-background
+                            disabled
+                        "
+                        >Yes</a
+                    >
+                    <a
+                        id="no"
+                        class="waves-effect waves-light btn neutral-background"
+                        >No</a
+                    >
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s12">
+                    <div class="preload-wrapper">
+                        <div
+                            id="preload"
+                            class="progress light-blue darken-3 hidden"
+                        >
+                            <div class="indeterminate white"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="input-field col s12">
+                    <select id="account" name="account">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label>Analytics account</label>
+                </div>
+                <div class="input-field col s12">
+                    <select id="property" name="property">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label>Analytics property</label>
+                </div>
+                <div class="input-field col s12">
+                    <select id="profile" name="profile">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label>Analytics profile</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="input-field col s12">
+                    <select id="gtm-account" name="gtm-account">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label>Tag Manager account</label>
+                </div>
+                <div class="input-field col s12">
+                    <select id="gtm-container" name="gtm-container">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label>Tag Manager container</label>
+                </div>
+                <div class="input-field col s12">
+                    <select id="gtm-workspace" name="gtm-workspace">
+                        <option value="" disabled selected>Select</option>
+                    </select>
+                    <label class="multiline">Tag Manager workspace</label>
+                </div>
+            </div>
+        </div>
+
+        <?!= config ?>
+        <?!= run ?>
+        <?!= utils ?>
+        <?!= common ?>
+        <?!= uaPrompt ?>
+    </body>
+</html>
