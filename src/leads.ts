@@ -59,15 +59,14 @@ const recordNewOwner = ({
         logging: { users },
     } = APP_CONFIG;
 
-    const emails = getAdminEmails({ onError });
-
-    const user = getOwner({ onError });
-
-    if (!user) return false;
-
-    const ownerEmail = userToEmail(user);
-
     try {
+        const emails = getAdminEmails({ onError });
+
+        const user = getOwner({ onError });
+        if (!user) return false;
+
+        const ownerEmail = userToEmail(user);
+
         const {
             properties: { lead: prop },
         } = APP_CONFIG;
@@ -98,14 +97,11 @@ const recordNewOwner = ({
             contentType: "application/json",
         });
 
-        if (resp.getResponseCode() !== 200) {
-            logger.log(`failed to send owner: ${resp.getContentText()}`);
+        const status = resp.getResponseCode();
+        const text = resp.getContentText();
 
-            SpreadsheetApp.getActiveSheet()
-                .getActiveCell()
-                .setValue(resp.getContentText());
-
-            logger.dump();
+        if (status !== 200) {
+            logger.log(`[${status}] failed to record owner: ${text}`).dump();
             return false;
         }
 
