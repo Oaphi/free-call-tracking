@@ -8,12 +8,6 @@
         actions.forEach(({ classList }) => classList.remove("disabled"));
     };
 
-    /**
-     * @summary check if can enable actions
-     */
-    const checkGTM = (info: AppSettings["accounts"]["tagManager"]) =>
-        Object.values(info).every(Boolean);
-
     const preload = d.getElementById("preload")!;
 
     w.addEventListener("error", async ({ message }) => {
