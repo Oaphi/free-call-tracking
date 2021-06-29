@@ -1,0 +1,3 @@
+<script type="text/javascript">
+"use strict";var run=function(n){var e=n.funcName,t=n.onEnd,o=n.onFailure,i=void 0===o?console.error:o,u=n.onSuccess,n=n.params,c=void 0===n?[]:n;return new Promise(function(o,r){google.script.run.withSuccessHandler(function(n){"function"==typeof u&&u(n),"function"==typeof t&&t(),o(n)}).withFailureHandler(function(n){"function"==typeof i&&i(n),"function"==typeof t&&t(),r(n)})[e].apply(null,c)})},gscript=function(r){for(var e=[],n=1;n<arguments.length;n++)e[n-1]=arguments[n];return new Promise(function(n,o){google.script.run.withSuccessHandler(n).withFailureHandler(o)[r].apply(null,e)})};
+</script>

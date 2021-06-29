@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Universal Analytics Dismissed</title>
+
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Material+Icons"
+        />
+
+        <?!= style ?>
+    </head>
+    <body>
+        <?!= config ?>
+        <?!= utils ?>
+        <?!= run ?>
+        <?!= dismissPrompt ?>
+
+        <div class="container">
+            <div class="row">
+                <div class="col s12">
+                    <p
+                        >The Universal Analytics installer was dismissed
+                        before!</p
+                    >
+                    <p>
+                        You can reset the preference below, the install dialog
+                        will open shortly after:
+                    </p>
+                    <a
+                        id="reset"
+                        class="waves-effect waves-light btn primary-background"
+                        >Reset</a
+                    >
+                </div>
+                <div class="col s12">
+                    <div id="preload" class="progress primary-background hide">
+                        <div class="indeterminate white"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
