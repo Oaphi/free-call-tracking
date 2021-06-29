@@ -133,6 +133,10 @@ type AnalyticsGoal = GoogleAppsScript.Analytics.Schema.Goal & {
 
 type AnalyticsCreateGoalOptions = AnalyticsGoal & CommonAnalyticsOptions;
 
+type AnalyticsUpdateGoalOptions = AnalyticsCreateGoalOptions & {
+    goalId: string;
+};
+
 type AnalyticsListResponse<T extends "analytics#goals" | "analytics#profiles"> =
     {
         kind: T;
@@ -294,6 +298,36 @@ class AnalyticsManagementHelper extends Helper {
                 ...this.addAuthHeaders(),
                 method: "post",
                 payload: JSON.stringify(goal),
+            }
+        );
+
+        return this.processResponse(res);
+    }
+
+    /**
+     * @see {@link https://developers.google.com/analytics/devguides/config/mgmt/v3/mgmtReference/management/goals/patch}
+     */
+    static updateGoal({
+        goalId,
+        accountId,
+        profileId,
+        webPropertyId,
+        ...rest
+    }: AnalyticsUpdateGoalOptions) {
+        const { base } = this;
+
+        const res = UrlFetchApp.fetch(
+            `${base}/${this.getGoalPath(
+                accountId,
+                webPropertyId,
+                profileId,
+                goalId
+            )}s`,
+            {
+                ...this.getCommonFetchOpts(),
+                ...this.addAuthHeaders(),
+                method: "patch",
+                payload: JSON.stringify(rest),
             }
         );
 
@@ -468,17 +502,17 @@ class AnalyticsMeasurementHelper extends Helper {
 type EventGoalCreationOptions = {
     gaAccount: string;
     gaProperty: string;
-    gaCategory: string;
     gaProfile: string;
-    gaEvent: string;
+    category: string;
+    action: string;
 };
 
 const createEventGoal = ({
     gaAccount,
     gaProperty,
     gaProfile,
-    gaCategory,
-    gaEvent,
+    category,
+    action,
 }: EventGoalCreationOptions) =>
     AnalyticsManagementHelper.createGoal({
         accountId: gaAccount,
@@ -492,12 +526,12 @@ const createEventGoal = ({
                 {
                     type: "CATEGORY",
                     matchType: "EXACT",
-                    expression: gaCategory,
+                    expression: category,
                 },
                 {
                     type: "ACTION",
                     matchType: "EXACT",
-                    expression: gaEvent,
+                    expression: action,
                 },
             ],
             useEventValue: true,
