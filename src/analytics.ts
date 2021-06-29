@@ -216,14 +216,10 @@ class AnalyticsManagementHelper extends Helper {
             }
         );
 
-        const code = res.getResponseCode(),
-            content = JSON.parse(res.getContentText());
-
-        const success = code === 200;
-
-        success || console.warn(content);
-
+        const success = this.processResponse(res);
         if (!success) return [];
+
+        const content = JSON.parse(res.getContentText());
 
         //TODO: expand to include pagination
         const { items = [] } =
@@ -279,8 +275,8 @@ class AnalyticsManagementHelper extends Helper {
 
         //generates sequential unique id for the goal
         const goals = this.listGoals({ accountId, profileId, webPropertyId });
-        const goalIds = goals.map(({ id }) => id!).sort();
-        const id = (+goalIds[goalIds.length - 1] + 1).toString();
+        const ids = goals.map(({ id }) => id!).sort();
+        const id = (+ids[ids.length - 1] + 1).toString();
 
         const goal: GoogleAppsScript.Analytics.Schema.Goal = {
             id,
@@ -367,28 +363,6 @@ class AnalyticsManagementHelper extends Helper {
         return items;
     }
 }
-
-const testListGoals = () => {
-    const goals = AnalyticsManagementHelper.listGoals({
-        accountId: "134578661",
-        profileId: "230400611",
-        webPropertyId: "UA-134578661-2",
-    });
-    console.log({ goals });
-};
-
-const testCreateGoal = () => {
-    AnalyticsManagementHelper.createGoal({
-        accountId: "134578661",
-        profileId: "230400611",
-        webPropertyId: "UA-134578661-2",
-        type: "EVENT",
-        eventDetails: {
-            eventConditions: [{}],
-            useEventValue: true,
-        },
-    });
-};
 
 type AnalyticsPageviewOptions = {
     domain: string;
