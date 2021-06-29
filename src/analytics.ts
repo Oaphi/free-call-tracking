@@ -318,7 +318,7 @@ class AnalyticsManagementHelper extends Helper {
                 webPropertyId,
                 profileId,
                 goalId
-            )}s`,
+            )}`,
             {
                 ...this.getCommonFetchOpts(),
                 ...this.addAuthHeaders(),
@@ -481,36 +481,61 @@ type EventGoalCreationOptions = {
     action: string;
 };
 
-const createEventGoal = ({
+const installEventGoal = ({
     gaAccount,
     gaProperty,
     gaProfile,
     category,
     action,
-}: EventGoalCreationOptions) =>
-    AnalyticsManagementHelper.createGoal({
+}: EventGoalCreationOptions) => {
+    const common = {
         accountId: gaAccount,
-        webPropertyId: gaProperty,
         profileId: gaProfile,
-        type: "EVENT",
-        name: getConfig().analytics.goals.name,
-        active: true,
-        eventDetails: {
-            eventConditions: [
-                {
-                    type: "CATEGORY",
-                    matchType: "EXACT",
-                    expression: category,
-                },
-                {
-                    type: "ACTION",
-                    matchType: "EXACT",
-                    expression: action,
-                },
-            ],
-            useEventValue: true,
-        },
+        webPropertyId: gaProperty,
+    };
+
+    const goals = AnalyticsManagementHelper.listGoals({
+        ...common,
     });
+
+    const {
+        analytics: {
+            goals: { name },
+        },
+    } = getConfig();
+
+    const goal = goals.find(({ name: gname }) => gname === name);
+
+    const goalOptions: AnalyticsCreateGoalOptions | AnalyticsUpdateGoalOptions =
+        {
+            ...common,
+            type: "EVENT",
+            name: getConfig().analytics.goals.name,
+            active: true,
+            eventDetails: {
+                eventConditions: [
+                    {
+                        type: "CATEGORY",
+                        matchType: "EXACT",
+                        expression: category,
+                    },
+                    {
+                        type: "ACTION",
+                        matchType: "EXACT",
+                        expression: action,
+                    },
+                ],
+                useEventValue: true,
+            },
+        };
+
+    return goal
+        ? AnalyticsManagementHelper.updateGoal({
+              ...goalOptions,
+              goalId: goal.id!,
+          })
+        : AnalyticsManagementHelper.createGoal(goalOptions);
+};
 
 /**
  * @summary wrapper to client-side page view

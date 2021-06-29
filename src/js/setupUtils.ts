@@ -17,6 +17,30 @@ interface EventListener {
     //     checked ? adsForm.show(duration) : adsForm.hide(duration);
     // };
 
+    const installAnalyticsGoal = async (options: {
+        gaAccount?: string;
+        gaProperty?: string;
+        gaProfile?: string;
+        category: string;
+        action: string;
+    }) => {
+        try {
+            const status = await gscript("installEventGoal", options);
+
+            status
+                ? notify(
+                      `Created an Analytics Goal`,
+                      config.classes.notify.success
+                  )
+                : notify(
+                      `Failed to create Analytics Goal!`,
+                      config.classes.notify.failure
+                  );
+        } catch ({ message }) {
+            await gscript("logException", "setup_goal", message);
+        }
+    };
+
     async function deployAddon(preloader: HTMLElement) {
         const ids = [
             "account",
@@ -37,7 +61,8 @@ interface EventListener {
         ] = ids.map((id) => d.getElementById<HTMLSelectElement>(id)?.value);
 
         // const willLinkAds = $("#gAdsSwitch").is(":checked");
-        // const willCreateGoal = $("#createGoal").is(":checked");
+        const { checked: willCreateGoal = false } =
+            d.getElementById<HTMLInputElement>("createGoal") || {};
 
         const issues: string[] = [];
         if (!gaAccount) issues.push("Please select an Analytics Account!");
@@ -48,9 +73,6 @@ interface EventListener {
         if (!workspaceId) issues.push("Please select a Workspace!");
         // if (willLinkAds && !adsAccount)
         //     issues.push("Please select an Ads Account");
-
-        // if (willCreateGoal && !gaProfile)
-        //     issues.push(`Please select an Analytics Profile!`);
 
         const { failure } = config.classes.notify;
 
@@ -83,26 +105,17 @@ interface EventListener {
         const category = d.getElementById<HTMLInputElement>("category")!.value;
         const action = d.getElementById<HTMLInputElement>("action")!.value;
 
-        // if (willCreateGoal) {
-        //     const goalStatus = await gscript("createEventGoal", {
-        //         gaAccount,
-        //         gaProperty,
-        //         gaProfile,
-        //         gaCategory,
-        //         gaEvent,
-        //     });
+        if (willCreateGoal) {
+            await installAnalyticsGoal({
+                category,
+                action,
+                gaAccount,
+                gaProfile,
+                gaProperty,
+            });
+        }
 
-        //     goalStatus
-        //         ? notify(
-        //               `Created Analytics Goal`,
-        //               config.times.notify.slow,
-        //               config.classes.notify.success
-        //           )
-        //         : showError(`Failed to create Analytics Goal!`);
-        // }
         try {
-
-
             await gscript("deployAddon", {
                 category,
                 action,
