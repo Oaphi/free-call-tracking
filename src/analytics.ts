@@ -64,6 +64,11 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
     TriggersApp.guardTracked(e, function onEditEvent({ range }) {
         const catActPair = range.getValue().toString();
         const iRow = range.getRow();
+        const iCol = range.getColumn();
+
+        const submitA1 = `I${iRow}`;
+
+        if (getIndexFromA1(submitA1) + 1 !== iCol) return;
 
         const ss = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -74,7 +79,7 @@ const onEditEvent = (e: GoogleAppsScript.Events.SheetsOnEdit) =>
         const [[stamp, _timestamp, cid, geo, _src, tgt, title, userAgent]] =
             sheet.getRange(iRow, 1, 1, sheet.getLastColumn()).getValues();
 
-        if (!cid) return sheet.getRange(`I${iRow}`).clearContent();
+        if (!cid) return sheet.getRange(submitA1).clearContent();
 
         const {
             accounts: {
