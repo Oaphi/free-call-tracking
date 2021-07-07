@@ -159,48 +159,46 @@ type NoAnalyticsStatus = {
     status: boolean;
     dismissed: boolean;
     deployed: boolean;
-}
+};
 
 /**
  * @summary fires on manual analytics form being submitted
  */
-function onFormSubmit({
-    values,
-    range,
-    onError = console.warn,
-}: Errable<GoogleAppsScript.Events.SheetsOnFormSubmit>) {
-    try {
-        const sheet = range.getSheet();
+const onFormSubmit = (e: GoogleAppsScript.Events.SheetsOnFormSubmit) =>
+    TriggersApp.guardTracked(e, function onFormSubmit({ values, range }) {
+        try {
+            const sheet = range.getSheet();
 
-        const [_fstamp, _tstamp, clientId] = values;
+            const [_fstamp, _tstamp, clientId] = values;
 
-        const {
-            properties: { metadata: key },
-        } = APP_CONFIG;
+            const {
+                properties: { metadata: key },
+            } = APP_CONFIG;
 
-        const noGAmeta: NoAnalyticsStatus = getMetadataValue({
-            key,
-            sheet,
-            def: makeNoGAstatus(),
-        });
+            const noGAmeta: NoAnalyticsStatus = getMetadataValue({
+                key,
+                sheet,
+                def: makeNoGAstatus(),
+            });
 
-        if (!clientId) {
-            const { dismissed = false }: NoAnalyticsStatus = noGAmeta;
-            if (dismissed) return;
-            noGAmeta.status = true;
+            if (!clientId) {
+                const { dismissed = false }: NoAnalyticsStatus = noGAmeta;
+                if (dismissed) return;
+                noGAmeta.status = true;
+            }
+
+            setMetadataValue({
+                sheet,
+                key,
+                value: noGAmeta,
+            });
+
+            if (isFirstActionableRowEmpty(sheet))
+                removeFirstActionableRow(sheet);
+        } catch (error) {
+            console.warn(error);
         }
-
-        setMetadataValue({
-            sheet,
-            key,
-            value: noGAmeta,
-        });
-
-        if (isFirstActionableRowEmpty(sheet)) removeFirstActionableRow(sheet);
-    } catch (error) {
-        onError(error);
-    }
-}
+    });
 
 /**
  * @summary deletes sheet with linked form and associated metadata
