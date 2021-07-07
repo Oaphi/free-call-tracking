@@ -34,20 +34,35 @@
 
         <main>
             <div class="container">
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input
+                            id="keep"
+                            name="keep"
+                            min="1"
+                            max="120"
+                            step="1"
+                            value="15"
+                            type="number"
+                            class="tooltipped"
+                            data-position="bottom"
+                            data-tooltip="Time to treat records as active (minutes)"
+                        />
+                        <label for="keep">Qualification window</label>
+                    </div>
+                </div>
                 <div class="row dense">
-                    <div class="col s12">
-                        <div class="input-field">
-                            <input
-                                id="clearAt"
-                                name="clearAt"
-                                placeholder="00:00"
-                                type="text"
-                                class="timepicker tooltipped"
-                                data-position="bottom"
-                                data-tooltip="Time when the sheet is cleared"
-                            />
-                            <label for="clearAt">Clear At</label>
-                        </div>
+                    <div class="input-field col s12">
+                        <input
+                            id="clearAt"
+                            name="clearAt"
+                            placeholder="00:00"
+                            type="text"
+                            class="timepicker tooltipped"
+                            data-position="bottom"
+                            data-tooltip="Time when the sheet is cleared"
+                        />
+                        <label for="clearAt">Clear At</label>
                     </div>
                 </div>
                 <div class="row">

@@ -107,18 +107,21 @@ interface Document {
             }
         });
 
-        const settings = await gscript("getSettings");
+        const settings = await gscript<AppSettings>("getSettings");
 
         const {
             triggers: { enableDailyClear, enableEditTrigger },
             accounts: { analytics },
+            setup: { activity },
         } = settings;
 
-        const clear = document.getElementById<HTMLInputElement>("clear")!;
-        const edit = document.getElementById<HTMLInputElement>("edit")!;
+        const clear = d.getElementById<HTMLInputElement>("clear")!;
+        const edit = d.getElementById<HTMLInputElement>("edit")!;
+        const keep = d.getElementById<HTMLInputElement>("keep")!;
 
         clear.checked = enableDailyClear;
         edit.checked = enableEditTrigger;
+        keep.value = activity.keep.toString();
 
         await setupAnalytics(analytics);
 
@@ -134,50 +137,53 @@ interface Document {
         // adsSel.value = ads; //TODO: change
         // const inst = M.FormSelect.init(adsSel);
 
-        document.addEventListener(
-            "change",
-            async ({ target, currentTarget }) => {
-                if (target === currentTarget) return;
+        d.addEventListener("change", async ({ target, currentTarget }) => {
+            if (target === currentTarget) return;
 
-                const { id } = <HTMLElement>target;
+            const { id } = <HTMLElement>target;
 
-                const handlerMap: {
-                    [x: string]: (t: HTMLInputElement) => Promise<boolean>;
-                } = {
-                    clear: ({ checked }) =>
-                        gscript("updateSettings", {
-                            "triggers/enableDailyClear": checked,
-                        }),
-                    edit: ({ checked }) =>
-                        gscript("updateSettings", {
-                            "triggers/enableEditTrigger": checked,
-                        }),
-                    // adsid: {
-                    //     action: ({ value }) =>
-                    //         gscript("updateSettings", {
-                    //             "accounts/ads": value,
-                    //         })
-                    // },
-                };
+            const settingsCallback = "updateSettings";
 
-                const action = handlerMap[id];
+            const handlerMap: {
+                [x: string]: (t: HTMLInputElement) => Promise<boolean>;
+            } = {
+                clear: ({ checked }) =>
+                    gscript(settingsCallback, {
+                        "triggers/enableDailyClear": checked,
+                    }),
+                edit: ({ checked }) =>
+                    gscript(settingsCallback, {
+                        "triggers/enableEditTrigger": checked,
+                    }),
+                keep: ({ valueAsNumber }) =>
+                    gscript(settingsCallback, {
+                        "setup/activity/keep": Math.trunc(valueAsNumber),
+                    }),
+                // adsid: {
+                //     action: ({ value }) =>
+                //         gscript("updateSettings", {
+                //             "accounts/ads": value,
+                //         })
+                // },
+            };
 
-                try {
-                    show(preloader, hideCls);
+            const action = handlerMap[id];
 
-                    const status = await action(<HTMLInputElement>target);
+            try {
+                show(preloader, hideCls);
 
-                    notify(
-                        status ? `Settings updated` : `Failed to update`,
-                        status ? primBckg : failureBckg
-                    );
-                } catch ({ message }) {
-                    await gscript("logException", "save", message);
-                } finally {
-                    hide(preloader, hideCls);
-                }
+                const status = await action(<HTMLInputElement>target);
+
+                notify(
+                    status ? `Settings updated` : `Failed to update`,
+                    status ? primBckg : failureBckg
+                );
+            } catch ({ message }) {
+                await gscript("logException", "save", message);
+            } finally {
+                hide(preloader, hideCls);
             }
-        );
+        });
 
         const reset = d.getElementById("reset")!;
 

@@ -67,6 +67,9 @@ type AppSettings = {
             category: string;
             action: string;
         };
+        activity: {
+            keep: number;
+        };
     };
 };
 
@@ -93,6 +96,9 @@ const getDefaults = (): AppSettings => ({
         analytics: {
             category: "Call",
             action: "Call",
+        },
+        activity: {
+            keep: 15,
         },
     },
 });

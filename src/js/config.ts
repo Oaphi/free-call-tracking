@@ -22,6 +22,9 @@ type AppSettings = {
             category: string;
             action: string;
         };
+        activity: {
+            keep: 15e3;
+        };
     };
 };
 
