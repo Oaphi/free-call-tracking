@@ -142,8 +142,9 @@ const setupAnalytics = async (settings: AnalyticsSettings) => {
     );
 
     await updateGAaccounts(acc, account);
-    if (prop) await updateGAproperties(prop, account, property);
-    if (prof) await updateGAprofiles(prof, account, property, profile);
+    if (prop && account) await updateGAproperties(prop, account, property);
+    if (prof && account && property)
+        await updateGAprofiles(prof, account, property, profile);
 
     document.addEventListener("change", async ({ target }) => {
         const el = <HTMLSelectElement>target;
