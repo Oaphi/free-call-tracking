@@ -14,7 +14,7 @@ type AnalyticsInstallSetterOptions = {
 /**
  * @summary reusable utility preparing project triggers
  */
-const prepareTriggersForUse = () => {
+const prepareTriggersForUse = (settings = getSettings()) => {
     const onInstallFailure = (msg: string) =>
         console.warn(`failed to install trigger: ${msg}`);
 
@@ -27,26 +27,35 @@ const prepareTriggersForUse = () => {
 
     const common = { unique: true, onInstallFailure };
 
-    const submitInstalled = TriggersApp.getOrInstallTrigger({
+    const submitting = TriggersApp.getOrInstallTrigger({
         ...common,
         callbackName: onFormSubmit.name,
         type: TriggersApp.TriggerTypes.SUBMIT,
     });
 
-    const editInstalled = TriggersApp.getOrInstallTrigger({
+    const editing = TriggersApp.getOrInstallTrigger({
         ...common,
         callbackName: onEditEvent.name,
         type: TriggersApp.TriggerTypes.EDIT,
     });
 
-    const clearInstalled = TriggersApp.getOrInstallTrigger({
+    const clearing = TriggersApp.getOrInstallTrigger({
         ...common,
         installerConfig: getDailyClearConfig(),
         callbackName: handleDailyClear.name,
         type: TriggersApp.TriggerTypes.CLOCK,
     });
 
-    return tracking && submitInstalled && editInstalled && !!clearInstalled;
+    const keeping = TriggersApp.getOrInstallTrigger({
+        ...common,
+        installerConfig: {
+            minutely: settings.setup.activity.keep,
+        },
+        callbackName: handleHideInactive.name,
+        type: TriggersApp.TriggerTypes.CLOCK,
+    });
+
+    return [tracking, submitting, editing, clearing, keeping].every(Boolean);
 };
 
 const makeNoGAstatus = (): NoAnalyticsStatus => ({
