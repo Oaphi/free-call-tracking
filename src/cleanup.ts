@@ -18,22 +18,27 @@ const setDailyClearConfig = (config: DailyClearOptions) => {
 /**
  * @summary callback for the daily clean trigger
  */
-const handleDailyClear = () => {
-    const sheet = getFormSheet();
-    const logger = makeLogger();
-    if (!sheet) return logger.log("form sheet missing").dump();
+const handleDailyClear = (e: GoogleAppsScript.Events.TimeDrivenEvent) =>
+    TriggersApp.guardTracked(e, function () {
+        const sheet = getFormSheet();
+        const logger = makeLogger();
+        if (!sheet) return logger.log("form sheet missing").dump();
 
-    const frozen = sheet.getFrozenRows();
+        const frozen = sheet.getFrozenRows();
 
-    const keepRows = 1 + frozen;
-    const nrows = sheet.getMaxRows();
+        const keepRows = 1 + frozen;
+        const nrows = sheet.getMaxRows();
 
-    sheet.getRange(frozen + 1, 1, 1, sheet.getMaxColumns()).clearContent();
+        sheet.getRange(frozen + 1, 1, 1, sheet.getMaxColumns()).clearContent();
 
-    const diff = nrows - keepRows;
-    if (diff <= 0) return;
+        const diff = nrows - keepRows;
+        if (diff <= 0) return;
 
-    sheet.deleteRows(keepRows + 1, diff);
+        sheet.deleteRows(keepRows + 1, diff);
+    });
+
+const handleHideInactive = () => {
+    // const sheet = getFormSheet();
 };
 
 /**
