@@ -27,7 +27,7 @@
     "@types/gulp-uglify": "^3.0.7",
     "@types/materialize-css": "^1.0.10",
     "@types/mocha": "^8.2.2",
-    "@types/node": "^16.3.1",
+    "@types/node": "^16.3.2",
     "@typescript-eslint/eslint-plugin": "^4.28.2",
     "@typescript-eslint/parser": "^4.28.1",
     "chai": "^4.2.0",
