@@ -23,7 +23,7 @@
     "@types/google.script.client-side": "^0.1.1",
     "@types/gulp": "^4.0.8",
     "@types/gulp-autoprefixer": "^0.0.32",
-    "@types/gulp-rename": "^2.0.0",
+    "@types/gulp-rename": "^2.0.1",
     "@types/gulp-uglify": "^3.0.6",
     "@types/materialize-css": "^1.0.10",
     "@types/mocha": "^8.2.2",
