@@ -26,7 +26,7 @@
     "@types/gulp-rename": "^2.0.1",
     "@types/gulp-uglify": "^3.0.7",
     "@types/materialize-css": "^1.0.11",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^8.2.3",
     "@types/node": "^16.3.2",
     "@typescript-eslint/eslint-plugin": "^4.28.2",
     "@typescript-eslint/parser": "^4.28.1",
