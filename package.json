@@ -27,7 +27,7 @@
     "@types/gulp-uglify": "^3.0.7",
     "@types/materialize-css": "^1.0.11",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^16.11.41",
+    "@types/node": "^16.11.42",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "chai": "^4.3.6",
@@ -40,7 +40,7 @@
     "gulp-typescript": "^6.0.0-alpha.1",
     "gulp-uglify": "^3.0.2",
     "mocha": "^9.2.2",
-    "ts-node": "^10.8.1",
+    "ts-node": "^10.8.2",
     "typescript": "^4.7.4"
   },
   "dependencies": {
